@@ -2,204 +2,70 @@ package com.rhms;
 
 import com.rhms.userManagement.*;
 import com.rhms.appointmentScheduling.*;
-import com.rhms.healthDataHandling.*;
 import com.rhms.doctorPatientInteraction.*;
 import com.rhms.emergencyAlert.*;
-import com.rhms.notifications.ReminderService;
-import com.rhms.notifications.SMSNotification;
-import com.rhms.notifications.EmailNotification;
-import com.rhms.emergencyAlert.EmergencyAlert;
-import com.rhms.healthDataHandling.VitalSign;
-import com.rhms.loginSystem.AuthenticationService;
+import com.rhms.notifications.*;
+import com.rhms.Database.*;
+import com.rhms.healthDataHandling.*;
 
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.io.IOException;
+import java.util.*;
 
 public class App {
-    private static ArrayList<Patient> patients = new ArrayList<>();
-    private static ArrayList<Doctor> doctors = new ArrayList<>();
-    private static AppointmentManager appointmentManager = new AppointmentManager();
-    private static EmergencyAlert emergencyAlert = new EmergencyAlert();
-    private static Scanner scanner = new Scanner(System.in);
-    private static String userType = ""; // Store user type
-    private static ChatServer chatServer = new ChatServer();
-    private static Map<String, ChatClient> chatClients = new HashMap<>();
-    private static ReminderService reminderService = new ReminderService();
-    private static SMSNotification smsNotification = new SMSNotification();
-    private static EmailNotification emailNotification = new EmailNotification();
-    private static UserManager userManager = new UserManager();
-    private static AuthenticationService authService = new AuthenticationService();
-
-    // Current logged-in user session
-    private static String currentSessionToken = null;
+    private static final Scanner scanner = new Scanner(System.in);
     private static User currentUser = null;
+    private static final UserManager userManager = new UserManager();
+    private static final AppointmentManager appointmentManager = new AppointmentManager();
+    private static final ChatServer chatServer = new ChatServer();
 
     public static void main(String[] args) {
-        initializeUserManager();
+        initializeSystem();
+        mainMenu();
+    }
 
-        // Add an initial admin user if one doesn't exist
+    /**
+     * Initialize the system by syncing users from the database.
+     */
+    private static void initializeSystem() {
+        System.out.println("Initializing system...");
+        userManager.syncUsersFromDatabase();
         createInitialAdminIfNeeded();
+        System.out.println("System initialized successfully.");
+    }
 
+    /**
+     * Main menu for login, registration, and exit.
+     */
+    private static void mainMenu() {
         while (true) {
-            if (currentUser == null) {
-                showLoginRegisterMenu();
-            } else {
-                // User Type Selection
-                System.out.println("\n===== RHMS User Type Selection =====");
-                System.out.println("1. Patient");
-                System.out.println("2. Doctor");
-                System.out.println("3. Admin");
-                System.out.println("4. Logout");
-                System.out.println("0. Exit System");
-                System.out.print("Choose your user type: ");
+            System.out.println("\n===== Main Menu =====");
+            System.out.println("1. Login");
+            System.out.println("2. Register");
+            System.out.println("0. Exit");
+            System.out.print("Choose an option: ");
 
-                int userTypeChoice = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
 
-                if (userTypeChoice == 0) {
-                    System.out.println("Exiting RHMS System. Goodbye!");
+            switch (choice) {
+                case 1:
+                    login();
+                    break;
+                case 2:
+                    register();
+                    break;
+                case 0:
+                    System.out.println("Exiting system. Goodbye!");
                     return;
-                }
-
-                switch (userTypeChoice) {
-                    case 1: userType = "Patient"; break;
-                    case 2: userType = "Doctor"; break;
-                    case 3: userType = "Admin"; break;
-                    case 4: logout(); continue;
-                    default:
-                        System.out.println("Invalid choice! Please try again.");
-                        continue;
-                }
-
-                // Sub-menu loop
-                boolean stayInSubmenu = true;
-                while (stayInSubmenu) {
-                    System.out.println("\n===== RHMS System Menu =====");
-                    if ("Admin".equals(userType)) {
-                        showAdminMenu();
-                    } else if ("Patient".equals(userType)) {
-                        showPatientMenu();
-                    } else if ("Doctor".equals(userType)) {
-                        showDoctorMenu();
-                    }
-                    int choice = scanner.nextInt();
-                    scanner.nextLine(); // Consume newline
-
-                    if (choice == 9) {
-                        stayInSubmenu = false; // Go back to user type selection
-                        continue;
-                    }
-
-                    // Execute based on the user type
-                    if ("Admin".equals(userType)) {
-                        switch (choice) {
-                            case 1: registerPatient(); break;
-                            case 2: registerDoctor(); break;
-                            case 3: scheduleAppointment(); break;
-                            case 4: showNotificationMenu(); break;
-                            case 5: viewAllAppointments(); break;
-                            case 6: registerAdministrator(); break; // Handle the new admin option
-                            case 0: stayInSubmenu = false; break;
-                            default: System.out.println("Invalid choice!");
-                        }
-                    } else if ("Patient".equals(userType)) {
-                        switch (choice) {
-                            case 1: scheduleAppointment(); break;
-                            case 2: viewVitals(); break;
-                            case 3: provideFeedback(); break;
-                            case 4: triggerEmergencyAlert(); break;
-                            case 5: togglePanicButton(); break;
-                            case 6: joinVideoConsultation(); break;
-                            case 7: openChat(); break;
-                            case 8: uploadVitalsFromCSV(); break; // New option
-                            case 0: System.out.println("Exiting RHMS System. Goodbye!"); return;
-                            default: System.out.println("Invalid choice! Please try again.");
-                        }
-                    } else if ("Doctor".equals(userType)) {
-                        switch (choice) {
-                            case 1: approveAppointment(); break;
-                            case 2: cancelAppointment(); break;
-                            case 3: uploadVitals(); break;
-                            case 4: viewVitals(); break;
-                            case 5: startVideoConsultation(); break;
-                            case 6: openChat(); break;
-                            case 7: viewPatientVitalsHistory(); break; // New option
-                            case 0: System.out.println("Exiting RHMS System. Goodbye!"); return;
-                            default: System.out.println("Invalid choice! Please try again.");
-                        }
-                    }
-                }
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+                    break;
             }
         }
     }
 
     /**
-     * Initialize the UserManager without hardcoded test users
-     */
-    private static void initializeUserManager() {
-        // Create clean authentication service and user manager
-        authService = new AuthenticationService();
-        userManager = new UserManager(authService);
-
-        System.out.println("System initialized successfully.");
-        System.out.println("Please register or login to continue.");
-    }
-
-    /**
-     * Creates an initial admin user if no administrator exists in the system
-     */
-    private static void createInitialAdminIfNeeded() {
-        if (userManager.getAllAdministrators().isEmpty()) {
-            Administrator admin = userManager.registerAdministrator(
-                "System Admin",
-                "admin@rhms.com",
-                "admin123",
-                "123-456-7890",
-                "RHMS Headquarters"
-            );
-            System.out.println("\n========== ADMIN ACCESS INFORMATION ==========");
-            System.out.println("Default administrator account created.");
-            System.out.println("Username: " + admin.getUsername());
-            System.out.println("Password: admin123");
-            System.out.println("Please change this password after first login.");
-            System.out.println("==============================================\n");
-        }
-    }
-
-    /**
-     * Show login or register menu
-     */
-    private static void showLoginRegisterMenu() {
-        System.out.println("\n===== RHMS Authentication =====");
-        System.out.println("1. Login");
-        System.out.println("2. Register");
-        System.out.println("0. Exit");
-        System.out.print("Choose an option: ");
-
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-
-        switch (choice) {
-            case 1:
-                login();
-                break;
-            case 2:
-                register();
-                break;
-            case 0:
-                System.out.println("Exiting RHMS System. Goodbye!");
-                System.exit(0);
-            default:
-                System.out.println("Invalid choice! Please try again.");
-        }
-    }
-
-    /**
-     * Handle user login
+     * Login functionality.
      */
     private static void login() {
         System.out.print("Enter username: ");
@@ -208,55 +74,33 @@ public class App {
         System.out.print("Enter password: ");
         String password = scanner.nextLine();
 
-        currentSessionToken = authService.login(username, password);
+        UserDatabaseHandler dbHandler = new UserDatabaseHandler();
+        User user = dbHandler.getUserByUsername(username);
 
-        if (currentSessionToken != null) {
-            currentUser = authService.getUserBySession(currentSessionToken);
+        if (user != null && user.getPassword().equals(password)) {
+            currentUser = user;
             System.out.println("Login successful. Welcome, " + currentUser.getName() + "!");
-
-            // Determine user type
-            if (currentUser instanceof Patient) {
-                userType = "Patient";
-            } else if (currentUser instanceof Doctor) {
-                userType = "Doctor";
-            } else if (currentUser instanceof Administrator) {
-                userType = "Admin";
-            }
+            userMenu(); // Navigate directly to the user-specific menu
         } else {
             System.out.println("Login failed. Invalid username or password.");
         }
     }
 
     /**
-     * Handle user logout
-     */
-    private static void logout() {
-        if (currentSessionToken != null) {
-            authService.logout(currentSessionToken);
-            System.out.println("Logged out successfully.");
-        }
-        currentSessionToken = null;
-        currentUser = null;
-        userType = "";
-    }
-
-    /**
-     * Handle user registration
+     * Registration functionality.
      */
     private static void register() {
-        System.out.println("\n===== User Registration =====");
+        System.out.println("\n===== Registration =====");
         System.out.println("1. Register as Patient");
         System.out.println("2. Register as Doctor");
-        System.out.println("3. Register as Administrator"); // Add admin registration option
+        System.out.println("3. Register as Administrator");
         System.out.println("0. Back");
         System.out.print("Choose an option: ");
 
         int choice = scanner.nextInt();
         scanner.nextLine(); // Consume newline
 
-        if (choice == 0) {
-            return;
-        }
+        if (choice == 0) return;
 
         System.out.print("Enter name: ");
         String name = scanner.nextLine();
@@ -267,7 +111,7 @@ public class App {
         System.out.print("Enter password: ");
         String password = scanner.nextLine();
 
-        System.out.print("Enter phone number: ");
+        System.out.print("Enter phone: ");
         String phone = scanner.nextLine();
 
         System.out.print("Enter address: ");
@@ -275,633 +119,387 @@ public class App {
 
         switch (choice) {
             case 1:
-                System.out.print("Enter emergency contact: ");
-                String emergencyContact = scanner.nextLine();
-
-                System.out.print("Enter health insurance info: ");
-                String healthInsurance = scanner.nextLine();
-
-                Patient patient = userManager.registerPatient(name, email, password,
-                                                           phone, address,
-                                                           emergencyContact, healthInsurance);
-                patients.add(patient);
-                System.out.println("Patient registered successfully! Your username is: " + patient.getUsername());
+                registerPatient(name, email, password, phone, address);
                 break;
-
             case 2:
-                System.out.print("Enter specialization: ");
-                String specialization = scanner.nextLine();
-
-                System.out.print("Enter years of experience: ");
-                int experienceYears = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
-
-                Doctor doctor = userManager.registerDoctor(name, email, password,
-                                                        phone, address,
-                                                        specialization, experienceYears);
-                doctors.add(doctor);
-                System.out.println("Doctor registered successfully! Your username is: " + doctor.getUsername());
+                registerDoctor(name, email, password, phone, address);
                 break;
-
             case 3:
-                // Only allow admin registration if the user is already an admin
-                if (currentUser instanceof Administrator) {
-                    Administrator admin = userManager.registerAdministrator(name, email, password,
-                                                                         phone, address);
-                    System.out.println("Administrator registered successfully! Username is: " + admin.getUsername());
-                } else {
-                    System.out.println("Error: Only existing administrators can register new administrators.");
-                }
+                registerAdministrator(name, email, password, phone, address);
                 break;
-
             default:
-                System.out.println("Invalid choice!");
-        }
-    }
-
-    private static void showAdminMenu() {
-        System.out.println("\n===== RHMS Admin Menu =====");
-        System.out.println("1. Register Patient");
-        System.out.println("2. Register Doctor");
-        System.out.println("3. Schedule Appointment");
-        System.out.println("4. Send Notifications");
-        System.out.println("5. View All Appointments");
-        System.out.println("6. Add Administrator"); // New option for adding administrators
-        System.out.println("0. Back to User Selection");
-        System.out.print("Choose an option: ");
-    }
-
-    private static void showPatientMenu() {
-        System.out.println("1. Schedule an Appointment");
-        System.out.println("2. View Patient Vitals");
-        System.out.println("3. Provide Doctor Feedback");
-        System.out.println("4. Trigger Emergency Alert");
-        System.out.println("5. Enable/Disable Panic Button");
-        System.out.println("6. Join Video Consultation");
-        System.out.println("7. Open Chat");
-        System.out.println("8. Upload Vitals from CSV"); // New option
-        System.out.println("9. Back to User Selection");
-        System.out.println("0. Exit");
-        System.out.print("Choose an option: ");
-    }
-
-    private static void showDoctorMenu() {
-        System.out.println("1. Approve Appointment");
-        System.out.println("2. Cancel Appointment");
-        System.out.println("3. Upload Vital Signs");
-        System.out.println("4. View Patient Vitals");
-        System.out.println("5. Start Video Consultation");
-        System.out.println("6. Open Chat");
-        System.out.println("7. View Patient's Vitals History"); // New option
-        System.out.println("9. Back to User Selection");
-        System.out.println("0. Exit");
-        System.out.print("Choose an option: ");
-    }
-
-    private static void registerPatient() {
-        System.out.print("Enter Patient Name: ");
-        String name = scanner.nextLine();
-        System.out.print("Enter Email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter Password: ");
-        String password = scanner.nextLine();
-        System.out.print("Enter Phone: ");
-        String phone = scanner.nextLine();
-        System.out.print("Enter Address: ");
-        String address = scanner.nextLine();
-        System.out.print("Enter User ID: ");
-        int userID = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-
-        Patient patient = new Patient(name, email, password, phone, address, userID);
-        patients.add(patient);
-        System.out.println("Patient " + name + " registered successfully.");
-    }
-
-    private static void registerDoctor() {
-        System.out.print("Enter Doctor Name: ");
-        String name = scanner.nextLine();
-        System.out.print("Enter Email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter Password: ");
-        String password = scanner.nextLine();
-        System.out.print("Enter Phone: ");
-        String phone = scanner.nextLine();
-        System.out.print("Enter Address: ");
-        String address = scanner.nextLine();
-        System.out.print("Enter User ID: ");
-        int userID = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-        System.out.print("Enter Specialization: ");
-        String specialization = scanner.nextLine();
-        System.out.print("Enter Years of Experience: ");
-        int experienceYears = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-
-        Doctor doctor = new Doctor(name, email, password, phone, address, userID, specialization, experienceYears);
-        doctors.add(doctor);
-        System.out.println("Doctor " + name + " registered successfully.");
-    }
-
-    private static void scheduleAppointment() {
-        if (patients.isEmpty() || doctors.isEmpty()) {
-            System.out.println("Error: Register at least one patient and one doctor first.");
-            return;
-        }
-
-        System.out.print("Enter Patient Name: ");
-        String patientName = scanner.nextLine();
-        Patient patient = findPatient(patientName);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
-        System.out.print("Enter Doctor Name: ");
-        String doctorName = scanner.nextLine();
-        Doctor doctor = findDoctor(doctorName);
-        if (doctor == null) {
-            System.out.println("Doctor not found!");
-            return;
-        }
-
-        System.out.print("Enter Appointment Date (yyyy-MM-dd): ");
-        Date appointmentDate = null;
-        while (appointmentDate == null) {
-            try {
-                String appointmentDateInput = scanner.nextLine();
-                if (!appointmentDateInput.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    throw new IllegalArgumentException("Invalid date format. Please use yyyy-MM-dd");
-                }
-                appointmentDate = java.sql.Date.valueOf(appointmentDateInput);
-
-                // Check if date is in the future
-                if (appointmentDate.before(new Date())) {
-                    System.out.println("Cannot schedule appointment in the past.");
-                    System.out.print("Enter Appointment Date (yyyy-MM-dd): ");
-                    appointmentDate = null;
-                    continue;
-                }
-            } catch (IllegalArgumentException e) {
-                System.out.println("Error: " + e.getMessage());
-                System.out.print("Please enter date in format yyyy-MM-dd (e.g., 2024-04-20): ");
-            }
-        }
-
-        String appointmentDetails = "Appointment on " + appointmentDate.toString();
-
-        // Create an Appointment object
-        Appointment appointment = new Appointment(appointmentDate, doctor, patient, "Pending");
-
-        // Add to patient's appointments
-        patient.scheduleAppointment(appointment);
-
-        // Add to doctor's management
-        doctor.manageAppointment(appointmentDetails);
-
-        // Add to appointment manager
-        appointmentManager.getAppointments().add(appointment);
-
-        // Send confirmation notifications
-        String subject = "Appointment Confirmation";
-        String message = String.format("Your appointment with Dr. %s is scheduled for %s",
-            doctor.getName(), appointmentDate.toString());
-
-        emailNotification.sendNotification(patient.getEmail(), subject, message);
-        smsNotification.sendNotification(patient.getPhone(), subject, message);
-
-        System.out.println("Appointment scheduled successfully!");
-    }
-
-    private static void approveAppointment() {
-        if (appointmentManager.getAppointments().isEmpty()) {
-            System.out.println("No appointments found.");
-            return;
-        }
-        appointmentManager.getAppointments().get(0).setStatus("Approved");
-        System.out.println("Appointment Approved!");
-    }
-
-    private static void cancelAppointment() {
-        if (appointmentManager.getAppointments().isEmpty()) {
-            System.out.println("No appointments to cancel.");
-            return;
-        }
-        appointmentManager.getAppointments().get(0).setStatus("Cancelled");
-        System.out.println("Appointment Cancelled!");
-    }
-
-    private static void uploadVitals() {
-        System.out.print("Enter Patient Name: ");
-        String name = scanner.nextLine();
-        Patient patient = findPatient(name);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
-        System.out.print("Enter Heart Rate: ");
-        double heartRate = scanner.nextDouble();
-        System.out.print("Enter Oxygen Level: ");
-        double oxygenLevel = scanner.nextDouble();
-        System.out.print("Enter Blood Pressure: ");
-        double bloodPressure = scanner.nextDouble();
-        System.out.print("Enter Temperature: ");
-        double temperature = scanner.nextDouble();
-        scanner.nextLine(); // Consume newline
-
-        // Create vital sign record
-        VitalSign vitals = new VitalSign(heartRate, oxygenLevel, bloodPressure, temperature);
-
-        // Check for emergency conditions
-        emergencyAlert.checkVitals(patient, vitals);
-
-        // Store vitals record
-        String vitalsRecord = String.format("HR: %.1f, O2: %.1f%%, BP: %.1f, Temp: %.1f°C",
-            heartRate, oxygenLevel, bloodPressure, temperature);
-        patient.uploadMedicalRecord(vitalsRecord);
-
-        System.out.println("Vitals uploaded successfully!");
-    }
-
-    private static void viewVitals() {
-        System.out.print("Enter Patient Name: ");
-        String name = scanner.nextLine();
-        Patient patient = findPatient(name);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
-        System.out.println("\nMedical Records:");
-        for (String record : patient.getDoctorFeedback()) {
-            System.out.println(record);
-        }
-    }
-
-    private static void provideFeedback() {
-        System.out.print("Enter Doctor Name: ");
-        String doctorName = scanner.nextLine();
-        Doctor doctor = findDoctor(doctorName);
-        if (doctor == null) {
-            System.out.println("Doctor not found!");
-            return;
-        }
-
-        System.out.print("Enter Patient Name: ");
-        String patientName = scanner.nextLine();
-        Patient patient = findPatient(patientName);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
-        System.out.print("Enter Feedback: ");
-        String feedback = scanner.nextLine();
-
-        doctor.provideFeedback(patient, feedback);
-        System.out.println("Feedback recorded successfully!");
-    }
-
-    private static void triggerEmergencyAlert() {
-        System.out.print("Enter patient name: ");
-        String name = scanner.nextLine();
-        Patient patient = findPatient(name);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
-        System.out.print("Enter emergency reason: ");
-        String reason = scanner.nextLine();
-
-        PanicButton panicButton = new PanicButton(patient);
-        panicButton.triggerAlert(reason);
-    }
-
-    private static void togglePanicButton() {
-        System.out.print("Enter patient name: ");
-        String name = scanner.nextLine();
-        Patient patient = findPatient(name);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
-        System.out.println("\nCurrent panic button status: " + patient.getPanicButton().getStatus());
-        System.out.println("1. Enable Panic Button");
-        System.out.println("2. Disable Panic Button");
-        System.out.println("0. Back");
-        System.out.print("Choose an option: ");
-
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-
-        switch (choice) {
-            case 1:
-                patient.enablePanicButton();
+                System.out.println("Invalid choice! Please try again.");
                 break;
-            case 2:
-                patient.disablePanicButton();
-                break;
-            case 0:
-                return;
-            default:
-                System.out.println("Invalid choice!");
-        }
-    }
-
-    private static void startVideoConsultation() {
-        System.out.print("Enter patient name: ");
-        String patientName = scanner.nextLine();
-        Patient patient = findPatient(patientName);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
         }
 
-        String meetingId = VideoCall.generateMeetingId();
-        System.out.println("Starting video consultation...");
-        System.out.println("Meeting ID: " + meetingId);
-
-        VideoCall.startVideoCall(meetingId);
+        // Synchronize users from the database after registration
+        userManager.syncUsersFromDatabase();
     }
 
-    private static void joinVideoConsultation() {
-        System.out.print("Enter meeting ID: ");
-        String meetingId = scanner.nextLine();
+    /**
+     * Register a new patient.
+     */
+    private static void registerPatient(String name, String email, String password, String phone, String address) {
+        // Removed emergency contact and insurance info prompts as they were trimmed previously
 
-        VideoCall.startVideoCall(meetingId);
-    }
-
-    private static void openChat() {
-        System.out.print("Enter the name of user to chat with: ");
-        String otherUser = scanner.nextLine();
-
-        if (userType.equals("Doctor")) {
-            Patient patient = findPatient(otherUser);
-            if (patient == null) {
-                System.out.println("Patient not found!");
-                return;
-            }
-            otherUser = patient.getName();
+        Patient patient = userManager.registerPatient(name, email, password, phone, address);
+        if (patient != null) {
+            System.out.println("Patient registered successfully! Your username is: " + patient.getUsername());
         } else {
-            Doctor doctor = findDoctor(otherUser);
-            if (doctor == null) {
-                System.out.println("Doctor not found!");
-                return;
-            }
-            otherUser = doctor.getName();
-        }
-
-        ChatClient chatClient = chatClients.computeIfAbsent(
-            userType.equals("Doctor") ? otherUser : otherUser,
-            name -> new ChatClient(
-                userType.equals("Doctor") ? findDoctor(userType) : findPatient(userType),
-                chatServer
-            )
-        );
-
-        while (true) {
-            System.out.println("\n1. Send Message");
-            System.out.println("2. View Chat History");
-            System.out.println("0. Back");
-            System.out.print("Choose an option: ");
-
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
-
-            switch (choice) {
-                case 1:
-                    System.out.print("Enter message: ");
-                    String message = scanner.nextLine();
-                    chatClient.sendMessage(otherUser, message);
-                    break;
-                case 2:
-                    chatClient.displayChat(otherUser);
-                    break;
-                case 0:
-                    return;
-                default:
-                    System.out.println("Invalid choice!");
-            }
-        }
-    }
-
-    private static Patient findPatient(String name) {
-        for (Patient patient : patients) {
-            if (patient.getName().equalsIgnoreCase(name)) {
-                return patient;
-            }
-        }
-        return null;
-    }
-
-    private static Doctor findDoctor(String name) {
-        for (Doctor doctor : doctors) {
-            if (doctor.getName().equalsIgnoreCase(name)) {
-                return doctor;
-            }
-        }
-        return null;
-    }
-
-    private static void sendNotification() {
-        System.out.println("\n=== Send Notification ===");
-        System.out.println("1. Send Appointment Reminder");
-        System.out.println("2. Send Medication Reminder");
-        System.out.println("3. Send Custom Message");
-        System.out.println("0. Back");
-        System.out.print("Choose an option: ");
-
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-
-        System.out.print("Enter patient name: ");
-        String patientName = scanner.nextLine();
-        Patient patient = findPatient(patientName);
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
-        switch (choice) {
-            case 1:
-                sendAppointmentReminder(patient);
-                break;
-            case 2:
-                sendMedicationReminder(patient);
-                break;
-            case 3:
-                sendCustomMessage(patient);
-                break;
-            case 0:
-                return;
-            default:
-                System.out.println("Invalid choice!");
-        }
-    }
-
-    private static void sendAppointmentReminder(Patient patient) {
-        System.out.print("Enter appointment date (e.g., tomorrow 2:30 PM): ");
-        String appointmentTime = scanner.nextLine();
-
-        String subject = "Appointment Reminder";
-        String message = String.format("Dear %s, you have an appointment scheduled for %s.",
-            patient.getName(), appointmentTime);
-
-        smsNotification.sendNotification(patient.getPhone(), subject, message);
-        reminderService.sendImmediateReminder(patient, subject, message);
-    }
-
-    private static void sendMedicationReminder(Patient patient) {
-        System.out.print("Enter medication name: ");
-        String medication = scanner.nextLine();
-        System.out.print("Enter schedule (e.g., twice daily): ");
-        String schedule = scanner.nextLine();
-
-        reminderService.scheduleMedicationReminder(patient, medication, schedule);
-        System.out.println("Medication reminder set successfully!");
-    }
-
-    private static void sendCustomMessage(Patient patient) {
-        System.out.print("Enter message subject: ");
-        String subject = scanner.nextLine();
-        System.out.print("Enter message content: ");
-        String message = scanner.nextLine();
-
-        smsNotification.sendNotification(patient.getPhone(), subject, message);
-        System.out.println("Custom message sent successfully!");
-    }
-
-    private static void showNotificationMenu() {
-        while (true) {
-            System.out.println("\n===== Notification Menu =====");
-            System.out.println("1. Send Email");
-            System.out.println("2. Send SMS");
-            System.out.println("3. Send Both Email and SMS");
-            System.out.println("0. Back");
-            System.out.print("Choose an option: ");
-
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
-
-            if (choice == 0) return;
-
-            System.out.print("Enter patient name: ");
-            String patientName = scanner.nextLine();
-            Patient patient = findPatient(patientName);
-
-            if (patient == null) {
-                System.out.println("Patient not found!");
-                continue;
-            }
-
-            System.out.print("Enter subject: ");
-            String subject = scanner.nextLine();
-            System.out.print("Enter message: ");
-            String message = scanner.nextLine();
-
-            switch (choice) {
-                case 1:
-                    emailNotification.sendNotification(patient.getEmail(), subject, message);
-                    break;
-                case 2:
-                    smsNotification.sendNotification(patient.getPhone(), subject, message);
-                    break;
-                case 3:
-                    emailNotification.sendNotification(patient.getEmail(), subject, message);
-                    smsNotification.sendNotification(patient.getPhone(), subject, message);
-                    break;
-                default:
-                    System.out.println("Invalid choice!");
-            }
-        }
-    }
-
-    private static void viewAllAppointments() {
-        System.out.println("\n=== All Appointments ===");
-        for (Appointment appointment : appointmentManager.getAppointments()) {
-            System.out.println(appointment);
+            System.out.println("Patient registration failed."); // Error message already printed by UserManager
         }
     }
 
     /**
-     * Register a new administrator (can only be done by an existing administrator)
+     * Register a new doctor.
      */
-    private static void registerAdministrator() {
-        // Verify the current user is an administrator
-        if (!(currentUser instanceof Administrator)) {
-            System.out.println("Error: Only administrators can add other administrators.");
-            return;
-        }
+    private static void registerDoctor(String name, String email, String password, String phone, String address) {
+        System.out.print("Enter specialization: ");
+        String specialization = scanner.nextLine();
 
-        System.out.println("\n===== Register New Administrator =====");
-        System.out.print("Enter Administrator Name: ");
-        String name = scanner.nextLine();
-        System.out.print("Enter Email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter Password: ");
-        String password = scanner.nextLine();
-        System.out.print("Enter Phone: ");
-        String phone = scanner.nextLine();
-        System.out.print("Enter Address: ");
-        String address = scanner.nextLine();
+        System.out.print("Enter years of experience: ");
+        int experienceYears = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
 
-        Administrator newAdmin = userManager.registerAdministrator(name, email, password, phone, address);
-
-        System.out.println("\n===== Administrator Registered Successfully =====");
-        System.out.println("Name: " + newAdmin.getName());
-        System.out.println("Username: " + newAdmin.getUsername());
-        System.out.println("User ID: " + newAdmin.getUserID());
-
-        // Log the action
-        if (currentUser instanceof Administrator) {
-            Administrator adminUser = (Administrator) currentUser;
-            adminUser.logActivity("Created new administrator account: " + newAdmin.getUsername());
+        Doctor doctor = userManager.registerDoctor(name, email, password, phone, address, specialization, experienceYears);
+        if (doctor != null) {
+            System.out.println("Doctor registered successfully! Your username is: " + doctor.getUsername());
+        } else {
+            System.out.println("Doctor registration failed."); // Error message already printed by UserManager
         }
     }
 
-    // Add this new method for handling CSV vitals upload
-    private static void uploadVitalsFromCSV() {
+    /**
+     * Register a new administrator.
+     */
+    private static void registerAdministrator(String name, String email, String password, String phone, String address) {
+        // Removed the check for currentUser instanceof Administrator to allow initial admin creation via registration menu if needed
+        // if (!(currentUser instanceof Administrator)) {
+        //     System.out.println("Error: Only administrators can register new administrators.");
+        //     return;
+        // }
+
+        Administrator admin = userManager.registerAdministrator(name, email, password, phone, address);
+        if (admin != null) {
+            System.out.println("Administrator registered successfully! Your username is: " + admin.getUsername());
+        } else {
+            System.out.println("Administrator registration failed."); // Error message already printed by UserManager
+        }
+    }
+
+    /**
+     * Menu for logged-in users based on their type.
+     */
+    private static void userMenu() {
+        if (currentUser instanceof Patient) {
+            showPatientMenu();
+        } else if (currentUser instanceof Doctor) {
+            showDoctorMenu();
+        } else if (currentUser instanceof Administrator) {
+            showAdminMenu();
+        } else {
+            System.out.println("Error: Unknown user type.");
+        }
+    }
+
+    /**
+     * Menu for patients.
+     */
+    private static void showPatientMenu() {
+        while (true) {
+            System.out.println("\n===== Patient Menu =====");
+            System.out.println("1. Schedule Appointment");
+            System.out.println("2. View Feedback");
+            System.out.println("3. Trigger Emergency Alert");
+            System.out.println("4. Enable/Disable Panic Button");
+            System.out.println("5. Join Video Consultation");
+            System.out.println("6. Upload Vital Signs (CSV)");
+            System.out.println("7. View Vital Signs History");
+            System.out.println("0. Logout");
+            System.out.print("Choose an option: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    scheduleAppointment();
+                    break;
+                case 2:
+                    viewFeedback();
+                    break;
+                case 3:
+                    triggerEmergencyAlert();
+                    break;
+                case 4:
+                    togglePanicButton();
+                    break;
+                case 5:
+                    joinVideoConsultation();
+                    break;
+                case 6:
+                    uploadVitalSigns();
+                    break;
+                case 7:
+                    viewVitalSignsHistory();
+                    break;
+                case 0:
+                    logout();
+                    return;
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Menu for doctors.
+     */
+    private static void showDoctorMenu() {
+        while (true) {
+            System.out.println("\n===== Doctor Menu =====");
+            System.out.println("1. Approve Appointment");
+            System.out.println("2. View Patient History");
+            System.out.println("3. Start Video Consultation");
+            System.out.println("4. Open Chat");
+            System.out.println("0. Logout");
+            System.out.print("Choose an option: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    approveAppointment();
+                    break;
+                case 2:
+                    viewPatientHistory();
+                    break;
+                case 3:
+                    startVideoConsultation();
+                    break;
+                case 4:
+                    openChat();
+                    break;
+                case 0:
+                    logout();
+                    return;
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Menu for administrators.
+     */
+    private static void showAdminMenu() {
+        while (true) {
+            System.out.println("\n===== Admin Menu =====");
+            System.out.println("1. Register Patient");
+            System.out.println("2. Register Doctor");
+            System.out.println("3. Register Administrator");
+            System.out.println("4. View System Logs");
+            System.out.println("5. Assign Doctor to Patient");
+            System.out.println("0. Logout");
+            System.out.print("Choose an option: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    register();
+                    break;
+                case 2:
+                    register();
+                    break;
+                case 3:
+                    register();
+                    break;
+                case 4:
+                    viewSystemLogs();
+                    break;
+                case 5:
+                    assignDoctorToPatient();
+                    break;
+                case 0:
+                    logout();
+                    return;
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Assign a doctor to a patient
+     */
+    private static void assignDoctorToPatient() {
+        System.out.println("\n===== Assign Doctor to Patient =====");
+        
+        // Get list of all doctors and patients
+        List<Doctor> doctors = userManager.getAllDoctors();
+        List<Patient> patients = userManager.getAllPatients();
+        
+        // Check if we have both doctors and patients
+        if (doctors.isEmpty()) {
+            System.out.println("No doctors registered in the system.");
+            return;
+        }
+        
+        if (patients.isEmpty()) {
+            System.out.println("No patients registered in the system.");
+            return;
+        }
+        
+        // Display available doctors
+        System.out.println("\nAvailable Doctors:");
+        for (int i = 0; i < doctors.size(); i++) {
+            Doctor doctor = doctors.get(i);
+            System.out.println((i + 1) + ". Dr. " + doctor.getName() + 
+                               " (" + doctor.getSpecialization() + ")");
+        }
+        
+        // Select a doctor
+        System.out.print("\nSelect a doctor (number): ");
+        int doctorIndex = scanner.nextInt() - 1;
+        scanner.nextLine(); // Consume newline
+        
+        if (doctorIndex < 0 || doctorIndex >= doctors.size()) {
+            System.out.println("Invalid doctor selection.");
+            return;
+        }
+        
+        Doctor selectedDoctor = doctors.get(doctorIndex);
+        
+        // Display available patients
+        System.out.println("\nAvailable Patients:");
+        for (int i = 0; i < patients.size(); i++) {
+            Patient patient = patients.get(i);
+            System.out.println((i + 1) + ". " + patient.getName() + " (ID: " + patient.getUserID() + ")");
+        }
+        
+        // Select a patient
+        System.out.print("\nSelect a patient (number): ");
+        int patientIndex = scanner.nextInt() - 1;
+        scanner.nextLine(); // Consume newline
+        
+        if (patientIndex < 0 || patientIndex >= patients.size()) {
+            System.out.println("Invalid patient selection.");
+            return;
+        }
+        
+        Patient selectedPatient = patients.get(patientIndex);
+        
+        // Assign the doctor to the patient
+        selectedPatient.addAssignedDoctor(selectedDoctor);
+        System.out.println("Dr. " + selectedDoctor.getName() + " has been assigned to patient " + 
+                           selectedPatient.getName() + ".");
+    }
+
+    /**
+     * Create an initial admin if none exists.
+     */
+    private static void createInitialAdminIfNeeded() {
+        // Check if any administrators exist in the local list first
+        if (userManager.getAllAdministrators().isEmpty()) {
+            // Then check the database specifically for the default email
+            User existingAdmin = userManager.findUserByEmail("admin@rhms.com");
+            if (existingAdmin == null) {
+                System.out.println("No default administrator found. Creating one...");
+                // Use the UserManager registration method which handles database interaction
+                Administrator admin = userManager.registerAdministrator(
+                    "System Admin", "admin@rhms.com", "admin123", "123-456-7890", "RHMS Headquarters"
+                );
+                if (admin != null) {
+                    System.out.println("Default administrator account created. Username: " + admin.getUsername());
+                    // Re-sync after creating the admin to update local lists
+                    userManager.syncUsersFromDatabase();
+                } else {
+                    System.err.println("Error: Failed to create default administrator during initialization.");
+                }
+            } else {
+                System.out.println("Default administrator found in the database.");
+                // Ensure local lists are populated even if admin was found only in DB
+                userManager.syncUsersFromDatabase();
+            }
+        } else {
+             System.out.println("Administrator(s) already loaded.");
+        }
+    }
+
+    /**
+     * Logout functionality.
+     */
+    private static void logout() {
+        System.out.println("Logging out...");
+        currentUser = null;
+    }
+
+    // Placeholder methods for functionality
+    private static void scheduleAppointment() { System.out.println("Scheduling appointment..."); }
+    private static void viewFeedback() { System.out.println("Viewing feedback..."); }
+    private static void triggerEmergencyAlert() { System.out.println("Triggering emergency alert..."); }
+    private static void togglePanicButton() { System.out.println("Toggling panic button..."); }
+    private static void joinVideoConsultation() { System.out.println("Joining video consultation..."); }
+    private static void approveAppointment() { System.out.println("Approving appointment..."); }
+    private static void viewPatientHistory() { System.out.println("Viewing patient history..."); }
+    private static void startVideoConsultation() { System.out.println("Starting video consultation..."); }
+    private static void openChat() { System.out.println("Opening chat..."); }
+    private static void viewSystemLogs() { System.out.println("Viewing system logs..."); }
+
+    /**
+     * Uploads vital signs from a CSV file for the current patient.
+     */
+    private static void uploadVitalSigns() {
         if (!(currentUser instanceof Patient)) {
-            System.out.println("Error: Only patients can upload their vitals.");
+            System.out.println("Error: Only patients can upload vital signs.");
             return;
         }
-
+        
         Patient patient = (Patient) currentUser;
-
-        System.out.print("Enter CSV file path: ");
+        
+        System.out.println("\n===== Upload Vital Signs =====");
+        System.out.println("Please provide the path to your CSV file.");
+        System.out.println("CSV format: [timestamp(optional)], heart rate, oxygen level, temperature, blood pressure");
+        System.out.println("Example: 75.0, 98.5, 36.8, 120.0");
+        System.out.print("File path: ");
+        
         String filePath = scanner.nextLine();
-
-        System.out.println("Uploading vitals from CSV file: " + filePath);
+        
         try {
-            // Use the enhanced report-based method
-            patient.uploadVitalsFromCSVWithReport(filePath);
-            System.out.println("Upload process completed. Check the report above for details.");
+            VitalsUploadReport report = patient.uploadVitalsFromCSVWithReport(filePath);
+            System.out.println(report.generateReport());
+            
+            // Show a summary of the vitals if successful uploads
+            if (report.getSuccessCount() > 0) {
+                System.out.println("\nWould you like to view your vital signs history? (y/n): ");
+                String response = scanner.nextLine().trim().toLowerCase();
+                if (response.equals("y") || response.equals("yes")) {
+                    viewVitalSignsHistory();
+                }
+            }
         } catch (IOException e) {
-            System.err.println("Error reading CSV file: " + e.getMessage());
-            System.out.println("Please check that the file exists and is accessible.");
+            System.out.println("Error reading the CSV file: " + e.getMessage());
+            System.out.println("Please check the file path and try again.");
         }
     }
-
-    // Add a method for doctors to view a patient's complete vitals history
-    private static void viewPatientVitalsHistory() {
-        if (!(currentUser instanceof Doctor)) {
-            System.out.println("Error: Only doctors can view patient vitals history.");
+    
+    /**
+     * Displays the vital signs history for the current patient.
+     */
+    private static void viewVitalSignsHistory() {
+        if (!(currentUser instanceof Patient)) {
+            System.out.println("Error: Only patients can view their vital signs history.");
             return;
         }
-
-        System.out.print("Enter Patient Name: ");
-        String patientName = scanner.nextLine();
-        Patient patient = findPatient(patientName);
-
-        if (patient == null) {
-            System.out.println("Patient not found!");
-            return;
-        }
-
+        
+        Patient patient = (Patient) currentUser;
+        System.out.println("\n===== Vital Signs History =====");
         patient.getVitalsDatabase().displayAllVitals();
     }
 }
-

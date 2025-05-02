@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import com.rhms.Database.UserDatabaseHandler;
 
 public class Administrator extends User {
     private ArrayList<Doctor> doctors;
@@ -23,13 +24,23 @@ public class Administrator extends User {
     
     // Enhanced constructor with authentication fields
     public Administrator(String name, String email, String password, String phone, String address, 
-                        int userID, String username, String passwordHash) {
-        super(name, email, password, phone, address, userID, username, passwordHash);
+                        int userID, String username) {
+        super(name, email, password, phone, address, userID, username);
         this.doctors = new ArrayList<>();
         this.patients = new ArrayList<>();
         this.systemLogs = new ArrayList<>();
         this.systemConfiguration = new HashMap<>();
         this.lastAuditTime = LocalDateTime.now();
+    }
+
+    // Verify administrator in the database
+    public static Administrator verifyInDatabase(String username, String password) {
+        UserDatabaseHandler dbHandler = new UserDatabaseHandler();
+        User user = dbHandler.getUserByUsername(username);
+        if (user instanceof Administrator && user.getPassword().equals(password)) {
+            return (Administrator) user;
+        }
+        return null;
     }
 
     // Doctor management

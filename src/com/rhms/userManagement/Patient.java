@@ -8,6 +8,7 @@ import com.rhms.healthDataHandling.VitalsDatabase;
 import com.rhms.healthDataHandling.VitalSign;
 import com.rhms.healthDataHandling.CSVVitalsUploader;
 import com.rhms.healthDataHandling.VitalsUploadReport;
+import com.rhms.Database.UserDatabaseHandler;
 import java.io.IOException;
 
 public class Patient extends User {
@@ -16,9 +17,8 @@ public class Patient extends User {
     private ArrayList<Appointment> appointments;
     private PanicButton panicButton;
     private MedicalHistory medicalHistory;
-    private String emergencyContact;
-    private String healthInsuranceInfo;
     private VitalsDatabase vitalsDatabase;
+    private ArrayList<Doctor> assignedDoctors; // Track assigned doctors
 
     public Patient(String name, String email, String password, String phone, String address, int userID) {
         super(name, email, password, phone, address, userID);
@@ -28,27 +28,32 @@ public class Patient extends User {
         this.panicButton = new PanicButton(this);
         this.medicalHistory = new MedicalHistory();
         this.vitalsDatabase = new VitalsDatabase(this);
+        this.assignedDoctors = new ArrayList<>();
     }
     
     // Enhanced constructor with authentication fields
     public Patient(String name, String email, String password, String phone, String address, 
-                  int userID, String username, String passwordHash) {
-        super(name, email, password, phone, address, userID, username, passwordHash);
+                  int userID, String username) {
+        super(name, email, password, phone, address, userID, username);
         this.medicalRecords = new ArrayList<>();
         this.doctorFeedback = new ArrayList<>();
         this.appointments = new ArrayList<>();
         this.panicButton = new PanicButton(this);
         this.medicalHistory = new MedicalHistory();
         this.vitalsDatabase = new VitalsDatabase(this);
+        this.assignedDoctors = new ArrayList<>();
     }
-    
-    // Constructor with emergency contact and insurance info
-    public Patient(String name, String email, String password, String phone, String address, 
-                  int userID, String username, String passwordHash,
-                  String emergencyContact, String healthInsuranceInfo) {
-        this(name, email, password, phone, address, userID, username, passwordHash);
-        this.emergencyContact = emergencyContact;
-        this.healthInsuranceInfo = healthInsuranceInfo;
+
+    /**
+     * Verify patient in the database.
+     */
+    public static Patient verifyInDatabase(String username, String password) {
+        UserDatabaseHandler dbHandler = new UserDatabaseHandler();
+        User user = dbHandler.getUserByUsername(username);
+        if (user instanceof Patient && user.getPassword().equals(password)) {
+            return (Patient) user;
+        }
+        return null;
     }
 
     public void uploadMedicalRecord(String record) {        
@@ -117,24 +122,6 @@ public class Patient extends User {
         return medicalHistory;
     }
     
-    // Emergency contact getters and setters
-    public String getEmergencyContact() {
-        return emergencyContact;
-    }
-    
-    public void setEmergencyContact(String emergencyContact) {
-        this.emergencyContact = emergencyContact;
-    }
-    
-    // Health insurance getters and setters
-    public String getHealthInsuranceInfo() {
-        return healthInsuranceInfo;
-    }
-    
-    public void setHealthInsuranceInfo(String healthInsuranceInfo) {
-        this.healthInsuranceInfo = healthInsuranceInfo;
-    }
-    
     // Display patient information
     public void displayPatientInfo() {
         System.out.println("===== Patient Information =====");
@@ -143,12 +130,6 @@ public class Patient extends User {
         System.out.println("Contact: " + getPhone());
         System.out.println("Email: " + getEmail());
         System.out.println("Address: " + getAddress());
-        if (emergencyContact != null && !emergencyContact.isEmpty()) {
-            System.out.println("Emergency Contact: " + emergencyContact);
-        }
-        if (healthInsuranceInfo != null && !healthInsuranceInfo.isEmpty()) {
-            System.out.println("Health Insurance: " + healthInsuranceInfo);
-        }
     }
 
     /**
@@ -189,5 +170,49 @@ public class Patient extends User {
      */
     public VitalsDatabase getVitalsDatabase() {
         return vitalsDatabase;
+    }
+    
+    /**
+     * Add a doctor to this patient's list of assigned doctors
+     * @param doctor The doctor to assign to this patient
+     */
+    public void addAssignedDoctor(Doctor doctor) {
+        if (!assignedDoctors.contains(doctor)) {
+            assignedDoctors.add(doctor);
+            // Also add the patient to the doctor's list of assigned patients
+            if (!doctor.getAssignedPatients().contains(this)) {
+                doctor.addPatient(this);
+            }
+        }
+    }
+    
+    /**
+     * Remove a doctor from this patient's list of assigned doctors
+     * @param doctor The doctor to remove from this patient
+     */
+    public void removeAssignedDoctor(Doctor doctor) {
+        if (assignedDoctors.contains(doctor)) {
+            assignedDoctors.remove(doctor);
+            // Also remove the patient from the doctor's list of assigned patients
+            if (doctor.getAssignedPatients().contains(this)) {
+                doctor.removePatient(this);
+            }
+        }
+    }
+    
+    /**
+     * Get all doctors assigned to this patient
+     * @return ArrayList of assigned doctors
+     */
+    public ArrayList<Doctor> getAssignedDoctors() {
+        return assignedDoctors;
+    }
+    
+    /**
+     * Check if this patient has at least one assigned doctor
+     * @return true if the patient has at least one assigned doctor
+     */
+    public boolean hasAssignedDoctor() {
+        return !assignedDoctors.isEmpty();
     }
 }

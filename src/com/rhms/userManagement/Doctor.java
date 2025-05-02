@@ -3,6 +3,7 @@ package com.rhms.userManagement;
 import java.util.ArrayList;
 import com.rhms.doctorPatientInteraction.Feedback;
 import com.rhms.doctorPatientInteraction.Prescription;
+import com.rhms.Database.UserDatabaseHandler;
 
 public class Doctor extends User {
     private String specialization;
@@ -18,12 +19,21 @@ public class Doctor extends User {
     
     // Enhanced constructor with authentication fields
     public Doctor(String name, String email, String password, String phone, String address, 
-                  int userID, String username, String passwordHash,
-                  String specialization, int experienceYears) {
-        super(name, email, password, phone, address, userID, username, passwordHash);
+                  int userID, String username, String specialization, int experienceYears) {
+        super(name, email, password, phone, address, userID, username);
         this.specialization = specialization;
         this.experienceYears = experienceYears;
         this.assignedPatients = new ArrayList<>();
+    }
+
+    // Verify doctor in the database
+    public static Doctor verifyInDatabase(String username, String password) {
+        UserDatabaseHandler dbHandler = new UserDatabaseHandler();
+        User user = dbHandler.getUserByUsername(username);
+        if (user instanceof Doctor && user.getPassword().equals(password)) {
+            return (Doctor) user;
+        }
+        return null;
     }
 
     public void addPatient(Patient patient) {
