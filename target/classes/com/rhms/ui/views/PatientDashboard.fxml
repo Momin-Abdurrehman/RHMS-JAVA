@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="700.0" prefWidth="1000.0" styleClass="dashboard-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.PatientDashboardController">
+    <left>
+        <VBox prefHeight="200.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" BorderPane.alignment="CENTER">
+            <children>
+                <VBox alignment="CENTER" prefHeight="120.0" prefWidth="200.0" styleClass="user-profile-box">
+                    <children>
+                        <Label fx:id="nameLabel" styleClass="user-name" text="Patient Name" />
+                        <Label styleClass="user-role" text="Patient" />
+                    </children>
+                </VBox>
+                <Button mnemonicParsing="false" onAction="#handleAppointments" styleClass="sidebar-button" text="Appointments" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleVitals" styleClass="sidebar-button" text="Vital Signs" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleFeedback" styleClass="sidebar-button" text="Doctor Feedback" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleEmergencyAlert" styleClass="sidebar-button" text="Emergency Alert" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleUploadVitals" styleClass="sidebar-button" text="Upload Vitals" maxWidth="Infinity" />
+                <Region VBox.vgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#handleLogout" styleClass="logout-button" text="Logout" maxWidth="Infinity" />
+            </children>
+            <padding>
+                <Insets bottom="15.0" left="10.0" right="10.0" top="10.0" />
+            </padding>
+        </VBox>
+    </left>
+    <center>
+        <VBox fx:id="contentArea" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <children>
+                <Label styleClass="section-title" text="Dashboard">
+                    <font>
+                        <Font name="System Bold" size="24.0" />
+                    </font>
+                </Label>
+                <GridPane hgap="20.0" vgap="20.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="100.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="100.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                    <children>
+                        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="dashboard-module">
+                            <children>
+                                <Label styleClass="module-title" text="Heart Rate" />
+                                <Label fx:id="heartRateLabel" styleClass="stat-number" text="--" />
+                                <Label text="Last recorded value" />
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="dashboard-module" GridPane.columnIndex="1">
+                            <children>
+                                <Label styleClass="module-title" text="Oxygen Level" />
+                                <Label fx:id="oxygenLabel" styleClass="stat-number" text="--" />
+                                <Label text="Last recorded value" />
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="dashboard-module" GridPane.rowIndex="1">
+                            <children>
+                                <Label styleClass="module-title" text="Blood Pressure" />
+                                <Label fx:id="bloodPressureLabel" styleClass="stat-number" text="--" />
+                                <Label text="Last recorded value" />
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="dashboard-module" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <children>
+                                <Label styleClass="module-title" text="Temperature" />
+                                <Label fx:id="temperatureLabel" styleClass="stat-number" text="--" />
+                                <Label text="Last recorded value" />
+                            </children>
+                        </VBox>
+                    </children>
+                    <VBox.margin>
+                        <Insets top="20.0" />
+                    </VBox.margin>
+                </GridPane>
+                <VBox prefHeight="200.0" prefWidth="100.0" styleClass="content-pane">
+                    <VBox.margin>
+                        <Insets top="20.0" />
+                    </VBox.margin>
+                    <children>
+                        <Label styleClass="module-title" text="Upcoming Appointments">
+                            <VBox.margin>
+                                <Insets bottom="10.0" />
+                            </VBox.margin>
+                        </Label>
+                        <TableView fx:id="appointmentsTable" prefHeight="180.0" prefWidth="200.0">
+                            <columns>
+                                <TableColumn fx:id="dateColumn" prefWidth="150.0" text="Date" />
+                                <TableColumn fx:id="timeColumn" prefWidth="100.0" text="Time" />
+                                <TableColumn fx:id="doctorColumn" prefWidth="200.0" text="Doctor" />
+                                <TableColumn fx:id="statusColumn" prefWidth="100.0" text="Status" />
+                            </columns>
+                        </TableView>
+                    </children>
+                    <padding>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                    </padding>
+                </VBox>
+            </children>
+        </VBox>
+    </center>
+</BorderPane>

@@ -157,6 +157,38 @@ public class VitalSign {
         return details.toString();
     }
     
+    /**
+     * Check if heart rate is within normal range
+     * @return true if heart rate is normal, false otherwise
+     */
+    public boolean isHeartRateNormal() {
+        return heartRate >= MIN_HEART_RATE && heartRate <= MAX_HEART_RATE;
+    }
+    
+    /**
+     * Check if oxygen level is within normal range
+     * @return true if oxygen level is normal, false otherwise
+     */
+    public boolean isOxygenLevelNormal() {
+        return oxygenLevel >= MIN_OXYGEN_LEVEL;
+    }
+    
+    /**
+     * Check if blood pressure is within normal range
+     * @return true if blood pressure is normal, false otherwise
+     */
+    public boolean isBloodPressureNormal() {
+        return bloodPressure >= MIN_BLOOD_PRESSURE && bloodPressure <= MAX_BLOOD_PRESSURE;
+    }
+    
+    /**
+     * Check if temperature is within normal range
+     * @return true if temperature is normal, false otherwise
+     */
+    public boolean isTemperatureNormal() {
+        return temperature >= MIN_TEMPERATURE && temperature <= MAX_TEMPERATURE;
+    }
+    
     // Getters and setters
     
     public double getHeartRate() {

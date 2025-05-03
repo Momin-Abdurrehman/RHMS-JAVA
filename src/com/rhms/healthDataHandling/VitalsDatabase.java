@@ -46,11 +46,31 @@ public class VitalsDatabase {
     }
 
     /**
-     * Retrieves all vital sign records for the patient
+     * Retrieves all vital sign records for the patient (legacy method)
      * @return ArrayList containing all recorded vital signs
      */
     public ArrayList<VitalSign> getVitals() {
         return vitals;
+    }
+    
+    /**
+     * Retrieves all vital sign records for the patient
+     * Method name matches PatientDashboardController expectations
+     * @return List containing all recorded vital signs
+     */
+    public List<VitalSign> getAllVitals() {
+        return vitals;
+    }
+    
+    /**
+     * Retrieves the most recent vital sign record if available
+     * @return The most recent VitalSign, or null if no records exist
+     */
+    public VitalSign getLatestVitalSigns() {
+        if (vitals.isEmpty()) {
+            return null;
+        }
+        return vitals.get(vitals.size() - 1); // Return the last element
     }
 
     /**
