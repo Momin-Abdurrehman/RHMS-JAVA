@@ -45,4 +45,8 @@ public class Prescription {
         System.out.println("Dosage: " + dosage);
         System.out.println("Schedule: " + schedule);
     }
+
+    public void addInstructions(String instructions) {
+        System.out.println("Instructions: " + instructions);
+    }
 }

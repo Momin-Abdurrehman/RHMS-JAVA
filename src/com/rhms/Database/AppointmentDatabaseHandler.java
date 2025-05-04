@@ -9,6 +9,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class handles database operations for the appointments table.
@@ -16,6 +18,7 @@ import java.util.List;
 public class AppointmentDatabaseHandler {
     private Connection connection;
     private UserManager userManager;
+    private static final Logger LOGGER = Logger.getLogger(AppointmentDatabaseHandler.class.getName());
 
     /**
      * Constructor that initializes database connection
@@ -190,7 +193,37 @@ public class AppointmentDatabaseHandler {
             return appointments;
         }
     }
-    
+
+    public Appointment addAppointment(Appointment appointment) throws SQLException {
+        String sql = "INSERT INTO appointment (appointment_date, doctor_id, patient_id, status, purpose, notes, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setTimestamp(1, new java.sql.Timestamp(appointment.getAppointmentDate().getTime()));
+            stmt.setInt(2, appointment.getDoctor().getUserID());
+            stmt.setInt(3, appointment.getPatient().getUserID());
+            stmt.setString(4, appointment.getStatus());
+            stmt.setString(5, appointment.getPurpose());
+            stmt.setString(6, appointment.getNotes());
+            stmt.setTimestamp(7, new java.sql.Timestamp(appointment.getCreatedAt().getTime()));
+
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating appointment failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    appointment.setAppointmentId(generatedKeys.getInt(1));
+                } else {
+                    throw new SQLException("Creating appointment failed, no ID obtained.");
+                }
+            }
+            return appointment;
+        }
+    }
+
+
     /**
      * Retrieves all appointments for a specific doctor
      * 

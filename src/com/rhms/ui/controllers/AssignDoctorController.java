@@ -11,11 +11,12 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AssignDoctorController {
 
@@ -107,18 +108,37 @@ public class AssignDoctorController {
     }
     
     /**
-     * Load existing doctor-patient assignments
+     * Load existing doctor-patient assignments from the database and in-memory
      */
     private void loadExistingAssignments() {
         assignments = FXCollections.observableArrayList();
-        
-        // Collect all doctor-patient relationships
+
+        // To avoid duplicates, use a set of doctor-patient id pairs
+        Set<String> seen = new HashSet<>();
+
+        // Ensure assignments are loaded from the database into in-memory objects
+        // (UserManager does this at startup, but we reload here for robustness)
         for (Doctor doctor : doctors) {
             for (Patient patient : doctor.getAssignedPatients()) {
-                assignments.add(new DoctorPatientAssignment(doctor, patient));
+                String key = doctor.getUserID() + "-" + patient.getUserID();
+                if (!seen.contains(key)) {
+                    assignments.add(new DoctorPatientAssignment(doctor, patient));
+                    seen.add(key);
+                }
             }
         }
-        
+
+        // Also check patients' assigned doctors in case of any missing links
+        for (Patient patient : patients) {
+            for (Doctor doctor : patient.getAssignedDoctors()) {
+                String key = doctor.getUserID() + "-" + patient.getUserID();
+                if (!seen.contains(key)) {
+                    assignments.add(new DoctorPatientAssignment(doctor, patient));
+                    seen.add(key);
+                }
+            }
+        }
+
         assignmentTable.setItems(assignments);
     }
     
@@ -150,30 +170,51 @@ public class AssignDoctorController {
             return;
         }
         
-        // Check if assignment already exists
-        boolean alreadyAssigned = false;
+        // Check if assignment already exists in the UI list (optional, but good UX)
+        boolean alreadyAssignedUI = false;
         for (DoctorPatientAssignment assignment : assignments) {
             if (assignment.getDoctor().equals(selectedDoctor) && 
                 assignment.getPatient().equals(selectedPatient)) {
-                alreadyAssigned = true;
+                alreadyAssignedUI = true;
                 break;
             }
         }
         
-        if (alreadyAssigned) {
+        if (alreadyAssignedUI) {
             messageArea.setText("Dr. " + selectedDoctor.getName() + " is already assigned to " + 
                 selectedPatient.getName() + ".");
             return;
         }
-        
-        // Create the assignment
-        selectedPatient.addAssignedDoctor(selectedDoctor);
-        
-        // Refresh data
-        refreshData();
-        
-        messageArea.setText("Successfully assigned Dr. " + selectedDoctor.getName() + 
-            " to patient " + selectedPatient.getName() + ".");
+
+        // Attempt to create the assignment using UserManager
+        // This now handles database interaction
+        boolean successOrAlreadyExists = userManager.assignDoctorToPatient(selectedDoctor, selectedPatient);
+
+        if (successOrAlreadyExists) {
+            // Refresh data regardless of whether it was new or already existed in DB
+            // This ensures UI consistency if the in-memory state was somehow out of sync
+            refreshData();
+            // Check again if it exists in the refreshed UI list to determine message
+            boolean nowAssigned = false;
+             for (DoctorPatientAssignment assignment : assignments) {
+                if (assignment.getDoctor().equals(selectedDoctor) && 
+                    assignment.getPatient().equals(selectedPatient)) {
+                    nowAssigned = true;
+                    break;
+                }
+            }
+            if(nowAssigned) {
+                 messageArea.setText("Successfully assigned Dr. " + selectedDoctor.getName() +
+                    " to patient " + selectedPatient.getName() + ".");
+            } else {
+                 // This case should ideally not happen if refreshData works correctly after a successful DB operation
+                 messageArea.setText("Assignment processed, but failed to verify in UI. Please check.");
+            }
+
+        } else {
+            // This means a real error occurred during the database operation
+            messageArea.setText("Failed to assign doctor due to a system error. Please check logs.");
+        }
     }
     
     /**
@@ -188,27 +229,35 @@ public class AssignDoctorController {
             return;
         }
         
-        // Remove the assignment
+        // Remove the assignment using UserManager
         Doctor doctor = selectedAssignment.getDoctor();
         Patient patient = selectedAssignment.getPatient();
-        patient.removeAssignedDoctor(doctor);
-        
-        // Refresh data
-        refreshData();
-        
-        messageArea.setText("Successfully removed assignment: Dr. " + doctor.getName() + 
-            " from patient " + patient.getName() + ".");
+        // Note: The line below directly modifies the object, which might be redundant
+        // if removeDoctorFromPatient also updates the object. Consider removing if so.
+        // patient.removeAssignedDoctor(doctor); // Let UserManager handle in-memory update
+
+        boolean success = userManager.removeDoctorFromPatient(doctor, patient);
+
+        if (success) {
+            // Refresh data from the source of truth (UserManager/DB)
+            refreshData();
+            messageArea.setText("Successfully removed assignment: Dr. " + doctor.getName() +
+                    " from patient " + patient.getName() + ".");
+        } else {
+            messageArea.setText("Failed to remove assignment. Please check logs.");
+        }
     }
     
     /**
      * Refresh all data in tables
      */
     private void refreshData() {
-        // Refresh the patients table to update "Has Doctor" column
+        // Reload doctors and patients which implicitly reloads assignments
+        loadDoctorsAndPatients();
+        // Explicitly refresh tables to ensure UI updates
+        doctorTable.refresh();
         patientTable.refresh();
-        
-        // Reload assignments
-        loadExistingAssignments();
+        assignmentTable.refresh();
     }
     
     /**

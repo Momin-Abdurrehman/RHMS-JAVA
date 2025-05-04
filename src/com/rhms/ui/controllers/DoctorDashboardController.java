@@ -1,5 +1,7 @@
 package com.rhms.ui.controllers;
 
+import com.rhms.Database.AppointmentDatabaseHandler;
+import com.rhms.appointmentScheduling.AppointmentManager;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.User;
@@ -43,6 +45,7 @@ public class DoctorDashboardController implements DashboardController {
     @FXML private TableColumn<Appointment, String> patientColumn;
     @FXML private TableColumn<Appointment, String> statusColumn;
 
+    private AppointmentManager appointmentManager;
     private Doctor currentDoctor;
     private UserManager userManager;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -60,6 +63,10 @@ public class DoctorDashboardController implements DashboardController {
     @Override
     public void setUserManager(UserManager userManager) {
         this.userManager = userManager;
+
+        // Create appointment manager with database handler
+        AppointmentDatabaseHandler dbHandler = new AppointmentDatabaseHandler(userManager);
+        this.appointmentManager = new AppointmentManager(dbHandler);
     }
 
     @Override
@@ -110,9 +117,40 @@ public class DoctorDashboardController implements DashboardController {
     }
 
     private void loadAppointments() {
-        List<Appointment> appointments = new ArrayList<>();
-        ObservableList<Appointment> appointmentData = FXCollections.observableArrayList(appointments);
-        appointmentsTable.setItems(appointmentData);
+        try {
+            List<Appointment> appointments;
+
+            if (appointmentManager != null) {
+                // Load from database
+                appointments = appointmentManager.loadDoctorAppointments(currentDoctor);
+            } else {
+                // Fallback to empty list
+                appointments = new ArrayList<>();
+            }
+
+            ObservableList<Appointment> appointmentData = FXCollections.observableArrayList(appointments);
+            appointmentsTable.setItems(appointmentData);
+        } catch (AppointmentManager.AppointmentException e) {
+            showMessage("Error loading appointments: " + e.getMessage());
+            appointmentsTable.setItems(FXCollections.observableArrayList());
+        }
+    }
+
+    /**
+     * Update the status of an appointment
+     */
+    private boolean updateAppointmentStatus(Appointment appointment, String newStatus) {
+        try {
+            if (appointmentManager != null) {
+                return appointmentManager.updateAppointmentStatus(appointment, newStatus);
+            } else {
+                appointment.setStatus(newStatus);
+                return true;
+            }
+        } catch (AppointmentManager.AppointmentException e) {
+            showMessage("Error updating appointment: " + e.getMessage());
+            return false;
+        }
     }
 
     @FXML
@@ -122,12 +160,71 @@ public class DoctorDashboardController implements DashboardController {
             showMessage("Please select a patient first.");
             return;
         }
-        showMessage("Patient details view not implemented yet.");
+        
+        try {
+            // Load the patient details view
+            URL patientDetailsUrl = getClass().getResource("/com/rhms/ui/views/DoctorPatientDetailsView.fxml");
+            if (patientDetailsUrl == null) {
+                showMessage("Could not find patient details view resource");
+                return;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(patientDetailsUrl);
+            Parent patientDetailsView = loader.load();
+            
+            // Initialize the controller with the selected patient and current doctor
+            DoctorPatientDetailsController controller = loader.getController();
+            controller.initializeData(currentDoctor, selectedPatient, userManager);
+            
+            // Show the view in a new window
+            Stage stage = new Stage();
+            stage.setTitle("Patient Details - " + selectedPatient.getName());
+            stage.setScene(new Scene(patientDetailsView));
+            stage.show();
+        } catch (IOException e) {
+            showMessage("Error loading patient details view: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @FXML
     public void handleAppointments(ActionEvent event) {
-        showMessage("Appointments management view not implemented yet.");
+        try {
+            // Load the appointments management view
+            URL appointmentsUrl = getClass().getResource("/com/rhms/ui/views/DoctorAppointmentsView.fxml");
+            if (appointmentsUrl == null) {
+                showMessage("Could not find appointments view resource");
+                return;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(appointmentsUrl);
+            Parent appointmentsView = loader.load();
+            
+            // Initialize the controller with the current doctor
+            DoctorAppointmentsController controller = loader.getController();
+            controller.initializeData(currentDoctor, userManager, appointmentManager);
+            
+            // Show the view in a new window
+            Stage stage = new Stage();
+            stage.setTitle("Appointment Management - Dr. " + currentDoctor.getName());
+            Scene scene = new Scene(appointmentsView);
+            
+            // Apply CSS if available
+            URL cssUrl = getClass().getResource("/com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                scene.getStylesheets().add(cssUrl.toExternalForm());
+            }
+            
+            stage.setScene(scene);
+            
+            // Add listener to refresh main dashboard appointments when appointments view is closed
+            stage.setOnHidden(e -> loadAppointments());
+            
+            stage.show();
+        } catch (IOException e) {
+            showMessage("Error loading appointments view: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -138,14 +235,40 @@ public class DoctorDashboardController implements DashboardController {
             return;
         }
 
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Provide Feedback");
-        dialog.setHeaderText("Feedback for " + selectedPatient.getName());
-        dialog.setContentText("Enter your comments:");
-
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent() && !result.get().trim().isEmpty()) {
-            showMessage("Feedback provided successfully!");
+        try {
+            // Load the feedback form view
+            URL feedbackFormUrl = getClass().getResource("/com/rhms/ui/views/DoctorFeedbackView.fxml");
+            if (feedbackFormUrl == null) {
+                showMessage("Could not find feedback form resource");
+                return;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(feedbackFormUrl);
+            Parent feedbackFormView = loader.load();
+            
+            // Initialize the controller with the selected patient and current doctor
+            DoctorFeedbackController controller = loader.getController();
+            controller.initializeData(currentDoctor, selectedPatient);
+            
+            // Show the view in a new window
+            Stage stage = new Stage();
+            stage.setTitle("Provide Feedback - " + selectedPatient.getName());
+            stage.setScene(new Scene(feedbackFormView));
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL); // Make it modal
+            
+            // Add CSS styles if available
+            URL cssUrl = getClass().getResource("/com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                stage.getScene().getStylesheets().add(cssUrl.toExternalForm());
+            }
+            
+            stage.showAndWait();
+            
+            // After closing the feedback form, refresh data if needed
+            loadPatients(); // This will refresh the patient list to show any updates
+        } catch (IOException e) {
+            showMessage("Error loading feedback form: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

@@ -19,21 +19,71 @@ public class UserDatabaseHandler {
 
     // Add a new user to the database
     public boolean addUser(User user) {
-        String sql = "INSERT INTO Users (username, password_hash, name, email, phone, address, user_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPassword());
-            stmt.setString(3, user.getName());
-            stmt.setString(4, user.getEmail());
-            stmt.setString(5, user.getPhone());
-            stmt.setString(6, user.getAddress());
-            stmt.setString(7, user.getClass().getSimpleName());
-            stmt.executeUpdate();
+        if (user == null) return false;
+
+        Connection conn = null;
+        PreparedStatement userStmt = null;
+        PreparedStatement doctorStmt = null;
+        ResultSet generatedKeys = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            // Insert into users table
+            String userSql = "INSERT INTO users (name, email, password_hash, phone, address, username, user_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            userStmt = conn.prepareStatement(userSql, Statement.RETURN_GENERATED_KEYS);
+            userStmt.setString(1, user.getName());
+            userStmt.setString(2, user.getEmail());
+            userStmt.setString(3, user.getPassword());
+            userStmt.setString(4, user.getPhone());
+            userStmt.setString(5, user.getAddress());
+            userStmt.setString(6, user.getUsername());
+            userStmt.setString(7, user.getClass().getSimpleName().toLowerCase()); // e.g., "doctor", "patient", etc.
+
+            int affectedRows = userStmt.executeUpdate();
+            if (affectedRows == 0) {
+                conn.rollback();
+                return false;
+            }
+
+            generatedKeys = userStmt.getGeneratedKeys();
+            int userId;
+            if (generatedKeys.next()) {
+                userId = generatedKeys.getInt(1);
+                user.setUserID(userId); // Set the generated ID in the object
+            } else {
+                conn.rollback();
+                return false;
+            }
+
+            // If user is a doctor, insert into doctors table
+            if (user instanceof Doctor) {
+                Doctor doctor = (Doctor) user;
+                String doctorSql = "INSERT INTO doctors (user_id, specialization, experience_years) VALUES (?, ?, ?)";
+                doctorStmt = conn.prepareStatement(doctorSql);
+                doctorStmt.setInt(1, userId);
+                doctorStmt.setString(2, doctor.getSpecialization());
+                doctorStmt.setInt(3, doctor.getExperienceYears());
+                doctorStmt.executeUpdate();
+            }
+
+            // Add similar logic for Patient/Administrator if needed
+
+            conn.commit();
             return true;
         } catch (SQLException e) {
-            System.err.println("Error adding user to database: " + e.getMessage());
+            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+            e.printStackTrace();
             return false;
+        } finally {
+            try { if (generatedKeys != null) generatedKeys.close(); } catch (SQLException e) {}
+            try { if (userStmt != null) userStmt.close(); } catch (SQLException e) {}
+            try { if (doctorStmt != null) doctorStmt.close(); } catch (SQLException e) {}
+            try { if (conn != null) conn.setAutoCommit(true); } catch (SQLException e) {}
         }
+
+
     }
 
     // Check if an email already exists in the database
@@ -70,7 +120,7 @@ public class UserDatabaseHandler {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 String userType = rs.getString("user_type");
-                
+
                 // Create the appropriate user type based on the database value
                 if ("Administrator".equals(userType)) {
                     return new Administrator(
@@ -205,7 +255,7 @@ public class UserDatabaseHandler {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 String userType = rs.getString("user_type");
-                
+
                 // Create the appropriate user type based on the database value
                 if ("Administrator".equals(userType)) {
                     return new Administrator(
@@ -337,5 +387,64 @@ public class UserDatabaseHandler {
         }
         return users;
     }
+    public Patient getPatientById(int patientId) {
+        String sql = "SELECT * FROM Users WHERE user_id = ? AND user_type = 'Patient'";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, patientId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new Patient(
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("password_hash"),
+                        rs.getString("phone"),
+                        rs.getString("address"),
+                        rs.getInt("user_id"),
+                        rs.getString("username")
+                );
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching patient by ID: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public Doctor getDoctorById(int doctorId) {
+        String sql = "SELECT * FROM Users WHERE user_id = ? AND user_type = 'Doctor'";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, doctorId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                String specialization = "General";
+                int experienceYears = 0;
+                try {
+                    // Try to get specialization and experience_years columns if they exist
+                    specialization = rs.getString("specialization");
+                } catch (SQLException | IllegalArgumentException e) {
+                    // Column not found or not present, use default
+                }
+                try {
+                    experienceYears = rs.getInt("experience_years");
+                } catch (SQLException | IllegalArgumentException e) {
+                    // Column not found or not present, use default
+                }
+                return new Doctor(
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("password_hash"),
+                        rs.getString("phone"),
+                        rs.getString("address"),
+                        rs.getInt("user_id"),
+                        rs.getString("username"),
+                        specialization,
+                        experienceYears
+                );
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching doctor by ID: " + e.getMessage());
+        }
+        return null;
+    }
+
 }
 

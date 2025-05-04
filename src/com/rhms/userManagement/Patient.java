@@ -1,6 +1,9 @@
 package com.rhms.userManagement;
 
 import java.util.ArrayList;
+
+import com.rhms.appointmentScheduling.AppointmentManager;
+import com.rhms.doctorPatientInteraction.Feedback;
 import com.rhms.emergencyAlert.PanicButton;
 import com.rhms.doctorPatientInteraction.MedicalHistory;
 import com.rhms.appointmentScheduling.Appointment;
@@ -10,6 +13,7 @@ import com.rhms.healthDataHandling.CSVVitalsUploader;
 import com.rhms.healthDataHandling.VitalsUploadReport;
 import com.rhms.Database.UserDatabaseHandler;
 import java.io.IOException;
+import java.util.List;
 
 public class Patient extends User {
     private ArrayList<String> medicalRecords;
@@ -100,6 +104,18 @@ public class Patient extends User {
     public ArrayList<Appointment> getAppointments() {
         return appointments;
     }
+    
+    /**
+     * Set the appointments list for this patient
+     * @param appointments The list of appointments to set
+     */
+    public void setAppointments(List<Appointment> appointments) {
+        if (appointments != null) {
+            this.appointments = new ArrayList<>(appointments);
+        } else {
+            this.appointments = new ArrayList<>();
+        }
+    }
 
     public void triggerPanicButton(String reason) {
         panicButton.triggerAlert(reason);
@@ -185,6 +201,7 @@ public class Patient extends User {
             }
         }
     }
+
     
     /**
      * Remove a doctor from this patient's list of assigned doctors
@@ -214,5 +231,67 @@ public class Patient extends User {
      */
     public boolean hasAssignedDoctor() {
         return !assignedDoctors.isEmpty();
+    }
+
+    /**
+     * Schedule an appointment for this patient using the appointment manager
+     *
+     * @param appointment The appointment to schedule
+     * @param appointmentManager The appointment manager to use
+     * @return The scheduled appointment with ID set from database
+     */
+    public Appointment scheduleAppointment(Appointment appointment, AppointmentManager appointmentManager) {
+        try {
+            return appointmentManager.scheduleAppointment(appointment);
+        } catch (AppointmentManager.AppointmentException e) {
+            System.err.println("Error scheduling appointment: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Add appointment to patient's list (used when loading from database)
+     */
+    public void addAppointment(Appointment appointment) {
+        if (!appointments.contains(appointment)) {
+            appointments.add(appointment);
+        }
+    }
+
+
+
+    /**
+     * Cancel an appointment for this patient
+     *
+     * @param appointment The appointment to cancel
+     * @param appointmentManager The appointment manager to use
+     * @return true if cancelled successfully, false otherwise
+     */
+    public boolean cancelAppointment(Appointment appointment, AppointmentManager appointmentManager) {
+        try {
+            return appointmentManager.updateAppointmentStatus(appointment, "Cancelled");
+        } catch (AppointmentManager.AppointmentException e) {
+            System.err.println("Error cancelling appointment: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    public List<Feedback> getAllFeedback() {
+        List<Feedback> allFeedback = new ArrayList<>();
+        for (Doctor doctor : assignedDoctors) {
+            allFeedback.addAll(doctor.getFeedbackForPatient(this));
+        }
+        return allFeedback;
+    }
+
+    public void receiveFeedback(Feedback feedback) {
+        if (feedback != null) {
+            doctorFeedback.add(feedback.getMessage());
+        }
+    }
+
+    public List<VitalSign> getVitalSigns() {
+        return vitalsDatabase.getAllVitalSigns();
     }
 }

@@ -61,16 +61,42 @@
     <build>
         <sourceDirectory>src</sourceDirectory>
         <outputDirectory>target/classes</outputDirectory>
-        <!-- Add resources configuration -->
+        <!-- Updated resources configuration -->
         <resources>
             <resource>
-                <!-- Assuming FXML and CSS files are under src/com/rhms/... -->
-                <directory>src</directory> <!-- Correct: Looks for resources in the 'src' directory -->
+                <!-- Include all FXML, CSS and other resource files -->
+                <directory>src</directory>
                 <includes>
-                    <include>**/*.fxml</include> <!-- Correct: Includes all FXML files -->
-                    <include>**/*.css</include>  <!-- Correct: Includes all CSS files -->
-                    <!-- ... -->
+                    <include>**/*.fxml</include>
+                    <include>**/*.css</include>
+                    <include>**/*.png</include>
+                    <include>**/*.jpg</include>
+                    <include>**/*.properties</include>
                 </includes>
+                <!-- Ensure proper filtering -->
+                <filtering>false</filtering>
+            </resource>
+            <!-- Explicit resource for views directory -->
+            <resource>
+                <directory>src/com/rhms/ui/views</directory>
+                <targetPath>com/rhms/ui/views</targetPath>
+                <includes>
+                    <include>*.fxml</include>
+                    <include>**/*.fxml</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+            <!-- Explicit resource for resources directory -->
+            <resource>
+                <directory>src/com/rhms/ui/resources</directory>
+                <targetPath>com/rhms/ui/resources</targetPath>
+                <includes>
+                    <include>*.css</include>
+                    <include>**/*.css</include>
+                    <include>*.png</include>
+                    <include>**/*.png</include>
+                </includes>
+                <filtering>false</filtering>
             </resource>
         </resources>
         <plugins>
@@ -78,6 +104,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
+                <configuration>
+                    <source>16</source>
+                    <target>16</target>
+                </configuration>
             </plugin>
             <!-- Consider adding the JavaFX Maven Plugin for easier running/packaging -->
             <plugin>
@@ -87,6 +117,20 @@
                  <configuration>
                      <mainClass>com.rhms.App</mainClass> <!-- Your main class -->
                  </configuration>
+            </plugin>
+            <!-- Added resource plugin for better control -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <nonFilteredFileExtensions>
+                        <nonFilteredFileExtension>fxml</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>css</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>png</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>jpg</nonFilteredFileExtension>
+                    </nonFilteredFileExtensions>
+                </configuration>
             </plugin>
         </plugins>
     </build>

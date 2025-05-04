@@ -2,6 +2,7 @@
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/doctorPatientInteraction/ChatClient.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/controllers/RegistrationController.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/doctorPatientInteraction/Feedback.java
+/Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/controllers/AssignDoctorController.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/Database/DatabaseConnection.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/App.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/userManagement/Doctor.java
@@ -24,15 +25,19 @@
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/healthDataHandling/CSVVitalsUploader.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/controllers/LoginViewController.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/emergencyAlert/NotificationService.java
+/Users/apple/Desktop/RHMS-JAVA/src/com/rhms/Database/DoctorPatientAssignmentHandler.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/emergencyAlert/EmergencyAlert.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/RhmsGuiApp.java
+/Users/apple/Desktop/RHMS-JAVA/src/com/rhms/Database/AppointmentDatabaseHandler.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/userManagement/Patient.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/doctorPatientInteraction/MedicalHistory.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/emergencyAlert/PanicButton.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/healthDataHandling/VitalsUploadReport.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/notifications/SMSNotification.java
+/Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/controllers/ScheduleAppointmentController.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/controllers/PatientDashboardController.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/LoginHandler.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/doctorPatientInteraction/Prescription.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/doctorPatientInteraction/VideoCall.java
+/Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/controllers/PatientAppointmentsController.java
 /Users/apple/Desktop/RHMS-JAVA/src/com/rhms/doctorPatientInteraction/ChatServer.java

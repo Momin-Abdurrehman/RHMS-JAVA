@@ -1,5 +1,8 @@
 package com.rhms.ui.controllers;
 
+import com.rhms.Database.AppointmentDatabaseHandler;
+import com.rhms.appointmentScheduling.AppointmentManager;
+import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.User;
 import com.rhms.userManagement.UserManager;
@@ -22,12 +25,14 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.geometry.Insets;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +43,7 @@ import java.util.Date;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PatientDashboardController implements DashboardController {
@@ -60,6 +66,7 @@ public class PatientDashboardController implements DashboardController {
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     private DecimalFormat decimalFormat = new DecimalFormat("#.0");
+    private AppointmentManager appointmentManager;
 
     @Override
     public void setUser(User user) {
@@ -73,6 +80,15 @@ public class PatientDashboardController implements DashboardController {
     @Override
     public void setUserManager(UserManager userManager) {
         this.userManager = userManager;
+
+        // Initialize the appointment manager for database operations
+        AppointmentDatabaseHandler dbHandler = userManager.getAppointmentDbHandler();
+        this.appointmentManager = new AppointmentManager(dbHandler);
+
+        // Load appointments for the patient if they're already set
+        if (currentPatient != null) {
+            userManager.loadAppointmentsForPatient(currentPatient);
+        }
     }
 
     @Override
@@ -99,13 +115,13 @@ public class PatientDashboardController implements DashboardController {
         statusColumn.setCellValueFactory(cellData -> {
             return new SimpleStringProperty(cellData.getValue().getStatus());
         });
-        
+
         // Add color-coding to status column
         statusColumn.setCellFactory(column -> new TableCell<Appointment, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                
+
                 if (empty || item == null) {
                     setText(null);
                     setStyle("");
@@ -131,6 +147,11 @@ public class PatientDashboardController implements DashboardController {
                 }
             }
         });
+
+        // Make sure appointments are loaded from database
+        if (userManager != null && currentPatient != null) {
+            userManager.loadAppointmentsForPatient(currentPatient);
+        }
 
         // Load vital signs data
         loadLatestVitals();
@@ -183,11 +204,11 @@ public class PatientDashboardController implements DashboardController {
     private void loadAppointments() {
         // Get appointments for the patient
         List<Appointment> appointments = currentPatient.getAppointments();
-        
+
         if (appointments == null) {
             appointments = new ArrayList<>();
         }
-        
+
         // Filter for only upcoming and recent appointments, sorted by date
         Date now = new Date();
         List<Appointment> filteredAppointments = appointments.stream()
@@ -205,7 +226,7 @@ public class PatientDashboardController implements DashboardController {
             })
             .sorted(Comparator.comparing(Appointment::getAppointmentDate))
             .collect(Collectors.toList());
-        
+
         ObservableList<Appointment> appointmentData = FXCollections.observableArrayList(filteredAppointments);
         appointmentsTable.setItems(appointmentData);
     }
@@ -215,39 +236,39 @@ public class PatientDashboardController implements DashboardController {
         try {
             // Get appointments for the patient
             List<Appointment> appointments = currentPatient.getAppointments();
-            
+
             if (appointments == null) {
                 appointments = new ArrayList<>();
             }
-            
+
             // Create a new stage for the appointments view
             Stage appointmentsStage = new Stage();
             appointmentsStage.setTitle("Appointments - " + currentPatient.getName());
             appointmentsStage.initModality(Modality.WINDOW_MODAL);
             appointmentsStage.initOwner(((Node)event.getSource()).getScene().getWindow());
-            
-            // Load the appointments view
-            URL appointmentsViewUrl = findResource("com/rhms/ui/views/PatientAppointmentsView.fxml");
-            
+
+            // Load the appointments view - Fix the resource path
+            URL appointmentsViewUrl = findResource("com/rhms/ui/views/PatientAppointmentsDashboard.fxml");
+
             if (appointmentsViewUrl == null) {
-                showMessage("Could not find appointments view resource");
+                showMessage("Could not find PatientAppointmentsDashboard.fxml. Make sure the file exists in src/com/rhms/ui/views/ directory and rebuild the project.");
                 return;
             }
-            
+
             FXMLLoader loader = new FXMLLoader(appointmentsViewUrl);
             Parent appointmentsView = loader.load();
-            
+
             // Get controller and pass data
             PatientAppointmentsController controller = loader.getController();
-            controller.initializeAppointments(currentPatient, appointments);
-            
+            controller.initialize(currentPatient, userManager);
+
             // Set up the scene
             Scene scene = new Scene(appointmentsView);
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());
             }
-            
+
             appointmentsStage.setScene(scene);
             appointmentsStage.setMinWidth(800);
             appointmentsStage.setMinHeight(600);
@@ -256,7 +277,7 @@ public class PatientDashboardController implements DashboardController {
                 loadAppointments();
             });
             appointmentsStage.show();
-            
+
         } catch (Exception e) {
             showMessage("Error displaying appointments: " + e.getMessage());
             e.printStackTrace();
@@ -268,33 +289,33 @@ public class PatientDashboardController implements DashboardController {
         try {
             // Get vital signs data
             List<VitalSign> vitals = currentPatient.getVitalsDatabase().getAllVitals();
-            
+
             if (vitals == null || vitals.isEmpty()) {
                 showMessage("No vital signs data available.");
                 return;
             }
-            
+
             // Create a new stage for the vitals history view
             Stage vitalsStage = new Stage();
             vitalsStage.setTitle("Vital Signs History - " + currentPatient.getName());
             vitalsStage.initModality(Modality.WINDOW_MODAL);
             vitalsStage.initOwner(((Node)event.getSource()).getScene().getWindow());
-            
+
             // Create tab pane for different views
             TabPane tabPane = new TabPane();
-            
+
             // Tab 1: Table View of vitals
             Tab tableTab = new Tab("Table View");
             tableTab.setClosable(false);
-            
+
             TableView<VitalSign> vitalsTable = new TableView<>();
-            
+
             // Define columns
             TableColumn<VitalSign, Date> timestampCol = new TableColumn<>("Date/Time");
             timestampCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getTimestamp()));
             timestampCol.setCellFactory(column -> new TableCell<VitalSign, Date>() {
                 private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-                
+
                 @Override
                 protected void updateItem(Date item, boolean empty) {
                     super.updateItem(item, empty);
@@ -305,42 +326,42 @@ public class PatientDashboardController implements DashboardController {
                     }
                 }
             });
-            
+
             TableColumn<VitalSign, Double> hrCol = new TableColumn<>("Heart Rate");
             hrCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getHeartRate()));
-            
+
             TableColumn<VitalSign, Double> oxygenCol = new TableColumn<>("Oxygen");
             oxygenCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getOxygenLevel()));
-            
+
             TableColumn<VitalSign, Double> bpCol = new TableColumn<>("Blood Pressure");
             bpCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getBloodPressure()));
-            
+
             TableColumn<VitalSign, Double> tempCol = new TableColumn<>("Temperature");
             tempCol.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getTemperature()));
-            
+
             TableColumn<VitalSign, String> statusCol = new TableColumn<>("Status");
             statusCol.setCellValueFactory(data -> {
                 VitalSign vital = data.getValue();
-                boolean isNormal = vital.isHeartRateNormal() && 
-                                  vital.isOxygenLevelNormal() && 
-                                  vital.isBloodPressureNormal() && 
+                boolean isNormal = vital.isHeartRateNormal() &&
+                                  vital.isOxygenLevelNormal() &&
+                                  vital.isBloodPressureNormal() &&
                                   vital.isTemperatureNormal();
                 return new SimpleStringProperty(isNormal ? "Normal" : "Abnormal");
             });
-            
+
             // Add columns to table
             vitalsTable.getColumns().addAll(timestampCol, hrCol, oxygenCol, bpCol, tempCol, statusCol);
-            
+
             // Set data
             ObservableList<VitalSign> vitalsData = FXCollections.observableArrayList(vitals);
             vitalsTable.setItems(vitalsData);
-            
+
             // Status column styling
             statusCol.setCellFactory(column -> new TableCell<VitalSign, String>() {
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
-                    
+
                     if (empty || item == null) {
                         setText(null);
                         setStyle("");
@@ -354,36 +375,36 @@ public class PatientDashboardController implements DashboardController {
                     }
                 }
             });
-            
+
             VBox tableContainer = new VBox(vitalsTable);
             VBox.setVgrow(vitalsTable, Priority.ALWAYS);
             tableTab.setContent(tableContainer);
-            
+
             // Tab 2: Line Chart View
             Tab chartTab = new Tab("Chart View");
             chartTab.setClosable(false);
-            
+
             // Create chart
             final NumberAxis xAxis = new NumberAxis();
             final NumberAxis yAxis = new NumberAxis();
             xAxis.setLabel("Measurement Number");
-            
+
             final LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
             lineChart.setTitle("Vital Signs Trends");
-            
+
             // Series for each vital sign
             XYChart.Series<Number, Number> heartRateSeries = new XYChart.Series<>();
             heartRateSeries.setName("Heart Rate");
-            
+
             XYChart.Series<Number, Number> oxygenSeries = new XYChart.Series<>();
             oxygenSeries.setName("Oxygen Level");
-            
+
             XYChart.Series<Number, Number> bpSeries = new XYChart.Series<>();
             bpSeries.setName("Blood Pressure");
-            
+
             XYChart.Series<Number, Number> tempSeries = new XYChart.Series<>();
             tempSeries.setName("Temperature");
-            
+
             // Populate data
             for (int i = 0; i < vitals.size(); i++) {
                 VitalSign vital = vitals.get(i);
@@ -392,41 +413,41 @@ public class PatientDashboardController implements DashboardController {
                 bpSeries.getData().add(new XYChart.Data<>(i+1, vital.getBloodPressure()));
                 tempSeries.getData().add(new XYChart.Data<>(i+1, vital.getTemperature()));
             }
-            
+
             // Add series to chart
             lineChart.getData().addAll(heartRateSeries, oxygenSeries, bpSeries, tempSeries);
-            
+
             VBox chartContainer = new VBox(lineChart);
             VBox.setVgrow(lineChart, Priority.ALWAYS);
             chartTab.setContent(chartContainer);
-            
+
             // Add tabs to pane
             tabPane.getTabs().addAll(tableTab, chartTab);
-            
+
             // Add controls
             Button closeButton = new Button("Close");
             closeButton.setOnAction(e -> vitalsStage.close());
-            
+
             Label summaryLabel = new Label("Total Records: " + vitals.size());
             summaryLabel.setStyle("-fx-font-weight: bold;");
-            
+
             HBox controlsBox = new HBox(10, summaryLabel, closeButton);
             controlsBox.setStyle("-fx-padding: 10;");
             controlsBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
-            
+
             VBox mainContainer = new VBox(tabPane, controlsBox);
             VBox.setVgrow(tabPane, Priority.ALWAYS);
-            
+
             // Set up the scene
             Scene scene = new Scene(mainContainer, 800, 600);
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());
             }
-            
+
             vitalsStage.setScene(scene);
             vitalsStage.show();
-            
+
         } catch (Exception e) {
             showMessage("Error displaying vital signs history: " + e.getMessage());
             e.printStackTrace();
@@ -435,8 +456,143 @@ public class PatientDashboardController implements DashboardController {
 
     @FXML
     public void handleFeedback(ActionEvent event) {
-        // Code to show feedback view
-        showMessage("Feedback view not implemented yet.");
+        try {
+            // Create a dialog for viewing and adding doctor feedback
+            Dialog<String> dialog = new Dialog<>();
+            dialog.setTitle("Doctor Feedback");
+            dialog.setHeaderText("View and submit feedback for your doctors");
+
+            // Set the button types
+            ButtonType submitButtonType = new ButtonType("Submit New Feedback", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(submitButtonType, ButtonType.CLOSE);
+
+            // Create content
+            VBox content = new VBox(15);
+            content.setPadding(new Insets(20, 20, 10, 20));
+
+            // Section for viewing existing feedback
+            Label existingFeedbackLabel = new Label("Existing Feedback:");
+            existingFeedbackLabel.setStyle("-fx-font-weight: bold;");
+            content.getChildren().add(existingFeedbackLabel);
+
+            // Get feedback from the patient object
+            ArrayList<String> feedbackList = currentPatient.getDoctorFeedback();
+            
+            if (feedbackList.isEmpty()) {
+                Label noFeedbackLabel = new Label("No feedback records found.");
+                noFeedbackLabel.setStyle("-fx-font-style: italic;");
+                content.getChildren().add(noFeedbackLabel);
+            } else {
+                // Create a list view to display existing feedback
+                ListView<String> feedbackListView = new ListView<>();
+                feedbackListView.setPrefHeight(200);
+                feedbackListView.setItems(FXCollections.observableArrayList(feedbackList));
+                content.getChildren().add(feedbackListView);
+            }
+
+            // Section for adding new feedback
+            Label newFeedbackLabel = new Label("Add New Feedback:");
+            newFeedbackLabel.setStyle("-fx-font-weight: bold; -fx-padding: 10 0 0 0;");
+            content.getChildren().add(newFeedbackLabel);
+
+            // Create doctor selection dropdown
+            Label doctorLabel = new Label("Select Doctor:");
+            ComboBox<String> doctorComboBox = new ComboBox<>();
+            
+            // Populate with the patient's doctors
+            ObservableList<String> doctorNames = FXCollections.observableArrayList();
+            for (Doctor doctor : currentPatient.getAssignedDoctors()) {
+                doctorNames.add("Dr. " + doctor.getName() + " (" + doctor.getSpecialization() + ")");
+            }
+            
+            if (doctorNames.isEmpty()) {
+                doctorNames.add("No assigned doctors");
+            }
+            
+            doctorComboBox.setItems(doctorNames);
+            doctorComboBox.getSelectionModel().selectFirst();
+            
+            // Create text area for feedback content
+            Label feedbackLabel = new Label("Your Feedback:");
+            TextArea feedbackTextArea = new TextArea();
+            feedbackTextArea.setPromptText("Enter your feedback here...");
+            feedbackTextArea.setPrefHeight(100);
+            feedbackTextArea.setWrapText(true);
+            
+            // Star rating for doctor
+            Label ratingLabel = new Label("Rating (1-5 stars):");
+            HBox ratingBox = new HBox(5);
+            ToggleGroup ratingGroup = new ToggleGroup();
+            
+            for (int i = 1; i <= 5; i++) {
+                final int rating = i;
+                RadioButton rb = new RadioButton(Integer.toString(i));
+                rb.setToggleGroup(ratingGroup);
+                rb.setUserData(rating);
+                if (i == 5) {
+                    rb.setSelected(true);
+                }
+                ratingBox.getChildren().add(rb);
+            }
+            
+            // Add fields to the form
+            GridPane form = new GridPane();
+            form.setHgap(10);
+            form.setVgap(10);
+            
+            form.add(doctorLabel, 0, 0);
+            form.add(doctorComboBox, 1, 0);
+            form.add(ratingLabel, 0, 1);
+            form.add(ratingBox, 1, 1);
+            form.add(feedbackLabel, 0, 2);
+            form.add(feedbackTextArea, 0, 3, 2, 1);
+            
+            content.getChildren().add(form);
+            
+            // Set content
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().setPrefWidth(600);
+            dialog.getDialogPane().setPrefHeight(500);
+            
+            // Enable/disable submit button based on text area content
+            Node submitButton = dialog.getDialogPane().lookupButton(submitButtonType);
+            submitButton.setDisable(doctorNames.get(0).equals("No assigned doctors"));
+            
+            feedbackTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
+                submitButton.setDisable(newValue.trim().isEmpty() || 
+                                       doctorNames.get(0).equals("No assigned doctors"));
+            });
+            
+            // Set result converter
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == submitButtonType) {
+                    String selectedDoctor = doctorComboBox.getValue();
+                    Toggle selectedRating = ratingGroup.getSelectedToggle();
+                    int rating = selectedRating != null ? (int)selectedRating.getUserData() : 5;
+                    
+                    return selectedDoctor + " - " + rating + " stars: " + feedbackTextArea.getText();
+                }
+                return null;
+            });
+            
+            // Apply CSS
+            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                dialog.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            }
+            
+            // Show dialog and process result
+            Optional<String> result = dialog.showAndWait();
+            result.ifPresent(feedback -> {
+                // Save the feedback
+                currentPatient.getDoctorFeedback().add(feedback);
+                showMessage("Feedback submitted successfully!");
+            });
+            
+        } catch (Exception e) {
+            showMessage("Error displaying feedback dialog: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -554,34 +710,245 @@ public class PatientDashboardController implements DashboardController {
      * Helper method to find resources using multiple approaches
      */
     private URL findResource(String path) {
-        URL url = getClass().getClassLoader().getResource(path);
+        URL url = null;
         
-        // Try alternate approaches if the resource wasn't found
-        if (url == null) {
-            url = getClass().getResource("/" + path);
-        }
-        
-        if (url == null) {
-            try {
-                // Try source folder
+        // Try multiple approaches to find the resource
+        try {
+            // Try the class loader first
+            url = getClass().getClassLoader().getResource(path);
+            
+            // If not found, try with leading slash
+            if (url == null) {
+                url = getClass().getResource("/" + path);
+            }
+            
+            // If still not found, try with direct file access
+            if (url == null) {
                 File file = new File("src/" + path);
                 if (file.exists()) {
                     url = file.toURI().toURL();
+                    System.out.println("Found resource at: " + file.getAbsolutePath());
                 }
-                
-                // Try target/classes folder
-                if (url == null) {
-                    file = new File("target/classes/" + path);
-                    if (file.exists()) {
-                        url = file.toURI().toURL();
+            }
+            
+            // Try in the target/classes directory
+            if (url == null) {
+                File file = new File("target/classes/" + path);
+                if (file.exists()) {
+                    url = file.toURI().toURL();
+                    System.out.println("Found resource at: " + file.getAbsolutePath());
+                }
+            }
+            
+            if (url == null) {
+                System.err.println("RESOURCE NOT FOUND: " + path);
+                File dir = new File("src/com/rhms/ui/views");
+                if (dir.exists() && dir.isDirectory()) {
+                    System.out.println("Available files in views directory:");
+                    for (String file : dir.list()) {
+                        System.out.println(" - " + file);
                     }
                 }
-            } catch (Exception e) {
-                // Silently handle exception - will return null if file not found
-                System.err.println("Error finding resource: " + e.getMessage());
             }
+        } catch (Exception e) {
+            System.err.println("Error finding resource '" + path + "': " + e.getMessage());
         }
         
         return url;
     }
+
+    @FXML
+    public void handleViewAssignedDoctors(ActionEvent event) {
+        try {
+            // Create a dialog to show assigned doctors
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("My Assigned Doctors");
+            dialog.setHeaderText("Doctors assigned to " + currentPatient.getName());
+
+            // Set the button types
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CLOSE);
+
+            // Create content
+            VBox content = new VBox(10);
+            content.setPadding(new Insets(20, 20, 10, 20));
+
+            List<Doctor> doctors = currentPatient.getAssignedDoctors();
+            
+            if (doctors.isEmpty()) {
+                Label noDocsLabel = new Label("No doctors currently assigned to you.");
+                noDocsLabel.setStyle("-fx-font-style: italic;");
+                content.getChildren().add(noDocsLabel);
+            } else {
+                TableView<Doctor> doctorsTable = new TableView<>();
+                doctorsTable.setMinHeight(300);
+                
+                TableColumn<Doctor, String> nameCol = new TableColumn<>("Name");
+                nameCol.setCellValueFactory(data -> new SimpleStringProperty("Dr. " + data.getValue().getName()));
+                nameCol.setPrefWidth(150);
+                
+                TableColumn<Doctor, String> specCol = new TableColumn<>("Specialization");
+                specCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSpecialization()));
+                specCol.setPrefWidth(150);
+                
+                TableColumn<Doctor, String> expCol = new TableColumn<>("Experience");
+                expCol.setCellValueFactory(data -> new SimpleStringProperty(
+                        data.getValue().getExperienceYears() + " years"));
+                expCol.setPrefWidth(100);
+                
+                TableColumn<Doctor, String> emailCol = new TableColumn<>("Email");
+                emailCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEmail()));
+                emailCol.setPrefWidth(200);
+                
+                doctorsTable.getColumns().addAll(nameCol, specCol, expCol, emailCol);
+                doctorsTable.setItems(FXCollections.observableArrayList(doctors));
+                
+                content.getChildren().add(doctorsTable);
+            }
+
+            // Set content
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().setPrefWidth(600);
+            dialog.getDialogPane().setPrefHeight(400);
+
+            // Apply CSS
+            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                dialog.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            }
+            
+            // Show dialog
+            dialog.showAndWait();
+            
+        } catch (Exception e) {
+            showMessage("Error displaying assigned doctors: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void handleRequestDoctor(ActionEvent event) {
+        try {
+            // Create doctor request dialog
+            Dialog<String> dialog = new Dialog<>();
+            dialog.setTitle("Request Doctor Assignment");
+            dialog.setHeaderText("Request a specific doctor or specialization");
+
+            // Set the button types
+            ButtonType requestButtonType = new ButtonType("Submit Request", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(requestButtonType, ButtonType.CANCEL);
+
+            // Create fields
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20, 150, 10, 10));
+
+            TextField requestField = new TextField();
+            requestField.setPromptText("Doctor name or specialization");
+            ComboBox<String> typeCombo = new ComboBox<>();
+            typeCombo.getItems().addAll("Specific Doctor", "Specialization");
+            typeCombo.setValue("Specialization");
+            TextArea detailsArea = new TextArea();
+            detailsArea.setPromptText("Additional details about your request");
+
+            grid.add(new Label("Request Type:"), 0, 0);
+            grid.add(typeCombo, 1, 0);
+            grid.add(new Label("Doctor/Specialization:"), 0, 1);
+            grid.add(requestField, 1, 1);
+            grid.add(new Label("Additional Details:"), 0, 2);
+            grid.add(detailsArea, 1, 2);
+
+            // Enable/Disable request button depending on whether text was entered
+            Node requestButton = dialog.getDialogPane().lookupButton(requestButtonType);
+            requestButton.setDisable(true);
+
+            // Validation
+            requestField.textProperty().addListener((observable, oldValue, newValue) -> {
+                requestButton.setDisable(newValue.trim().isEmpty());
+            });
+
+            dialog.getDialogPane().setContent(grid);
+
+            // Convert result to string when request button is clicked
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == requestButtonType) {
+                    return typeCombo.getValue() + ": " + requestField.getText() + "\nDetails: " + detailsArea.getText();
+                }
+                return null;
+            });
+
+            // Apply CSS
+            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                dialog.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            }
+
+            // Show dialog and process result
+            Optional<String> result = dialog.showAndWait();
+            result.ifPresent(request -> {
+                // In a real application, you would save this request to the database
+                showMessage("Doctor request submitted successfully!\nYour request: " + request);
+            });
+
+        } catch (Exception e) {
+            showMessage("Error submitting doctor request: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void handleViewMedicalHistory(ActionEvent event) {
+        try {
+            // Create a dialog to show medical history
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("Medical History");
+            dialog.setHeaderText("Medical History for " + currentPatient.getName());
+
+            // Set the button types
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CLOSE);
+
+            // Create content
+            VBox content = new VBox(10);
+            content.setPadding(new Insets(20, 20, 10, 20));
+            
+            // In a real application, you would load the patient's medical history from a database
+            // For now, we'll display a placeholder
+            Label placeholder = new Label("Medical history records would be displayed here.");
+            placeholder.setStyle("-fx-font-style: italic;");
+            content.getChildren().add(placeholder);
+            
+            // Create a text area for displaying medical history information
+            TextArea historyTextArea = new TextArea();
+            historyTextArea.setEditable(false);
+            historyTextArea.setPrefHeight(300);
+            historyTextArea.setText("Sample medical history information:\n\n" +
+                    "- Last physical examination: 06/15/2023\n" +
+                    "- Allergies: None\n" +
+                    "- Chronic conditions: None\n" +
+                    "- Surgeries: Appendectomy (2019)\n" +
+                    "- Current medications: Vitamin D supplement\n");
+            
+            content.getChildren().add(historyTextArea);
+
+            // Set content
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().setPrefWidth(500);
+            dialog.getDialogPane().setPrefHeight(400);
+
+            // Apply CSS
+            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                dialog.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            }
+            
+            // Show dialog
+            dialog.showAndWait();
+            
+        } catch (Exception e) {
+            showMessage("Error displaying medical history: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 }
+

@@ -1,26 +1,35 @@
 package com.rhms.userManagement;
 
+import com.rhms.Database.AppointmentDatabaseHandler;
+import com.rhms.Database.DoctorPatientAssignmentHandler;
 import com.rhms.Database.UserDatabaseHandler;
+import com.rhms.appointmentScheduling.Appointment;
+import com.rhms.healthDataHandling.VitalSign;
 import com.rhms.loginSystem.AuthenticationService;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Manages users in the Remote Healthcare Monitoring System
  * Provides functionality for user registration, lookup, and management
  */
 public class UserManager {
+    private static final Logger LOGGER = Logger.getLogger(UserManager.class.getName());
     private Map<Integer, User> users;
     private List<Doctor> doctors;
     private List<Patient> patients;
     private List<Administrator> administrators;
     private UserDatabaseHandler dbHandler;
+    private AppointmentDatabaseHandler appointmentDbHandler;
     private AuthenticationService authService;
     private int nextUserId = 1000; // Starting ID for users
-
+    private DoctorPatientAssignmentHandler assignmentHandler;
     /**
      * Initializes the user management system
      */
@@ -31,8 +40,31 @@ public class UserManager {
         this.administrators = new ArrayList<>();
         this.authService = new AuthenticationService();
         this.dbHandler = new UserDatabaseHandler();
+        this.appointmentDbHandler = new AppointmentDatabaseHandler(this);
+        assignmentHandler = new DoctorPatientAssignmentHandler();
+        loadUsers();
+        loadAllAssignmentsFromDatabase();
     }
+    private void loadAllAssignmentsFromDatabase() {
+        try {
+            // Get all doctors and patients from already loaded collections
+            for (Doctor doctor : getAllDoctors()) {
+                // Get all patients assigned to this doctor
+                List<Patient> assignedPatients = assignmentHandler.getPatientsForDoctor(
+                        doctor.getUserID(), dbHandler);
 
+                // Assign each patient to this doctor
+                for (Patient patient : assignedPatients) {
+                    // Update the in-memory relationship on both sides
+                    doctor.addPatient(patient);
+                    patient.addAssignedDoctor(doctor);
+                }
+            }
+            System.out.println("All doctor-patient assignments loaded successfully");
+        } catch (SQLException e) {
+            System.err.println("Error loading doctor-patient assignments: " + e.getMessage());
+        }
+    }
     /**
      * Registers a new patient in the system
      */
@@ -166,6 +198,25 @@ public class UserManager {
         return users.get(userId);
     }
 
+    public Patient getPatientById(int patientId) {
+        for (User user : users.values()) { // Correct iteration
+            if (user instanceof Patient && user.getUserID() == patientId) {
+                return (Patient) user;
+            }
+        }
+        return null;
+    }
+
+    public Doctor getDoctorById(int doctorId) {
+        for (User user : users.values()) { // Correct iteration
+            if (user instanceof Doctor && user.getUserID() == doctorId) {
+                return (Doctor) user;
+            }
+        }
+        return null;
+    }
+
+
     /**
      * Finds a user by their email address.
      * @param email The email to search for.
@@ -203,5 +254,164 @@ public class UserManager {
         }
 
         return username;
+    }
+
+    /**
+     * Load appointments for a specific patient from the database
+     * @param patient The patient for whom to load appointments
+     */
+    public void loadAppointmentsForPatient(Patient patient) {
+        if (patient == null) {
+            LOGGER.log(Level.WARNING, "Cannot load appointments for null patient");
+            return;
+        }
+        
+        try {
+            List<Appointment> appointments = appointmentDbHandler.loadAppointmentsForPatient(patient.getUserID());
+            patient.setAppointments(appointments);
+            LOGGER.log(Level.INFO, "Loaded {0} appointments for patient {1}", 
+                      new Object[]{appointments.size(), patient.getName()});
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error loading appointments for patient " + patient.getUserID(), e);
+        }
+    }
+
+    /**
+     * Load appointments for a specific doctor from the database
+     * @param doctor The doctor for whom to load appointments
+     */
+    public void loadAppointmentsForDoctor(Doctor doctor) {
+        if (doctor == null) {
+            LOGGER.log(Level.WARNING, "Cannot load appointments for null doctor");
+            return;
+        }
+        
+        try {
+            List<Appointment> appointments = appointmentDbHandler.loadAppointmentsForDoctor(doctor.getUserID());
+            doctor.setAppointments(appointments);
+            LOGGER.log(Level.INFO, "Loaded {0} appointments for doctor {1}", 
+                      new Object[]{appointments.size(), doctor.getName()});
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error loading appointments for doctor " + doctor.getUserID(), e);
+        }
+    }
+
+    /**
+     * Get the appointment database handler
+     * @return The appointment database handler
+     */
+    public AppointmentDatabaseHandler getAppointmentDbHandler() {
+        return appointmentDbHandler;
+    }
+
+    /**
+     * Assign a doctor to a patient and save to database
+     */
+    public boolean assignDoctorToPatient(Doctor doctor, Patient patient) {
+        try {
+            // Save to database first
+            boolean success = assignmentHandler.assignDoctorToPatient(doctor, patient);
+
+            if (success) {
+                // Update in-memory objects
+                doctor.addPatient(patient);
+                patient.addAssignedDoctor(doctor);
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error assigning doctor to patient", e);
+            return false;
+        }
+    }
+
+    /**
+     * Remove a doctor-patient assignment
+     */
+    public boolean removeDoctorFromPatient(Doctor doctor, Patient patient) {
+        try {
+            // Remove from database first
+            boolean success = assignmentHandler.removeDoctorFromPatient(doctor, patient);
+
+            if (success) {
+                // Update in-memory objects
+                doctor.removePatient(patient);
+                patient.removeAssignedDoctor(doctor);
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error removing doctor from patient", e);
+            return false;
+        }
+    }
+
+    /**
+     * Load doctor-patient assignments when loading users
+     */
+    private void loadDoctorPatientAssignments() {
+        try {
+            for (Doctor doctor : doctors) {
+                List<Patient> patients = assignmentHandler.getPatientsForDoctor(doctor.getUserID(), dbHandler);
+                for (Patient patient : patients) {
+                    doctor.addPatient(patient);
+
+                    // Find corresponding patient in our in-memory list and update it
+                    for (Patient p : patients) {
+                        if (p.getUserID() == patient.getUserID()) {
+                            p.addAssignedDoctor(doctor);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            for (Patient patient : patients) {
+                List<Doctor> doctors = assignmentHandler.getDoctorsForPatient(patient.getUserID(), dbHandler);
+                for (Doctor doctor : doctors) {
+                    patient.addAssignedDoctor(doctor);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error loading doctor-patient assignments", e);
+        }
+    }
+
+    // Update loadUsers() to call loadDoctorPatientAssignments()
+    private void loadUsers() {
+        List<User> allUsers = dbHandler.getAllUsers();
+
+        administrators = new ArrayList<>();
+        doctors = new ArrayList<>();
+        patients = new ArrayList<>();
+
+        for (User user : allUsers) {
+            if (user instanceof Administrator) {
+                administrators.add((Administrator) user);
+            } else if (user instanceof Doctor) {
+                doctors.add((Doctor) user);
+            } else if (user instanceof Patient) {
+                patients.add((Patient) user);
+            }
+        }
+
+        // Load assignments after users are loaded
+        loadDoctorPatientAssignments();
+    }
+
+    public List<VitalSign> getSortedVitals(boolean b) {
+        List<VitalSign> sortedVitals = new ArrayList<>();
+        for (User user : users.values()) {
+            if (user instanceof Patient) {
+                Patient patient = (Patient) user;
+                List<VitalSign> vitals = patient.getVitalSigns();
+                if (b) {
+                    sortedVitals.addAll(vitals);
+                } else {
+                    sortedVitals.addAll(vitals);
+                }
+            }
+        }
+        return sortedVitals;
     }
 }

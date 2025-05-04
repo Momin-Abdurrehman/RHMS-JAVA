@@ -17,6 +17,9 @@
                 </VBox>
                 <Button mnemonicParsing="false" onAction="#handleAppointments" styleClass="sidebar-button" text="Appointments" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleVitals" styleClass="sidebar-button" text="Vital Signs" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleViewAssignedDoctors" styleClass="sidebar-button" text="My Doctors" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleRequestDoctor" styleClass="sidebar-button" text="Request Doctor" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleViewMedicalHistory" styleClass="sidebar-button" text="Medical History" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleFeedback" styleClass="sidebar-button" text="Doctor Feedback" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleEmergencyAlert" styleClass="sidebar-button" text="Emergency Alert" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleUploadVitals" styleClass="sidebar-button" text="Upload Vitals" maxWidth="Infinity" />
