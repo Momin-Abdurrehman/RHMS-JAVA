@@ -155,7 +155,7 @@ public class UserManager {
      * Registers a new doctor in the system
      */
     public Doctor registerDoctor(String name, String email, String password, String phone, String address,
-                                  String specialization, int experienceYears) {
+                                 String specialization, int experienceYears) {
         if (dbHandler.isEmailExists(email)) {
             System.err.println("Error: Email " + email + " already exists in the database.");
             return null;
@@ -332,7 +332,7 @@ public class UserManager {
             List<Appointment> appointments = appointmentDbHandler.loadAppointmentsForPatient(patient.getUserID());
             patient.setAppointments(appointments);
             LOGGER.log(Level.INFO, "Loaded {0} appointments for patient {1}",
-                      new Object[]{appointments.size(), patient.getName()});
+                    new Object[]{appointments.size(), patient.getName()});
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading appointments for patient " + patient.getUserID(), e);
         }
@@ -352,7 +352,7 @@ public class UserManager {
             List<Appointment> appointments = appointmentDbHandler.loadAppointmentsForDoctor(doctor.getUserID());
             doctor.setAppointments(appointments);
             LOGGER.log(Level.INFO, "Loaded {0} appointments for doctor {1}",
-                      new Object[]{appointments.size(), doctor.getName()});
+                    new Object[]{appointments.size(), doctor.getName()});
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading appointments for doctor " + doctor.getUserID(), e);
         }
@@ -476,5 +476,103 @@ public class UserManager {
         }
         return sortedVitals;
     }
-}
 
+    /**
+     * Load assignments specifically for one doctor
+     * This is used when initializing the doctor dashboard
+     */
+    public void loadAssignmentsForDoctor(Doctor doctor) {
+        try {
+            if (doctor == null) {
+                LOGGER.log(Level.WARNING, "Cannot load assignments for null doctor");
+                return;
+            }
+            
+            System.out.println("Loading patient assignments specifically for doctor: " + doctor.getName() + " (ID: " + doctor.getUserID() + ")");
+            
+            // Clear existing patient assignments for this doctor
+            doctor.clearPatients();
+            
+            // Get patients assigned to this doctor from the database
+            List<Patient> assignedPatients = assignmentHandler.getPatientsForDoctor(doctor.getUserID(), dbHandler);
+            System.out.println("Database returned " + assignedPatients.size() + " assigned patients for doctor ID " + doctor.getUserID());
+            
+            // For each returned patient, find the matching in-memory patient instance
+            for (Patient dbPatient : assignedPatients) {
+                // Find the patient in our in-memory collection
+                Patient memoryPatient = getPatientById(dbPatient.getUserID());
+                
+                if (memoryPatient != null) {
+                    // Add the bi-directional relationship
+                    doctor.addPatient(memoryPatient);
+                    memoryPatient.addAssignedDoctor(doctor);
+                    System.out.println("Added doctor-patient assignment: Dr. " + doctor.getName() + 
+                                     " - Patient " + memoryPatient.getName());
+                } else {
+                    System.out.println("Warning: Could not find patient ID " + dbPatient.getUserID() + 
+                                     " in memory. Assignment not created.");
+                }
+            }
+            
+            System.out.println("Doctor now has " + doctor.getAssignedPatients().size() + 
+                             " patients in memory after loading");
+            
+        } catch (SQLException e) {
+            System.err.println("Error loading assignments for doctor: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Unexpected error loading doctor assignments: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Load assignments specifically for one patient
+     * This is used when initializing the patient dashboard
+     * @param patient The patient whose doctor assignments should be loaded
+     */
+    public void loadAssignmentsForPatient(Patient patient) {
+        try {
+            if (patient == null) {
+                LOGGER.log(Level.WARNING, "Cannot load assignments for null patient");
+                return;
+            }
+            
+            System.out.println("Loading doctor assignments specifically for patient: " + patient.getName() + " (ID: " + patient.getUserID() + ")");
+            
+            // Clear existing doctor assignments for this patient
+            patient.clearAssignedDoctors();
+            
+            // Get doctors assigned to this patient from the database
+            List<Doctor> assignedDoctors = assignmentHandler.getAssignedDoctorsForPatient(patient.getUserID(), dbHandler);
+            System.out.println("Database returned " + assignedDoctors.size() + " assigned doctors for patient ID " + patient.getUserID());
+            
+            // For each returned doctor, find the matching in-memory doctor instance
+            for (Doctor dbDoctor : assignedDoctors) {
+                // Find the doctor in our in-memory collection
+                Doctor memoryDoctor = getDoctorById(dbDoctor.getUserID());
+                
+                if (memoryDoctor != null) {
+                    // Add the bi-directional relationship
+                    patient.addAssignedDoctor(memoryDoctor);
+                    memoryDoctor.addPatient(patient);
+                    System.out.println("Added doctor-patient assignment: Dr. " + memoryDoctor.getName() + 
+                                     " - Patient " + patient.getName());
+                } else {
+                    System.out.println("Warning: Could not find doctor ID " + dbDoctor.getUserID() + 
+                                     " in memory. Assignment not created.");
+                }
+            }
+            
+            System.out.println("Patient now has " + patient.getAssignedDoctors().size() + 
+                             " doctors in memory after loading");
+            
+        } catch (SQLException e) {
+            System.err.println("Error loading assignments for patient: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Unexpected error loading patient assignments: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}

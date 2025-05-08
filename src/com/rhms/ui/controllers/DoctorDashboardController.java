@@ -67,12 +67,20 @@ public class DoctorDashboardController implements DashboardController {
         // Create appointment manager with database handler
         AppointmentDatabaseHandler dbHandler = new AppointmentDatabaseHandler(userManager);
         this.appointmentManager = new AppointmentManager(dbHandler);
+        
+        // If doctor is already set, load their assignments
+        if (currentDoctor != null) {
+            loadAssignmentsForDoctor();
+        }
     }
 
     @Override
     public void initializeDashboard() {
         nameLabel.setText("Dr. " + currentDoctor.getName());
 
+        // Explicitly load assignments for this doctor
+        loadAssignmentsForDoctor();
+        
         // Initialize patients table
         patientNameColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getName()));
@@ -109,11 +117,36 @@ public class DoctorDashboardController implements DashboardController {
         loadPatients();
         loadAppointments();
     }
+    
+    /**
+     * Load doctor-patient assignments from database for the current doctor
+     */
+    private void loadAssignmentsForDoctor() {
+        if (userManager == null || currentDoctor == null) {
+            System.out.println("Cannot load assignments: UserManager or Doctor is null");
+            return;
+        }
+        
+        System.out.println("Loading assignments for doctor: " + currentDoctor.getName() + " (ID: " + currentDoctor.getUserID() + ")");
+        userManager.loadAssignmentsForDoctor(currentDoctor);
+    }
 
     private void loadPatients() {
         List<Patient> patients = currentDoctor.getAssignedPatients();
+        System.out.println("Doctor " + currentDoctor.getName() + " has " + patients.size() + " assigned patients");
+        
+        // Debug: print all assigned patients
+        for (Patient patient : patients) {
+            System.out.println("  - Patient: " + patient.getName() + " (ID: " + patient.getUserID() + ")");
+        }
+        
         ObservableList<Patient> patientData = FXCollections.observableArrayList(patients);
         patientsTable.setItems(patientData);
+        
+        // If no patients, set a placeholder message
+        if (patients.isEmpty()) {
+            patientsTable.setPlaceholder(new Label("No patients assigned to you. Please contact an administrator."));
+        }
     }
 
     private void loadAppointments() {

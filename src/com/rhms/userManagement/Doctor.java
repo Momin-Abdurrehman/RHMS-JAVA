@@ -46,8 +46,14 @@ public class Doctor extends User {
 
     /**
      * Get a list of patients assigned to this doctor
+     * @return List of patients assigned to this doctor
      */
     public List<Patient> getAssignedPatients() {
+        // Print debug info
+        System.out.println("Doctor " + getName() + " (ID: " + getUserID() + 
+                     ") currently has " + assignedPatients.size() + " assigned patients");
+                     
+        // Return a defensive copy of the list
         return new ArrayList<>(assignedPatients);
     }
 

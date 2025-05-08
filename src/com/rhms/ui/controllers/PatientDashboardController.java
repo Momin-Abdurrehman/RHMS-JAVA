@@ -85,15 +85,21 @@ public class PatientDashboardController implements DashboardController {
         AppointmentDatabaseHandler dbHandler = userManager.getAppointmentDbHandler();
         this.appointmentManager = new AppointmentManager(dbHandler);
 
-        // Load appointments for the patient if they're already set
+        // Load appointments and doctor assignments for the patient if they're already set
         if (currentPatient != null) {
             userManager.loadAppointmentsForPatient(currentPatient);
+            userManager.loadAssignmentsForPatient(currentPatient);  // Load assignments specifically for this patient
         }
     }
 
     @Override
     public void initializeDashboard() {
         nameLabel.setText(currentPatient.getName());
+
+        // Force reload of doctor-patient assignments to ensure they're up to date
+        if (userManager != null) {
+            userManager.loadAssignmentsForPatient(currentPatient);  // Load assignments for this specific patient
+        }
 
         // Initialize table columns
         dateColumn.setCellValueFactory(cellData -> {
@@ -760,6 +766,11 @@ public class PatientDashboardController implements DashboardController {
     @FXML
     public void handleViewAssignedDoctors(ActionEvent event) {
         try {
+            // Force reload of assignments before displaying
+            if (userManager != null) {
+                userManager.loadAssignmentsForPatient(currentPatient);  // Load for this patient specifically
+            }
+
             // Create a dialog to show assigned doctors
             Dialog<Void> dialog = new Dialog<>();
             dialog.setTitle("My Assigned Doctors");
@@ -772,7 +783,10 @@ public class PatientDashboardController implements DashboardController {
             VBox content = new VBox(10);
             content.setPadding(new Insets(20, 20, 10, 20));
 
+            // Get the updated list of doctors
             List<Doctor> doctors = currentPatient.getAssignedDoctors();
+            System.out.println("Patient " + currentPatient.getName() + " has " + 
+                              doctors.size() + " assigned doctors");
             
             if (doctors.isEmpty()) {
                 Label noDocsLabel = new Label("No doctors currently assigned to you.");

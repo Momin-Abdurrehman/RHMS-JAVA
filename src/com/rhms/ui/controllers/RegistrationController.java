@@ -14,8 +14,11 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.io.File;
 import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RegistrationController {
+    private static final Logger LOGGER = Logger.getLogger(RegistrationController.class.getName());
     
     @FXML private TextField nameField;
     @FXML private TextField emailField;
@@ -48,6 +51,10 @@ public class RegistrationController {
     }
     
     public void setUserManager(UserManager userManager) {
+        if (userManager == null) {
+            LOGGER.warning("Attempted to set null UserManager");
+            return;
+        }
         this.userManager = userManager;
     }
     
@@ -57,6 +64,13 @@ public class RegistrationController {
     
     @FXML
     public void handleRegister(ActionEvent event) {
+        // Verify UserManager is set
+        if (userManager == null) {
+            showMessage("System error: UserManager not initialized", true);
+            LOGGER.severe("Cannot register user: UserManager is null");
+            return;
+        }
+        
         if (!validateInput()) {
             return;
         }
@@ -71,11 +85,25 @@ public class RegistrationController {
         User newUser = null;
         
         try {
+            // Check if email already exists
+            if (userManager.isEmailExists(email)) {
+                showMessage("Email already registered in the system. Please use a different email.", true);
+                return;
+            }
+            
             if ("Patient".equals(userType)) {
                 newUser = userManager.registerPatient(name, email, password, phone, address);
             } else if ("Doctor".equals(userType)) {
                 String specialization = specializationField.getText().trim();
-                int experienceYears = Integer.parseInt(experienceYearsField.getText().trim());
+                
+                // Parse experience years with error handling
+                int experienceYears;
+                try {
+                    experienceYears = Integer.parseInt(experienceYearsField.getText().trim());
+                } catch (NumberFormatException e) {
+                    showMessage("Experience years must be a valid number", true);
+                    return;
+                }
                 
                 newUser = userManager.registerDoctor(name, email, password, phone, address, 
                                                  specialization, experienceYears);
@@ -84,7 +112,8 @@ public class RegistrationController {
             }
             
             if (newUser != null) {
-                showMessage("User registered successfully: " + newUser.getUsername(), false);
+                LOGGER.info("Successfully registered " + userType + ": " + email);
+                showMessage(userType + " registered successfully: " + newUser.getUsername(), false);
                 clearFields();
                 
                 // If this was called from admin dashboard, refresh the user list
@@ -92,10 +121,12 @@ public class RegistrationController {
                     adminController.handleViewUsers(null);
                 }
             } else {
+                LOGGER.warning("Failed to register " + userType + ": " + email);
                 showMessage("Failed to register user. Please try again.", true);
             }
         } catch (Exception e) {
-            showMessage("Error: " + e.getMessage(), true);
+            LOGGER.log(Level.SEVERE, "Error during user registration", e);
+            showMessage("Registration error: " + e.getMessage(), true);
         }
     }
     
@@ -107,21 +138,31 @@ public class RegistrationController {
         String address = addressField.getText().trim();
         String userType = userTypeComboBox.getValue();
         
+        // Check for empty fields
         if (name.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty() || address.isEmpty()) {
             showMessage("All fields are required", true);
             return false;
         }
         
-        if (!email.contains("@") || !email.contains(".")) {
+        // Basic email validation
+        if (!email.contains("@") || !email.contains(".") || email.length() < 5) {
             showMessage("Please enter a valid email address", true);
             return false;
         }
         
+        // Password strength check
         if (password.length() < 6) {
             showMessage("Password must be at least 6 characters", true);
             return false;
         }
         
+        // Phone number basic validation
+        if (!phone.matches("\\d{10}") && !phone.matches("\\d{3}[-\\s]\\d{3}[-\\s]\\d{4}")) {
+            showMessage("Please enter a valid 10-digit phone number", true);
+            return false;
+        }
+        
+        // Validate doctor-specific fields
         if ("Doctor".equals(userType)) {
             String specialization = specializationField.getText().trim();
             String experienceYears = experienceYearsField.getText().trim();
@@ -137,6 +178,10 @@ public class RegistrationController {
                     showMessage("Experience years must be a positive number", true);
                     return false;
                 }
+                if (years > 80) {  // Reasonable upper limit
+                    showMessage("Experience years value seems too high", true);
+                    return false;
+                }
             } catch (NumberFormatException e) {
                 showMessage("Experience years must be a valid number", true);
                 return false;
@@ -148,13 +193,18 @@ public class RegistrationController {
     
     @FXML
     private void handleCancel(ActionEvent event) {
-        // If opened from admin dashboard, just close this window
-        if (adminController != null) {
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.close();
-        } else {
-            // Otherwise go back to login
-            goBackToLogin(event);
+        try {
+            // If opened from admin dashboard, just close this window
+            if (adminController != null) {
+                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                stage.close();
+            } else {
+                // Otherwise go back to login
+                goBackToLogin(event);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error handling cancel operation", e);
+            showMessage("Error closing form: " + e.getMessage(), true);
         }
     }
     
@@ -164,6 +214,7 @@ public class RegistrationController {
             
             if (loginUrl == null) {
                 showMessage("Could not find login view resource", true);
+                LOGGER.severe("Login view resource not found");
                 return;
             }
             
@@ -188,8 +239,8 @@ public class RegistrationController {
             stage.show();
             
         } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error navigating to login screen", e);
             showMessage("Error returning to login screen: " + e.getMessage(), true);
-            e.printStackTrace();
         }
     }
     
@@ -197,39 +248,54 @@ public class RegistrationController {
      * Helper method to find resources using multiple approaches
      */
     private URL findResource(String path) {
-        URL url = getClass().getClassLoader().getResource(path);
-        
-        // Try alternate approaches if the resource wasn't found
-        if (url == null) {
-            url = getClass().getResource("/" + path);
-        }
-        
-        if (url == null) {
-            try {
+        try {
+            URL url = getClass().getClassLoader().getResource(path);
+            
+            // Try alternate approaches if the resource wasn't found
+            if (url == null) {
+                url = getClass().getResource("/" + path);
+            }
+            
+            if (url == null) {
                 File file = new File("src/" + path);
                 if (file.exists()) {
                     url = file.toURI().toURL();
                 }
-            } catch (Exception e) {
-                // Silently handle exception - will return null if file not found
             }
+            
+            return url;
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error finding resource: " + path, e);
+            return null;
         }
-        
-        return url;
     }
     
     private void showMessage(String message, boolean isError) {
         messageLabel.setText(message);
         messageLabel.setStyle(isError ? "-fx-text-fill: red;" : "-fx-text-fill: green;");
+        
+        if (isError) {
+            messageLabel.getStyleClass().add("error-message");
+            // Log error messages
+            LOGGER.warning("Registration error: " + message);
+        } else {
+            messageLabel.getStyleClass().remove("error-message");
+            // Log success messages
+            LOGGER.info("Registration message: " + message);
+        }
     }
     
     private void clearFields() {
-        nameField.clear();
-        emailField.clear();
-        passwordField.clear();
-        phoneField.clear();
-        addressField.clear();
-        if (specializationField != null) specializationField.clear();
-        if (experienceYearsField != null) experienceYearsField.clear();
+        try {
+            nameField.clear();
+            emailField.clear();
+            passwordField.clear();
+            phoneField.clear();
+            addressField.clear();
+            if (specializationField != null) specializationField.clear();
+            if (experienceYearsField != null) experienceYearsField.clear();
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error clearing form fields", e);
+        }
     }
 }
