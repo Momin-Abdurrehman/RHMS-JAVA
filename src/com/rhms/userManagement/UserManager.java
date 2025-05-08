@@ -45,24 +45,86 @@ public class UserManager {
         loadUsers();
         loadAllAssignmentsFromDatabase();
     }
-    private void loadAllAssignmentsFromDatabase() {
+    /**
+     * Loads all doctor-patient assignments from the database
+     */
+    public void loadAllAssignmentsFromDatabase() {
         try {
-            // Get all doctors and patients from already loaded collections
-            for (Doctor doctor : getAllDoctors()) {
-                // Get all patients assigned to this doctor
-                List<Patient> assignedPatients = assignmentHandler.getPatientsForDoctor(
-                        doctor.getUserID(), dbHandler);
+            System.out.println("Starting to load all doctor-patient assignments from database...");
 
-                // Assign each patient to this doctor
-                for (Patient patient : assignedPatients) {
+            // Clear existing assignments for a clean reload
+            for (Doctor doctor : doctors) {
+                doctor.clearPatients();
+                System.out.println("Cleared patients for doctor: " + doctor.getName() + " (ID: " + doctor.getUserID() + ")");
+            }
+
+            for (Patient patient : patients) {
+                patient.clearAssignedDoctors();
+                System.out.println("Cleared doctors for patient: " + patient.getName() + " (ID: " + patient.getUserID() + ")");
+            }
+
+            // Get all assignments directly
+            List<DoctorPatientAssignmentHandler.DoctorPatientAssignment> allAssignments =
+                    assignmentHandler.getAllAssignments(dbHandler);
+
+            System.out.println("Retrieved " + allAssignments.size() + " assignments from database");
+
+            // Process all assignments at once
+            int successfulAssignments = 0;
+            for (DoctorPatientAssignmentHandler.DoctorPatientAssignment assignment : allAssignments) {
+                // Get the doctor and patient IDs from the database objects
+                int doctorId = assignment.getDoctor().getUserID();
+                int patientId = assignment.getPatient().getUserID();
+
+                // Find the matching objects in our in-memory collections
+                Doctor doctor = null;
+                for (Doctor d : doctors) {
+                    if (d.getUserID() == doctorId) {
+                        doctor = d;
+                        break;
+                    }
+                }
+
+                Patient patient = null;
+                for (Patient p : patients) {
+                    if (p.getUserID() == patientId) {
+                        patient = p;
+                        break;
+                    }
+                }
+
+                // Only proceed if we found both objects in memory
+                if (doctor != null && patient != null) {
                     // Update the in-memory relationship on both sides
                     doctor.addPatient(patient);
                     patient.addAssignedDoctor(doctor);
+                    successfulAssignments++;
+
+                    System.out.println("Assigned: Doctor " + doctor.getName() + " (ID: " + doctor.getUserID() +
+                            ") to Patient " + patient.getName() + " (ID: " + patient.getUserID() + ")");
+                } else {
+                    System.out.println("Warning: Could not find doctor ID " + doctorId +
+                            " or patient ID " + patientId + " in memory. Assignment not created.");
                 }
             }
-            System.out.println("All doctor-patient assignments loaded successfully");
+
+            // Verify loaded assignments
+            int assignmentCount = 0;
+            for (Doctor doctor : doctors) {
+                assignmentCount += doctor.getAssignedPatients().size();
+            }
+
+            System.out.println("Assignment loading complete. Successfully processed " + successfulAssignments +
+                    " out of " + allAssignments.size() + " assignments.");
+            System.out.println("Total active assignments in memory: " + assignmentCount);
+
+            if (assignmentCount != successfulAssignments) {
+                System.out.println("Warning: Discrepancy between processed assignments and counted assignments.");
+            }
+
         } catch (SQLException e) {
             System.err.println("Error loading doctor-patient assignments: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     /**
@@ -265,11 +327,11 @@ public class UserManager {
             LOGGER.log(Level.WARNING, "Cannot load appointments for null patient");
             return;
         }
-        
+
         try {
             List<Appointment> appointments = appointmentDbHandler.loadAppointmentsForPatient(patient.getUserID());
             patient.setAppointments(appointments);
-            LOGGER.log(Level.INFO, "Loaded {0} appointments for patient {1}", 
+            LOGGER.log(Level.INFO, "Loaded {0} appointments for patient {1}",
                       new Object[]{appointments.size(), patient.getName()});
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading appointments for patient " + patient.getUserID(), e);
@@ -285,11 +347,11 @@ public class UserManager {
             LOGGER.log(Level.WARNING, "Cannot load appointments for null doctor");
             return;
         }
-        
+
         try {
             List<Appointment> appointments = appointmentDbHandler.loadAppointmentsForDoctor(doctor.getUserID());
             doctor.setAppointments(appointments);
-            LOGGER.log(Level.INFO, "Loaded {0} appointments for doctor {1}", 
+            LOGGER.log(Level.INFO, "Loaded {0} appointments for doctor {1}",
                       new Object[]{appointments.size(), doctor.getName()});
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading appointments for doctor " + doctor.getUserID(), e);
@@ -367,7 +429,7 @@ public class UserManager {
             }
 
             for (Patient patient : patients) {
-                List<Doctor> doctors = assignmentHandler.getDoctorsForPatient(patient.getUserID(), dbHandler);
+                List<Doctor> doctors = assignmentHandler.getAssignedDoctorsForPatient(patient.getUserID(), dbHandler);
                 for (Doctor doctor : doctors) {
                     patient.addAssignedDoctor(doctor);
                 }
@@ -415,3 +477,4 @@ public class UserManager {
         return sortedVitals;
     }
 }
+

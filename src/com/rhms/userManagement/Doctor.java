@@ -44,6 +44,9 @@ public class Doctor extends User {
         return experienceYears;
     }
 
+    /**
+     * Get a list of patients assigned to this doctor
+     */
     public List<Patient> getAssignedPatients() {
         return new ArrayList<>(assignedPatients);
     }
@@ -69,16 +72,42 @@ public class Doctor extends User {
      * Add a patient to this doctor's assigned patients
      */
     public void addPatient(Patient patient) {
-        if (patient != null && !assignedPatients.contains(patient)) {
+        if (patient != null && !containsPatient(patient)) {
             assignedPatients.add(patient);
         }
+    }
+    
+    /**
+     * Check if the doctor already has this patient assigned
+     * Uses getUserID() for comparison to ensure proper equality checking
+     */
+    private boolean containsPatient(Patient patient) {
+        if (patient == null) return false;
+        
+        for (Patient p : assignedPatients) {
+            if (p.getUserID() == patient.getUserID()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Remove a patient from this doctor's assigned patients
      */
     public void removePatient(Patient patient) {
-        assignedPatients.remove(patient);
+        if (patient == null) return;
+        
+        // Remove using ID comparison to ensure proper removal
+        assignedPatients.removeIf(p -> p.getUserID() == patient.getUserID());
+    }
+    
+    /**
+     * Clear all patients from this doctor's assigned patients
+     * Used when reloading assignments from database
+     */
+    public void clearPatients() {
+        assignedPatients.clear();
     }
 
     /**

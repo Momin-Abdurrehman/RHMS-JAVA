@@ -4,11 +4,13 @@ import com.rhms.doctorPatientInteraction.Feedback;
 import com.rhms.healthDataHandling.VitalSign;
 import com.rhms.healthDataHandling.VitalsDatabase;
 import com.rhms.userManagement.Doctor;
+import com.rhms.healthDataHandling.MedicalRecord;
 import com.rhms.userManagement.Patient;
 
 import com.rhms.userManagement.UserManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -58,21 +60,22 @@ public class DoctorPatientDetailsController {
 
     private Doctor currentDoctor;
     private Patient currentPatient;
-    private UserManager vitalsDatabase;
+    private UserManager userManager;
 
     private SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     /**
      * Initialize the controller with doctor and patient data
      */
-    public void initializeData(Doctor doctor, Patient patient, UserManager vitalsDb) {
+    public void initializeData(Doctor doctor, Patient patient, UserManager userManager) {
         this.currentDoctor = doctor;
         this.currentPatient = patient;
-        this.vitalsDatabase = vitalsDb;
+        this.userManager = userManager;
 
         // Initialize UI components
         setupPatientInfo();
         setupVitalsTable();
+        loadVitalsData();
         loadMedicalHistory();
         loadPreviousFeedback();
 
@@ -114,11 +117,6 @@ public class DoctorPatientDetailsController {
             VitalSign vital = cellData.getValue();
             return new SimpleStringProperty(vital.getTemperature() + " °C");
         });
-
-      
-
-        // Load patient's vitals data
-        loadVitalsData();
     }
 
     /**
@@ -133,30 +131,69 @@ public class DoctorPatientDetailsController {
     }
 
     /**
-     * Load vitals data from the vitals database
+     * Load vitals data from the patient's history
      */
     private void loadVitalsData() {
-        if (vitalsDatabase != null) {
-            List<VitalSign> allVitals = vitalsDatabase.getSortedVitals(false); // newest first
-            vitalsTable.setItems(FXCollections.observableArrayList(allVitals));
+        List<VitalSign> vitals = currentPatient.getVitalsHistory();
+        if (vitals != null && !vitals.isEmpty()) {
+            // Sort by date (newest first)
+            vitals.sort(Comparator.comparing(VitalSign::getTimestamp).reversed());
+            vitalsTable.setItems(FXCollections.observableArrayList(vitals));
         } else {
-            LOGGER.log(Level.WARNING, "Vitals database not available for patient: {0}", currentPatient.getName());
+            LOGGER.log(Level.INFO, "No vitals data available for patient: {0}", currentPatient.getName());
             vitalsTable.setPlaceholder(new Label("No vitals data available"));
         }
     }
 
     /**
      * Load medical history for the patient
-     * Note: In a real app, this would come from a database
      */
     private void loadMedicalHistory() {
-        // Placeholder for medical history - in a real application, this would be retrieved from a database
-        medicalHistoryList.setItems(FXCollections.observableArrayList(
-                "2023-10-15: Annual checkup - Overall health good",
-                "2023-06-22: Treated for mild seasonal allergies",
-                "2022-12-05: Influenza vaccination administered",
-                "2022-08-17: Physical therapy for lower back pain"
-        ));
+        List<MedicalRecord> records = currentPatient.getMedicalRecords();
+        List<String> formattedRecords = new ArrayList<>();
+        
+        if (records != null && !records.isEmpty()) {
+            // Sort by date (most recent first)
+            records.sort(Comparator.comparing(MedicalRecord::getDate).reversed());
+            
+            for (MedicalRecord record : records) {
+                String doctorName = record.getRecordedBy() != null ? record.getRecordedBy().getName() : "Unknown Doctor";
+                
+                StringBuilder recordText = new StringBuilder();
+                recordText.append(dateTimeFormat.format(record.getDate()))
+                         .append(" - ").append(record.getCondition())
+                         .append("\nRecorded by: Dr. ").append(doctorName)
+                         .append("\n").append(record.getDescription());
+                         
+                formattedRecords.add(recordText.toString());
+            }
+        } else {
+            formattedRecords.add("No medical history available");
+        }
+        
+        medicalHistoryList.setItems(FXCollections.observableArrayList(formattedRecords));
+        
+        // Set up custom cell factory for better display
+        medicalHistoryList.setCellFactory(listView -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("-fx-background-color: transparent;");
+                } else {
+                    setText(item);
+                    setWrapText(true);
+                    setPrefWidth(0); // Enable text wrapping
+                    
+                    // Add some styling to make records easier to read
+                    if (!item.equals("No medical history available")) {
+                        setStyle("-fx-background-color: #f8f9fa; -fx-padding: 5;");
+                    }
+                }
+            }
+        });
     }
 
     /**

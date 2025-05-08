@@ -15,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 import java.io.File;
@@ -89,6 +90,9 @@ public class AdminDashboardController implements DashboardController {
 
     @FXML
     public void handleViewUsers(ActionEvent event) {
+        // Force reload of doctor-patient assignments before displaying
+        userManager.loadAllAssignmentsFromDatabase();
+        
         StringBuilder users = new StringBuilder("System Users:\n\n");
 
         users.append("=== Administrators ===\n");
@@ -108,8 +112,20 @@ public class AdminDashboardController implements DashboardController {
         } else {
             for (Doctor doctor : doctors) {
                 users.append("- Dr. ").append(doctor.getName())
-                        .append(" (").append(doctor.getSpecialization())
-                        .append(", ").append(doctor.getExperienceYears()).append(" years exp.)\n");
+                      .append(" (").append(doctor.getSpecialization())
+                      .append(", ").append(doctor.getExperienceYears()).append(" years exp.)\n");
+                
+                // Add the list of assigned patients under each doctor
+                List<Patient> assignedPatients = doctor.getAssignedPatients();
+                if (!assignedPatients.isEmpty()) {
+                    users.append("    Assigned Patients:\n");
+                    for (Patient patient : assignedPatients) {
+                        users.append("    * ").append(patient.getName())
+                              .append(" (ID: ").append(patient.getUserID()).append(")\n");
+                    }
+                } else {
+                    users.append("    No patients assigned\n");
+                }
             }
         }
 
@@ -120,7 +136,19 @@ public class AdminDashboardController implements DashboardController {
         } else {
             for (Patient patient : patients) {
                 users.append("- ").append(patient.getName())
-                        .append(" (").append(patient.getEmail()).append(")\n");
+                      .append(" (").append(patient.getEmail()).append(")\n");
+                
+                // Add the list of assigned doctors under each patient
+                List<Doctor> assignedDoctors = patient.getAssignedDoctors();
+                if (!assignedDoctors.isEmpty()) {
+                    users.append("    Assigned Doctors:\n");
+                    for (Doctor doctor : assignedDoctors) {
+                        users.append("    * Dr. ").append(doctor.getName())
+                              .append(" (").append(doctor.getSpecialization()).append(")\n");
+                    }
+                } else {
+                    users.append("    No doctors assigned\n");
+                }
             }
         }
 
@@ -165,15 +193,58 @@ public class AdminDashboardController implements DashboardController {
             assignStage.setScene(scene);
             assignStage.setTitle("RHMS - Assign Doctor to Patient");
             assignStage.initOwner(outputArea.getScene().getWindow());
+            
+            // Add event handler to update data when stage is closed
+            assignStage.setOnHidden(e -> {
+                // Refresh our view of doctor-patient assignments after the dialog is closed
+                refreshAssignmentsView();
+            });
+            
             assignStage.show();
-
-            outputArea.setText("Doctor-Patient assignment dialog opened.\n\n" +
-                    "Available doctors: " + doctors.size() + "\n" +
-                    "Available patients: " + patients.size());
 
         } catch (IOException e) {
             showError("Error loading assignment dialog: " + e.getMessage());
         }
+    }
+
+    /**
+     * Refresh the view to show current doctor-patient assignments
+     * Called after the assignment window is closed
+     */
+    private void refreshAssignmentsView() {
+        // First ensure assignments are reloaded from the database
+        userManager.loadAllAssignmentsFromDatabase();
+        
+        // Then update the display
+        StringBuilder assignments = new StringBuilder("Doctor-Patient Assignments Updated\n\n");
+        assignments.append("Current Doctor-Patient Assignments:\n");
+        
+        List<Doctor> doctors = userManager.getAllDoctors();
+        int assignmentCount = 0;
+        
+        // Go through each doctor and list their assigned patients
+        for (Doctor doctor : doctors) {
+            List<Patient> assignedPatients = doctor.getAssignedPatients();
+            if (!assignedPatients.isEmpty()) {
+                assignments.append("\nDr. ").append(doctor.getName())
+                         .append(" (").append(doctor.getSpecialization()).append(")");
+                assignments.append(" is assigned to:\n");
+                
+                for (Patient patient : assignedPatients) {
+                    assignments.append("  - ").append(patient.getName())
+                             .append(" (ID: ").append(patient.getUserID()).append(")\n");
+                    assignmentCount++;
+                }
+            }
+        }
+        
+        if (assignmentCount == 0) {
+            assignments.append("\nNo current doctor-patient assignments found.");
+        } else {
+            assignments.append("\nTotal number of assignments: ").append(assignmentCount);
+        }
+        
+        outputArea.setText(assignments.toString());
     }
 
     @FXML
@@ -276,3 +347,4 @@ public class AdminDashboardController implements DashboardController {
         alert.showAndWait();
     }
 }
+

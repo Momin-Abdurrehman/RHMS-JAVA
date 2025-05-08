@@ -7,10 +7,7 @@ import com.rhms.doctorPatientInteraction.Feedback;
 import com.rhms.emergencyAlert.PanicButton;
 import com.rhms.doctorPatientInteraction.MedicalHistory;
 import com.rhms.appointmentScheduling.Appointment;
-import com.rhms.healthDataHandling.VitalsDatabase;
-import com.rhms.healthDataHandling.VitalSign;
-import com.rhms.healthDataHandling.CSVVitalsUploader;
-import com.rhms.healthDataHandling.VitalsUploadReport;
+import com.rhms.healthDataHandling.*;
 import com.rhms.Database.UserDatabaseHandler;
 import java.io.IOException;
 import java.util.List;
@@ -218,6 +215,14 @@ public class Patient extends User {
     }
     
     /**
+     * Clear all assigned doctors
+     * Used when reloading assignments from database
+     */
+    public void clearAssignedDoctors() {
+        assignedDoctors.clear();
+    }
+    
+    /**
      * Get all doctors assigned to this patient
      * @return ArrayList of assigned doctors
      */
@@ -293,5 +298,17 @@ public class Patient extends User {
 
     public List<VitalSign> getVitalSigns() {
         return vitalsDatabase.getAllVitalSigns();
+    }
+
+    public List<VitalSign> getVitalsHistory() {
+        return vitalsDatabase.getAllVitalSigns();
+    }
+
+    public List<MedicalRecord> getMedicalRecords() {
+        List<MedicalRecord> records = new ArrayList<>();
+        for (String record : medicalRecords) {
+            records.add(new MedicalRecord(record));
+        }
+        return records;
     }
 }
