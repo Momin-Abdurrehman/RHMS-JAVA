@@ -41,7 +41,7 @@ public class RhmsGuiApp extends Application {
             controller.setUserManager(userManager);
             
             // Setup and display the scene
-            Scene scene = new Scene(root, 600, 400);
+            Scene scene = new Scene(root, 1400, 900);
             
             // Load CSS
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");

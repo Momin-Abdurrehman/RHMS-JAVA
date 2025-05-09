@@ -55,45 +55,6 @@ public class AdminDashboardController implements DashboardController {
     }
 
     @FXML
-    public void handleRegisterUser(ActionEvent event) {
-        try {
-            URL registerViewUrl = findResource("com/rhms/ui/views/RegistrationDashboard.fxml");
-
-            if (registerViewUrl == null) {
-                showError("Could not find registration view resource");
-                return;
-            }
-
-            FXMLLoader loader = new FXMLLoader(registerViewUrl);
-            Parent registerView = loader.load();
-
-            // Pass userManager to registration controller
-            RegistrationController controller = loader.getController();
-            controller.setUserManager(userManager);
-            
-            // Pass reference to this controller to avoid login menu opening
-            controller.setAdminController(this);
-
-            // Create new stage for registration
-            Stage registerStage = new Stage();
-            Scene scene = new Scene(registerView);
-
-            // Load CSS
-            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
-            if (cssUrl != null) {
-                scene.getStylesheets().add(cssUrl.toExternalForm());
-            }
-
-            registerStage.setScene(scene);
-            registerStage.setTitle("RHMS - Register New User");
-            registerStage.show();
-
-        } catch (IOException e) {
-            showError("Error loading registration form: " + e.getMessage());
-        }
-    }
-
-    @FXML
     public void handleViewUsers(ActionEvent event) {
         // Force reload of doctor-patient assignments before displaying
         userManager.loadAllAssignmentsFromDatabase();
@@ -197,7 +158,11 @@ public class AdminDashboardController implements DashboardController {
 
             assignStage.setScene(scene);
             assignStage.setTitle("RHMS - Assign Doctor to Patient");
-            assignStage.initOwner(outputArea.getScene().getWindow());
+
+            // Only set owner if the window is available
+            if (outputArea.getScene() != null && outputArea.getScene().getWindow() != null) {
+                assignStage.initOwner(outputArea.getScene().getWindow());
+            }
 
             // Add event handler to update data when stage is closed
             assignStage.setOnHidden(e -> {
