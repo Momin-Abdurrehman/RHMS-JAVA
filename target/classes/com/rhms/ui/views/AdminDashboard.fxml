@@ -30,6 +30,10 @@
                         styleClass="sidebar-button"
                         maxWidth="Infinity"
                         onAction="#handleRegisterUser"/>
+                <Button text="Manage Users"
+                        styleClass="sidebar-button"
+                        maxWidth="Infinity"
+                        onAction="#handleManageUsers"/>
                 <Button text="View All Users"
                         styleClass="sidebar-button"
                         maxWidth="Infinity"

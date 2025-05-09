@@ -13,7 +13,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -56,23 +58,26 @@ public class AdminDashboardController implements DashboardController {
     public void handleRegisterUser(ActionEvent event) {
         try {
             URL registerViewUrl = findResource("com/rhms/ui/views/RegistrationDashboard.fxml");
-            
+
             if (registerViewUrl == null) {
                 showError("Could not find registration view resource");
                 return;
             }
-            
+
             FXMLLoader loader = new FXMLLoader(registerViewUrl);
             Parent registerView = loader.load();
 
             // Pass userManager to registration controller
             RegistrationController controller = loader.getController();
             controller.setUserManager(userManager);
+            
+            // Pass reference to this controller to avoid login menu opening
+            controller.setAdminController(this);
 
             // Create new stage for registration
             Stage registerStage = new Stage();
             Scene scene = new Scene(registerView);
-            
+
             // Load CSS
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
             if (cssUrl != null) {
@@ -92,7 +97,7 @@ public class AdminDashboardController implements DashboardController {
     public void handleViewUsers(ActionEvent event) {
         // Force reload of doctor-patient assignments before displaying
         userManager.loadAllAssignmentsFromDatabase();
-        
+
         StringBuilder users = new StringBuilder("System Users:\n\n");
 
         users.append("=== Administrators ===\n");
@@ -112,16 +117,16 @@ public class AdminDashboardController implements DashboardController {
         } else {
             for (Doctor doctor : doctors) {
                 users.append("- Dr. ").append(doctor.getName())
-                      .append(" (").append(doctor.getSpecialization())
-                      .append(", ").append(doctor.getExperienceYears()).append(" years exp.)\n");
-                
+                        .append(" (").append(doctor.getSpecialization())
+                        .append(", ").append(doctor.getExperienceYears()).append(" years exp.)\n");
+
                 // Add the list of assigned patients under each doctor
                 List<Patient> assignedPatients = doctor.getAssignedPatients();
                 if (!assignedPatients.isEmpty()) {
                     users.append("    Assigned Patients:\n");
                     for (Patient patient : assignedPatients) {
                         users.append("    * ").append(patient.getName())
-                              .append(" (ID: ").append(patient.getUserID()).append(")\n");
+                                .append(" (ID: ").append(patient.getUserID()).append(")\n");
                     }
                 } else {
                     users.append("    No patients assigned\n");
@@ -136,15 +141,15 @@ public class AdminDashboardController implements DashboardController {
         } else {
             for (Patient patient : patients) {
                 users.append("- ").append(patient.getName())
-                      .append(" (").append(patient.getEmail()).append(")\n");
-                
+                        .append(" (").append(patient.getEmail()).append(")\n");
+
                 // Add the list of assigned doctors under each patient
                 List<Doctor> assignedDoctors = patient.getAssignedDoctors();
                 if (!assignedDoctors.isEmpty()) {
                     users.append("    Assigned Doctors:\n");
                     for (Doctor doctor : assignedDoctors) {
                         users.append("    * Dr. ").append(doctor.getName())
-                              .append(" (").append(doctor.getSpecialization()).append(")\n");
+                                .append(" (").append(doctor.getSpecialization()).append(")\n");
                     }
                 } else {
                     users.append("    No doctors assigned\n");
@@ -167,12 +172,12 @@ public class AdminDashboardController implements DashboardController {
 
         try {
             URL assignViewUrl = findResource("com/rhms/ui/views/AssignDoctorView.fxml");
-            
+
             if (assignViewUrl == null) {
                 showError("Could not find AssignDoctorView.fxml resource");
                 return;
             }
-            
+
             FXMLLoader loader = new FXMLLoader(assignViewUrl);
             Parent assignView = loader.load();
 
@@ -183,7 +188,7 @@ public class AdminDashboardController implements DashboardController {
             // Create new stage for assignment dialog
             Stage assignStage = new Stage();
             Scene scene = new Scene(assignView);
-            
+
             // Load CSS
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
             if (cssUrl != null) {
@@ -193,17 +198,57 @@ public class AdminDashboardController implements DashboardController {
             assignStage.setScene(scene);
             assignStage.setTitle("RHMS - Assign Doctor to Patient");
             assignStage.initOwner(outputArea.getScene().getWindow());
-            
+
             // Add event handler to update data when stage is closed
             assignStage.setOnHidden(e -> {
                 // Refresh our view of doctor-patient assignments after the dialog is closed
                 refreshAssignmentsView();
             });
-            
+
             assignStage.show();
 
         } catch (IOException e) {
             showError("Error loading assignment dialog: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void handleManageUsers(ActionEvent event) {
+        try {
+            // Find the ManageUsersDashboard.fxml resource
+            URL manageUsersUrl = findResource("com/rhms/ui/views/ManageUsersDashboard.fxml");
+            
+            if (manageUsersUrl == null) {
+                showError("Could not find ManageUsersDashboard.fxml resource");
+                return;
+            }
+            
+            // Load the FXML
+            FXMLLoader loader = new FXMLLoader(manageUsersUrl);
+            Parent manageUsersView = loader.load();
+            
+            // Get the controller and initialize it with user manager
+            ManageUsersDashboardController controller = loader.getController();
+            controller.setUserManager(userManager);
+            
+            // Clear the content area and add the manage users view
+            contentArea.getChildren().clear();
+            
+            // Add the title
+            Label titleLabel = new Label("Manage Users");
+            titleLabel.getStyleClass().add("section-title");
+            titleLabel.setFont(new Font("System Bold", 24));
+            
+            // Add the title and manage users view to the content area
+            contentArea.getChildren().add(titleLabel);
+            contentArea.getChildren().add(manageUsersView);
+
+            // Make the manage users view take all available space
+            VBox.setVgrow(manageUsersView, Priority.ALWAYS);
+            
+        } catch (IOException e) {
+            showError("Error loading manage users view: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -214,36 +259,36 @@ public class AdminDashboardController implements DashboardController {
     private void refreshAssignmentsView() {
         // First ensure assignments are reloaded from the database
         userManager.loadAllAssignmentsFromDatabase();
-        
+
         // Then update the display
         StringBuilder assignments = new StringBuilder("Doctor-Patient Assignments Updated\n\n");
         assignments.append("Current Doctor-Patient Assignments:\n");
-        
+
         List<Doctor> doctors = userManager.getAllDoctors();
         int assignmentCount = 0;
-        
+
         // Go through each doctor and list their assigned patients
         for (Doctor doctor : doctors) {
             List<Patient> assignedPatients = doctor.getAssignedPatients();
             if (!assignedPatients.isEmpty()) {
                 assignments.append("\nDr. ").append(doctor.getName())
-                         .append(" (").append(doctor.getSpecialization()).append(")");
+                        .append(" (").append(doctor.getSpecialization()).append(")");
                 assignments.append(" is assigned to:\n");
-                
+
                 for (Patient patient : assignedPatients) {
                     assignments.append("  - ").append(patient.getName())
-                             .append(" (ID: ").append(patient.getUserID()).append(")\n");
+                            .append(" (ID: ").append(patient.getUserID()).append(")\n");
                     assignmentCount++;
                 }
             }
         }
-        
+
         if (assignmentCount == 0) {
             assignments.append("\nNo current doctor-patient assignments found.");
         } else {
             assignments.append("\nTotal number of assignments: ").append(assignmentCount);
         }
-        
+
         outputArea.setText(assignments.toString());
     }
 
@@ -261,7 +306,7 @@ public class AdminDashboardController implements DashboardController {
         logContent.append("2023-07-10 08:30:12: New patient registration: 'John Smith'\n");
         logContent.append("2023-07-10 09:45:32: Doctor 'Dr. Williams' assigned to patient 'Mary Johnson'\n");
         logContent.append("2023-07-10 11:05:27: Emergency alert triggered by patient 'Robert Davis'\n");
-        
+
         // Display the logs
         outputArea.setText(logContent.toString());
     }
@@ -270,12 +315,12 @@ public class AdminDashboardController implements DashboardController {
     public void handleLogout() {
         try {
             URL loginUrl = findResource("com/rhms/ui/views/LoginView.fxml");
-            
+
             if (loginUrl == null) {
                 showError("Could not find login view resource");
                 return;
             }
-            
+
             FXMLLoader loader = new FXMLLoader(loginUrl);
             Parent loginView = loader.load();
 
@@ -303,18 +348,18 @@ public class AdminDashboardController implements DashboardController {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Helper method to find resources using multiple approaches
      */
     private URL findResource(String path) {
         URL url = getClass().getClassLoader().getResource(path);
-        
+
         // Try alternate approaches if the resource wasn't found
         if (url == null) {
             url = getClass().getResource("/" + path);
         }
-        
+
         if (url == null) {
             try {
                 // Try source folder
@@ -322,7 +367,7 @@ public class AdminDashboardController implements DashboardController {
                 if (file.exists()) {
                     url = file.toURI().toURL();
                 }
-                
+
                 // Try target/classes folder
                 if (url == null) {
                     file = new File("target/classes/" + path);
@@ -335,7 +380,7 @@ public class AdminDashboardController implements DashboardController {
                 System.err.println("Error finding resource: " + e.getMessage());
             }
         }
-        
+
         return url;
     }
 
@@ -347,4 +392,3 @@ public class AdminDashboardController implements DashboardController {
         alert.showAndWait();
     }
 }
-

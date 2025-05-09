@@ -74,13 +74,13 @@ public class UserDatabaseHandler {
                 // Create the appropriate user type based on the database value
                 if ("Administrator".equals(userType)) {
                     return new Administrator(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 } else if ("Doctor".equals(userType)) {
                     String specialization = "General";
@@ -92,36 +92,36 @@ public class UserDatabaseHandler {
                         // Missing doctor-specific columns; use default values.
                     }
                     return new Doctor(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username"),
-                        specialization,
-                        experienceYears
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username"),
+                            specialization,
+                            experienceYears
                     );
                 } else if ("Patient".equals(userType)) {
                     return new Patient(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 } else {
                     // Default fallback for unknown user types
                     return new User(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 }
             }
@@ -157,10 +157,10 @@ public class UserDatabaseHandler {
                 User user = getUserById(rs.getInt("user_id"));
                 if (user != null) {
                     return new Session(
-                        sessionToken,
-                        user,
-                        rs.getTimestamp("creation_time").toLocalDateTime(),
-                        rs.getTimestamp("last_activity_time").toLocalDateTime()
+                            sessionToken,
+                            user,
+                            rs.getTimestamp("creation_time").toLocalDateTime(),
+                            rs.getTimestamp("last_activity_time").toLocalDateTime()
                     );
                 }
             }
@@ -209,13 +209,13 @@ public class UserDatabaseHandler {
                 // Create the appropriate user type based on the database value
                 if ("Administrator".equals(userType)) {
                     return new Administrator(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 } else if ("Doctor".equals(userType)) {
                     String specialization = "General";
@@ -227,36 +227,36 @@ public class UserDatabaseHandler {
                         // Missing doctor-specific columns; use default values.
                     }
                     return new Doctor(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username"),
-                        specialization,
-                        experienceYears
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username"),
+                            specialization,
+                            experienceYears
                     );
                 } else if ("Patient".equals(userType)) {
                     return new Patient(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 } else {
                     // Default fallback for unknown user types
                     return new User(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        userId,
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            userId,
+                            rs.getString("username")
                     );
                 }
             }
@@ -286,45 +286,45 @@ public class UserDatabaseHandler {
                         // Use default values if columns are missing.
                     }
                     user = new Doctor(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username"),
-                        specialization,
-                        experienceYears
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username"),
+                            specialization,
+                            experienceYears
                     );
                 } else if ("Patient".equals(userType)) {
                     user = new Patient(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 } else if ("Administrator".equals(userType)) {
                     user = new Administrator(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 } else {
                     user = new User(
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getInt("user_id"),
-                        rs.getString("username")
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password_hash"),
+                            rs.getString("phone"),
+                            rs.getString("address"),
+                            rs.getInt("user_id"),
+                            rs.getString("username")
                     );
                 }
 

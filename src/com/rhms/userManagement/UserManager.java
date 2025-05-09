@@ -487,36 +487,36 @@ public class UserManager {
                 LOGGER.log(Level.WARNING, "Cannot load assignments for null doctor");
                 return;
             }
-            
+
             System.out.println("Loading patient assignments specifically for doctor: " + doctor.getName() + " (ID: " + doctor.getUserID() + ")");
-            
+
             // Clear existing patient assignments for this doctor
             doctor.clearPatients();
-            
+
             // Get patients assigned to this doctor from the database
             List<Patient> assignedPatients = assignmentHandler.getPatientsForDoctor(doctor.getUserID(), dbHandler);
             System.out.println("Database returned " + assignedPatients.size() + " assigned patients for doctor ID " + doctor.getUserID());
-            
+
             // For each returned patient, find the matching in-memory patient instance
             for (Patient dbPatient : assignedPatients) {
                 // Find the patient in our in-memory collection
                 Patient memoryPatient = getPatientById(dbPatient.getUserID());
-                
+
                 if (memoryPatient != null) {
                     // Add the bi-directional relationship
                     doctor.addPatient(memoryPatient);
                     memoryPatient.addAssignedDoctor(doctor);
-                    System.out.println("Added doctor-patient assignment: Dr. " + doctor.getName() + 
-                                     " - Patient " + memoryPatient.getName());
+                    System.out.println("Added doctor-patient assignment: Dr. " + doctor.getName() +
+                            " - Patient " + memoryPatient.getName());
                 } else {
-                    System.out.println("Warning: Could not find patient ID " + dbPatient.getUserID() + 
-                                     " in memory. Assignment not created.");
+                    System.out.println("Warning: Could not find patient ID " + dbPatient.getUserID() +
+                            " in memory. Assignment not created.");
                 }
             }
-            
-            System.out.println("Doctor now has " + doctor.getAssignedPatients().size() + 
-                             " patients in memory after loading");
-            
+
+            System.out.println("Doctor now has " + doctor.getAssignedPatients().size() +
+                    " patients in memory after loading");
+
         } catch (SQLException e) {
             System.err.println("Error loading assignments for doctor: " + e.getMessage());
             e.printStackTrace();
@@ -525,7 +525,7 @@ public class UserManager {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Load assignments specifically for one patient
      * This is used when initializing the patient dashboard
@@ -537,36 +537,36 @@ public class UserManager {
                 LOGGER.log(Level.WARNING, "Cannot load assignments for null patient");
                 return;
             }
-            
+
             System.out.println("Loading doctor assignments specifically for patient: " + patient.getName() + " (ID: " + patient.getUserID() + ")");
-            
+
             // Clear existing doctor assignments for this patient
             patient.clearAssignedDoctors();
-            
+
             // Get doctors assigned to this patient from the database
             List<Doctor> assignedDoctors = assignmentHandler.getAssignedDoctorsForPatient(patient.getUserID(), dbHandler);
             System.out.println("Database returned " + assignedDoctors.size() + " assigned doctors for patient ID " + patient.getUserID());
-            
+
             // For each returned doctor, find the matching in-memory doctor instance
             for (Doctor dbDoctor : assignedDoctors) {
                 // Find the doctor in our in-memory collection
                 Doctor memoryDoctor = getDoctorById(dbDoctor.getUserID());
-                
+
                 if (memoryDoctor != null) {
                     // Add the bi-directional relationship
                     patient.addAssignedDoctor(memoryDoctor);
                     memoryDoctor.addPatient(patient);
-                    System.out.println("Added doctor-patient assignment: Dr. " + memoryDoctor.getName() + 
-                                     " - Patient " + patient.getName());
+                    System.out.println("Added doctor-patient assignment: Dr. " + memoryDoctor.getName() +
+                            " - Patient " + patient.getName());
                 } else {
-                    System.out.println("Warning: Could not find doctor ID " + dbDoctor.getUserID() + 
-                                     " in memory. Assignment not created.");
+                    System.out.println("Warning: Could not find doctor ID " + dbDoctor.getUserID() +
+                            " in memory. Assignment not created.");
                 }
             }
-            
-            System.out.println("Patient now has " + patient.getAssignedDoctors().size() + 
-                             " doctors in memory after loading");
-            
+
+            System.out.println("Patient now has " + patient.getAssignedDoctors().size() +
+                    " doctors in memory after loading");
+
         } catch (SQLException e) {
             System.err.println("Error loading assignments for patient: " + e.getMessage());
             e.printStackTrace();
