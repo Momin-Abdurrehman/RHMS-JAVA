@@ -116,9 +116,9 @@ public class RegistrationController {
                 showMessage(userType + " registered successfully: " + newUser.getUsername(), false);
                 clearFields();
                 
-                // If this was called from admin dashboard, refresh the user list
+                // If this was called from admin dashboard, refresh the user management view
                 if (adminController != null) {
-                    adminController.handleViewUsers(null);
+                    adminController.handleManageUsers(null);
                 }
             } else {
                 LOGGER.warning("Failed to register " + userType + ": " + email);

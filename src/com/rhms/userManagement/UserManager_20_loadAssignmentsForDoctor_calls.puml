@@ -1,0 +1,267 @@
+@startuml
+
+/' diagram meta data start
+config=CallConfiguration;
+{
+  "rootMethod": "com.rhms.userManagement.UserManager#loadAssignmentsForDoctor(Doctor)",
+  "projectClassification": {
+    "searchMode": "OpenProject", // OpenProject, AllProjects
+    "includedProjects": "",
+    "pathEndKeywords": "*.impl",
+    "isClientPath": "",
+    "isClientName": "",
+    "isTestPath": "",
+    "isTestName": "",
+    "isMappingPath": "",
+    "isMappingName": "",
+    "isDataAccessPath": "",
+    "isDataAccessName": "",
+    "isDataStructurePath": "",
+    "isDataStructureName": "",
+    "isInterfaceStructuresPath": "",
+    "isInterfaceStructuresName": "",
+    "isEntryPointPath": "",
+    "isEntryPointName": "",
+    "treatFinalFieldsAsMandatory": false
+  },
+  "graphRestriction": {
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "removeByInheritance": "", // inheritance/annotation based filtering is done in a second step
+    "removeByAnnotation": "",
+    "removeByClassPackage": "", // cleanup the graph after inheritance/annotation based filtering is done
+    "removeByClassName": "",
+    "cutMappings": false,
+    "cutEnum": true,
+    "cutTests": true,
+    "cutClient": true,
+    "cutDataAccess": true,
+    "cutInterfaceStructures": true,
+    "cutDataStructures": true,
+    "cutGetterAndSetter": true,
+    "cutConstructors": true
+  },
+  "graphTraversal": {
+    "forwardDepth": 3,
+    "backwardDepth": 3,
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "hideMappings": false,
+    "hideDataStructures": false,
+    "hidePrivateMethods": true,
+    "hideInterfaceCalls": true, // indirection: implementation -> interface (is hidden) -> implementation
+    "onlyShowApplicationEntryPoints": false, // root node is included
+    "useMethodCallsForStructureDiagram": "ForwardOnly" // ForwardOnly, BothDirections, No
+  },
+  "details": {
+    "aggregation": "GroupByClass", // ByClass, GroupByClass, None
+    "showMethodParametersTypes": false,
+    "showMethodParametersNames": false,
+    "showMethodReturnType": false,
+    "showPackageLevels": 2,
+    "showCallOrder": false,
+    "edgeMode": "MethodsOnly", // TypesOnly, MethodsOnly, TypesAndMethods, MethodsAndDirectTypeUsage
+    "showDetailedClassStructure": false
+  },
+  "rootClass": "com.rhms.userManagement.UserManager",
+  "extensionCallbackMethod": "" // qualified.class.name#methodName - signature: public static String method(String)
+}
+diagram meta data end '/
+
+
+
+digraph g {
+    rankdir="LR"
+    splines=polyline
+    
+
+'nodes 
+subgraph cluster_3499612 { 
+   	label=rhms
+	labeljust=l
+	fillcolor="#ececec"
+	style=filled
+   
+   subgraph cluster_1177773926 { 
+   	label=ui
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   subgraph cluster_1963124869 { 
+   	label=DoctorDashboardController
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   DoctorDashboardController1319010786XXXinitializeDashboard0[
+	label="+ initializeDashboard()"
+	style=filled
+	fillcolor=white
+	tooltip="DoctorDashboardController
+
+&#10;  Initializes the dashboard with user-specific data&#10; "
+	fontcolor=darkgreen
+];
+} 
+
+subgraph cluster_355486142 { 
+   	label=LoginViewController
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   LoginViewController1319010786XXXinitialize0[
+	label="+ initialize()"
+	style=filled
+	fillcolor=white
+	tooltip="LoginViewController
+
+null"
+	fontcolor=darkgreen
+];
+} 
+} 
+
+subgraph cluster_1951307539 { 
+   	label=Database
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   subgraph cluster_1780453371 { 
+   	label=DoctorPatientAssignmentHandler
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   DoctorPatientAssignmentHandler1676144448XXXgetPatientsForDoctor1369338721[
+	label="+ getPatientsForDoctor()"
+	style=filled
+	fillcolor=white
+	tooltip="DoctorPatientAssignmentHandler
+
+null"
+	fontcolor=darkgreen
+];
+} 
+
+subgraph cluster_42351050 { 
+   	label=UserDatabaseHandler
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   UserDatabaseHandler1676144448XXXgetPatientById104431[
+	label="+ getPatientById()"
+	style=filled
+	fillcolor=white
+	tooltip="UserDatabaseHandler
+
+null"
+	fontcolor=darkgreen
+];
+} 
+} 
+
+subgraph cluster_85584960 { 
+   	label=userManagement
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   subgraph cluster_1209960250 { 
+   	label=Doctor
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   Doctor108603475XXXaddPatient873235173[
+	label="+ addPatient()"
+	style=filled
+	fillcolor=white
+	tooltip="Doctor
+
+&#10;  Add a patient to this doctor's assigned patients&#10; "
+	fontcolor=darkgreen
+];
+
+Doctor108603475XXXclearPatients0[
+	label="+ clearPatients()"
+	style=filled
+	fillcolor=white
+	tooltip="Doctor
+
+&#10;  Clear all patients from this doctor's assigned patients&#10;  Used when reloading assignments from database&#10; "
+	fontcolor=darkgreen
+];
+} 
+
+subgraph cluster_528726090 { 
+   	label=Patient
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   Patient108603475XXXaddAssignedDoctor2052357439[
+	label="+ addAssignedDoctor()"
+	style=filled
+	fillcolor=white
+	tooltip="Patient
+
+&#10;  Add a doctor to this patient's list of assigned doctors&#10;  @param doctor The doctor to assign to this patient&#10; "
+	fontcolor=darkgreen
+];
+} 
+
+subgraph cluster_879193049 { 
+   	label=UserManager
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   UserManager108603475XXXgetPatientById104431[
+	label="+ getPatientById()"
+	style=filled
+	fillcolor=white
+	tooltip="UserManager
+
+null"
+	fontcolor=darkgreen
+];
+
+UserManager108603475XXXloadAssignmentsForDoctor2052357439[
+	label="+ loadAssignmentsForDoctor()"
+	style=filled
+	fillcolor=white
+	tooltip="UserManager
+
+&#10;  Load assignments specifically for one doctor&#10;  This is used when initializing the doctor dashboard&#10; "
+	penwidth=4
+	fontcolor=darkgreen
+];
+} 
+} 
+} 
+
+'edges    
+DoctorDashboardController1319010786XXXinitializeDashboard0 -> UserManager108603475XXXloadAssignmentsForDoctor2052357439;
+DoctorPatientAssignmentHandler1676144448XXXgetPatientsForDoctor1369338721 -> UserDatabaseHandler1676144448XXXgetPatientById104431;
+LoginViewController1319010786XXXinitialize0 -> DoctorDashboardController1319010786XXXinitializeDashboard0;
+Patient108603475XXXaddAssignedDoctor2052357439 -> Doctor108603475XXXaddPatient873235173;
+UserManager108603475XXXloadAssignmentsForDoctor2052357439 -> Doctor108603475XXXaddPatient873235173;
+UserManager108603475XXXloadAssignmentsForDoctor2052357439 -> Doctor108603475XXXclearPatients0;
+UserManager108603475XXXloadAssignmentsForDoctor2052357439 -> DoctorPatientAssignmentHandler1676144448XXXgetPatientsForDoctor1369338721;
+UserManager108603475XXXloadAssignmentsForDoctor2052357439 -> Patient108603475XXXaddAssignedDoctor2052357439;
+UserManager108603475XXXloadAssignmentsForDoctor2052357439 -> UserManager108603475XXXgetPatientById104431;
+    
+}
+@enduml

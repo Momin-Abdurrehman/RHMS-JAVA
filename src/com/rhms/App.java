@@ -52,7 +52,7 @@ public class App {
             if (existingDoctor == null) {
                 System.out.println("Creating demo doctor account...");
                 Doctor doctor = userManager.registerDoctor(
-                    "John Smith", "doctor@rhms.com", "doctor123", 
+                    "M", "doctor@rhms.com", "doctor123",
                     "555-123-4567", "123 Medical Center Dr",
                     "Cardiology", 10
                 );

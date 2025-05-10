@@ -30,11 +30,8 @@
                         styleClass="sidebar-button"
                         maxWidth="Infinity"
                         onAction="#handleManageUsers"/>
-                <Button text="View All Users"
-                        styleClass="sidebar-button"
-                        maxWidth="Infinity"
-                        onAction="#handleViewUsers"/>
-                <Button text="Assign Doctor to Patient"
+
+                <Button text="Doctor Patient Assignments"
                         styleClass="sidebar-button"
                         maxWidth="Infinity"
                         onAction="#handleAssignDoctor"/>

@@ -54,72 +54,6 @@ public class AdminDashboardController implements DashboardController {
                 "Select an option from the sidebar to begin managing the system.");
     }
 
-    @FXML
-    public void handleViewUsers(ActionEvent event) {
-        // Force reload of doctor-patient assignments before displaying
-        userManager.loadAllAssignmentsFromDatabase();
-
-        StringBuilder users = new StringBuilder("System Users:\n\n");
-
-        users.append("=== Administrators ===\n");
-        List<Administrator> admins = userManager.getAllAdministrators();
-        if (admins.isEmpty()) {
-            users.append("No administrators found.\n");
-        } else {
-            for (Administrator admin : admins) {
-                users.append("- ").append(admin.getName()).append(" (").append(admin.getEmail()).append(")\n");
-            }
-        }
-
-        users.append("\n=== Doctors ===\n");
-        List<Doctor> doctors = userManager.getAllDoctors();
-        if (doctors.isEmpty()) {
-            users.append("No doctors found.\n");
-        } else {
-            for (Doctor doctor : doctors) {
-                users.append("- Dr. ").append(doctor.getName())
-                        .append(" (").append(doctor.getSpecialization())
-                        .append(", ").append(doctor.getExperienceYears()).append(" years exp.)\n");
-
-                // Add the list of assigned patients under each doctor
-                List<Patient> assignedPatients = doctor.getAssignedPatients();
-                if (!assignedPatients.isEmpty()) {
-                    users.append("    Assigned Patients:\n");
-                    for (Patient patient : assignedPatients) {
-                        users.append("    * ").append(patient.getName())
-                                .append(" (ID: ").append(patient.getUserID()).append(")\n");
-                    }
-                } else {
-                    users.append("    No patients assigned\n");
-                }
-            }
-        }
-
-        users.append("\n=== Patients ===\n");
-        List<Patient> patients = userManager.getAllPatients();
-        if (patients.isEmpty()) {
-            users.append("No patients found.\n");
-        } else {
-            for (Patient patient : patients) {
-                users.append("- ").append(patient.getName())
-                        .append(" (").append(patient.getEmail()).append(")\n");
-
-                // Add the list of assigned doctors under each patient
-                List<Doctor> assignedDoctors = patient.getAssignedDoctors();
-                if (!assignedDoctors.isEmpty()) {
-                    users.append("    Assigned Doctors:\n");
-                    for (Doctor doctor : assignedDoctors) {
-                        users.append("    * Dr. ").append(doctor.getName())
-                                .append(" (").append(doctor.getSpecialization()).append(")\n");
-                    }
-                } else {
-                    users.append("    No doctors assigned\n");
-                }
-            }
-        }
-
-        outputArea.setText(users.toString());
-    }
 
     @FXML
     public void handleAssignDoctor(ActionEvent event) {
@@ -294,11 +228,15 @@ public class AdminDashboardController implements DashboardController {
             controller.setUserManager(userManager);
 
             // Get the current stage
-            Scene scene = nameLabel.getScene();
-            Stage stage = (Stage) scene.getWindow();
+            Scene currentScene = nameLabel.getScene();
+            Stage stage = (Stage) currentScene.getWindow();
+            
+            // Get current window dimensions before changing scene
+            double width = stage.getWidth();
+            double height = stage.getHeight();
 
-            // Setup new scene
-            scene = new Scene(loginView);
+            // Setup new scene with same dimensions as current window
+            Scene scene = new Scene(loginView, width, height);
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());
@@ -306,6 +244,11 @@ public class AdminDashboardController implements DashboardController {
 
             stage.setScene(scene);
             stage.setTitle("RHMS - Login");
+            
+            // Ensure the window stays the same size
+            stage.setWidth(width);
+            stage.setHeight(height);
+            
             stage.show();
 
         } catch (IOException e) {

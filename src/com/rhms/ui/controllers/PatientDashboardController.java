@@ -45,6 +45,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
+import java.sql.SQLException;
 
 public class PatientDashboardController implements DashboardController {
 
@@ -843,9 +846,9 @@ public class PatientDashboardController implements DashboardController {
     public void handleRequestDoctor(ActionEvent event) {
         try {
             // Create doctor request dialog
-            Dialog<String> dialog = new Dialog<>();
+            Dialog<Map<String, String>> dialog = new Dialog<>();
             dialog.setTitle("Request Doctor Assignment");
-            dialog.setHeaderText("Request a specific doctor or specialization");
+            dialog.setHeaderText("Request a new doctor or change your current doctor");
 
             // Set the button types
             ButtonType requestButtonType = new ButtonType("Submit Request", ButtonBar.ButtonData.OK_DONE);
@@ -855,38 +858,69 @@ public class PatientDashboardController implements DashboardController {
             GridPane grid = new GridPane();
             grid.setHgap(10);
             grid.setVgap(10);
-            grid.setPadding(new Insets(20, 150, 10, 10));
+            grid.setPadding(new Insets(20, 20, 10, 20));
 
-            TextField requestField = new TextField();
-            requestField.setPromptText("Doctor name or specialization");
-            ComboBox<String> typeCombo = new ComboBox<>();
-            typeCombo.getItems().addAll("Specific Doctor", "Specialization");
-            typeCombo.setValue("Specialization");
-            TextArea detailsArea = new TextArea();
-            detailsArea.setPromptText("Additional details about your request");
-
+            // Request type dropdown (New Doctor or Change Doctor)
+            ComboBox<String> requestTypeCombo = new ComboBox<>();
+            requestTypeCombo.getItems().addAll("New Doctor", "Change Doctor");
+            requestTypeCombo.setValue("New Doctor");
             grid.add(new Label("Request Type:"), 0, 0);
-            grid.add(typeCombo, 1, 0);
-            grid.add(new Label("Doctor/Specialization:"), 0, 1);
-            grid.add(requestField, 1, 1);
+            grid.add(requestTypeCombo, 1, 0);
+
+            // Doctor specialization dropdown
+            ComboBox<String> specializationCombo = new ComboBox<>();
+            specializationCombo.getItems().addAll(
+                "General Practice",
+                "Cardiology",
+                "Dermatology",
+                "Endocrinology",
+                "Gastroenterology",
+                "Neurology",
+                "Obstetrics",
+                "Oncology",
+                "Ophthalmology",
+                "Orthopedics",
+                "Pediatrics",
+                "Psychiatry",
+                "Radiology",
+                "Urology"
+            );
+            specializationCombo.setEditable(true); // Allow custom entries
+            specializationCombo.setValue("General Practice");
+            grid.add(new Label("Doctor Specialization:"), 0, 1);
+            grid.add(specializationCombo, 1, 1);
+
+            // Additional details text area
+            TextArea detailsArea = new TextArea();
+            detailsArea.setPromptText("Provide any additional details about your request");
+            detailsArea.setPrefRowCount(5);
+            detailsArea.setWrapText(true);
             grid.add(new Label("Additional Details:"), 0, 2);
             grid.add(detailsArea, 1, 2);
 
-            // Enable/Disable request button depending on whether text was entered
+            // Enable/Disable request button depending on required fields
             Node requestButton = dialog.getDialogPane().lookupButton(requestButtonType);
-            requestButton.setDisable(true);
 
-            // Validation
-            requestField.textProperty().addListener((observable, oldValue, newValue) -> {
-                requestButton.setDisable(newValue.trim().isEmpty());
+            // Initial validation
+            requestButton.setDisable(specializationCombo.getValue() == null ||
+                                    specializationCombo.getValue().trim().isEmpty());
+
+            // Validation on specialization change
+            specializationCombo.valueProperty().addListener((observable, oldValue, newValue) -> {
+                requestButton.setDisable(newValue == null || newValue.trim().isEmpty());
             });
 
             dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().setPrefWidth(450);
 
-            // Convert result to string when request button is clicked
+            // Convert result when request button is clicked
             dialog.setResultConverter(dialogButton -> {
                 if (dialogButton == requestButtonType) {
-                    return typeCombo.getValue() + ": " + requestField.getText() + "\nDetails: " + detailsArea.getText();
+                    Map<String, String> result = new HashMap<>();
+                    result.put("requestType", requestTypeCombo.getValue());
+                    result.put("specialization", specializationCombo.getValue());
+                    result.put("details", detailsArea.getText());
+                    return result;
                 }
                 return null;
             });
@@ -898,14 +932,42 @@ public class PatientDashboardController implements DashboardController {
             }
 
             // Show dialog and process result
-            Optional<String> result = dialog.showAndWait();
-            result.ifPresent(request -> {
-                // In a real application, you would save this request to the database
-                showMessage("Doctor request submitted successfully!\nYour request: " + request);
+            Optional<Map<String, String>> result = dialog.showAndWait();
+            result.ifPresent(requestData -> {
+                try {
+                    // Get data from the form
+                    String requestType = requestData.get("requestType");
+                    String specialization = requestData.get("specialization");
+                    String details = requestData.get("details");
+
+                    // Create database handler if needed
+                    com.rhms.Database.DoctorRequestDatabaseHandler requestDbHandler =
+                        new com.rhms.Database.DoctorRequestDatabaseHandler();
+
+                    // Save the request to database
+                    int requestId = requestDbHandler.addDoctorRequest(
+                        currentPatient.getUserID(),
+                        requestType,
+                        specialization,
+                        details
+                    );
+
+                    if (requestId > 0) {
+                        showMessage("Doctor request submitted successfully!\nYour request ID: " + requestId);
+                    } else {
+                        showMessage("Failed to submit doctor request. Please try again.");
+                    }
+                } catch (SQLException e) {
+                    showMessage("Database error: " + e.getMessage());
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    showMessage("Error submitting doctor request: " + e.getMessage());
+                    e.printStackTrace();
+                }
             });
 
         } catch (Exception e) {
-            showMessage("Error submitting doctor request: " + e.getMessage());
+            showMessage("Error creating doctor request form: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -924,13 +986,13 @@ public class PatientDashboardController implements DashboardController {
             // Create content
             VBox content = new VBox(10);
             content.setPadding(new Insets(20, 20, 10, 20));
-            
+
             // In a real application, you would load the patient's medical history from a database
             // For now, we'll display a placeholder
             Label placeholder = new Label("Medical history records would be displayed here.");
             placeholder.setStyle("-fx-font-style: italic;");
             content.getChildren().add(placeholder);
-            
+
             // Create a text area for displaying medical history information
             TextArea historyTextArea = new TextArea();
             historyTextArea.setEditable(false);
@@ -941,7 +1003,7 @@ public class PatientDashboardController implements DashboardController {
                     "- Chronic conditions: None\n" +
                     "- Surgeries: Appendectomy (2019)\n" +
                     "- Current medications: Vitamin D supplement\n");
-            
+
             content.getChildren().add(historyTextArea);
 
             // Set content
@@ -954,10 +1016,10 @@ public class PatientDashboardController implements DashboardController {
             if (cssUrl != null) {
                 dialog.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
             }
-            
+
             // Show dialog
             dialog.showAndWait();
-            
+
         } catch (Exception e) {
             showMessage("Error displaying medical history: " + e.getMessage());
             e.printStackTrace();
