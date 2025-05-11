@@ -6,6 +6,7 @@ public class Prescription {
     private String medicationName;
     private String dosage;        // Amount of medication per dose
     private String schedule;      // Timing/frequency of doses
+    private String instructions;  // Additional instructions for the patient
 
     // Creates a new prescription with medication details
     public Prescription(String medicationName, String dosage, String schedule) {
@@ -48,5 +49,13 @@ public class Prescription {
 
     public void addInstructions(String instructions) {
         System.out.println("Instructions: " + instructions);
+    }
+
+    public String getMedicationInfo() {
+        return "Medication: " + medicationName + "\nDosage: " + dosage + "\nSchedule: " + schedule;
+    }
+
+    public String getInstructions() {
+        return "Instructions: " + instructions;
     }
 }

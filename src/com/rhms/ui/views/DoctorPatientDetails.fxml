@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Add a Generate Report button to the doctor's patient details view -->
+<HBox spacing="10" alignment="CENTER_RIGHT">
+    <Button fx:id="generateReportButton" 
+            mnemonicParsing="false" 
+            onAction="#handleGeneratePatientReport" 
+            text="Generate Report" 
+            styleClass="action-button">
+    </Button>
+</HBox>

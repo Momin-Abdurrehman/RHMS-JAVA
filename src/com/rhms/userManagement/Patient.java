@@ -311,4 +311,14 @@ public class Patient extends User {
         }
         return records;
     }
+
+    public List<String> getPrescriptions() {
+        List<String> prescriptions = new ArrayList<>();
+        for (String record : medicalRecords) {
+            if (record.contains("Prescription")) {
+                prescriptions.add(record);
+            }
+        }
+        return prescriptions;
+    }
 }

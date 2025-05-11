@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="800.0" prefWidth="1300.0" styleClass="dashboard-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.ChatWithPatientDashboard">
+    <top>
+        <HBox alignment="CENTER_LEFT" prefHeight="80.0" prefWidth="200.0" spacing="10.0" styleClass="header-container" BorderPane.alignment="CENTER">
+            <children>
+                <Button mnemonicParsing="false" onAction="#handleBack" styleClass="navigation-button" text="← Back" />
+                <Label styleClass="section-title" text="Chat with Patient">
+                    <font>
+                        <Font name="System Bold" size="24.0" />
+                    </font>
+                </Label>
+                <Region HBox.hgrow="ALWAYS" />
+                <ComboBox fx:id="patientComboBox" prefHeight="35.0" prefWidth="250.0" promptText="Select Patient" />
+                <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="refresh-button" text="Refresh" />
+            </children>
+            <padding>
+                <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+            </padding>
+        </HBox>
+    </top>
+    <center>
+        <VBox spacing="10.0" BorderPane.alignment="CENTER">
+            <children>
+                <Label fx:id="statusLabel" text="Please select a patient to start chatting" />
+                <ListView fx:id="messagesListView" prefHeight="500.0" prefWidth="200.0" styleClass="chat-list" VBox.vgrow="ALWAYS" />
+            </children>
+            <padding>
+                <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+            </padding>
+        </VBox>
+    </center>
+    <bottom>
+        <VBox spacing="10.0" BorderPane.alignment="CENTER">
+            <children>
+                <HBox alignment="CENTER" spacing="10.0">
+                    <children>
+                        <TextField fx:id="messageField" onAction="#handleSendMessage" prefHeight="40.0" promptText="Type your message here..." HBox.hgrow="ALWAYS" />
+                        <Button fx:id="sendButton" defaultButton="true" mnemonicParsing="false" onAction="#handleSendMessage" prefHeight="40.0" prefWidth="100.0" styleClass="primary-button" text="Send" />
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER">
+                    <children>
+                        <Label styleClass="footer-text" text="Messages are saved and securely stored for future reference" />
+                    </children>
+                    <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                    </padding>
+                </HBox>
+            </children>
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+            </padding>
+        </VBox>
+    </bottom>
+</BorderPane>

@@ -7,6 +7,8 @@ import com.rhms.notifications.EmailNotification;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Monitors patient vital signs and triggers emergency alerts when critical thresholds are exceeded
@@ -23,6 +25,10 @@ public class EmergencyAlert {
     // Service for sending emergency notifications
     private NotificationService notificationService;
     private EmailNotification emailNotifier;
+    
+    // Track recent alerts to prevent duplicates
+    private Map<Integer, LocalDateTime> recentAlerts;
+    private static final int ALERT_COOLDOWN_MINUTES = 15;
 
     /**
      * Initializes emergency alert system with notification service
@@ -30,6 +36,7 @@ public class EmergencyAlert {
     public EmergencyAlert() {
         this.notificationService = new NotificationService();
         this.emailNotifier = new EmailNotification();
+        this.recentAlerts = new HashMap<>();
     }
 
     /**
@@ -86,9 +93,34 @@ public class EmergencyAlert {
             return;
         }
         
+        // Check if we've sent an alert for this patient recently
+        if (isOnCooldown(patient.getUserID())) {
+            System.out.println("Alert for patient " + patient.getName() + " is on cooldown, skipping notification.");
+            return;
+        }
+        
+        // Send one alert to each assigned doctor
         for (Doctor doctor : assignedDoctors) {
             sendAbnormalVitalsAlert(doctor, patient, vitalSign);
         }
+        
+        // Record this alert to prevent duplicates
+        recentAlerts.put(patient.getUserID(), LocalDateTime.now());
+    }
+    
+    /**
+     * Check if an alert for this patient is currently on cooldown
+     * @param patientId The patient's user ID
+     * @return True if we should skip sending another alert
+     */
+    private boolean isOnCooldown(int patientId) {
+        LocalDateTime lastAlert = recentAlerts.get(patientId);
+        if (lastAlert == null) {
+            return false;
+        }
+        
+        LocalDateTime now = LocalDateTime.now();
+        return lastAlert.plusMinutes(ALERT_COOLDOWN_MINUTES).isAfter(now);
     }
     
     /**

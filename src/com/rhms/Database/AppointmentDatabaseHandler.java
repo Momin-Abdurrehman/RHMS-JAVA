@@ -126,6 +126,7 @@ public class AppointmentDatabaseHandler {
     
     /**
      * Updates the status of an existing appointment in the database
+     * Also updates the updated_at timestamp to current time
      * 
      * @param appointmentId The ID of the appointment to update
      * @param status The new status value
@@ -137,7 +138,8 @@ public class AppointmentDatabaseHandler {
             throw new IllegalArgumentException("Status cannot be null or empty");
         }
         
-        String sql = "UPDATE appointments SET status = ? WHERE appointment_id = ?";
+        String sql = "UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP, " +
+                     "notification_sent = false WHERE appointment_id = ?";
                      
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, status);
@@ -146,12 +148,221 @@ public class AppointmentDatabaseHandler {
             int affectedRows = stmt.executeUpdate();
             
             if (affectedRows > 0) {
-                System.out.println("Appointment ID " + appointmentId + " status updated to: " + status);
+                LOGGER.log(Level.INFO, "Appointment ID {0} status updated to: {1}", 
+                          new Object[]{appointmentId, status});
                 return true;
             } else {
-                System.out.println("No appointment found with ID: " + appointmentId);
+                LOGGER.log(Level.WARNING, "No appointment found with ID: {0}", appointmentId);
                 return false;
             }
+        }
+    }
+    
+    /**
+     * Updates an appointment status and records who made the change
+     * 
+     * @param appointmentId The ID of the appointment to update
+     * @param status The new status value
+     * @param doctorId The ID of the doctor making the change
+     * @return true if the update was successful, false otherwise
+     * @throws SQLException If there is an error updating the database
+     */
+    public boolean acceptAppointment(int appointmentId, String status, int doctorId) throws SQLException {
+        Connection conn = null;
+        boolean autoCommit = true;
+        
+        try {
+            conn = DatabaseConnection.getConnection();
+            autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);  // Start transaction
+            
+            // First, verify appointment is in "Pending" status
+            String checkSql = "SELECT status FROM appointments WHERE appointment_id = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+                checkStmt.setInt(1, appointmentId);
+                ResultSet rs = checkStmt.executeQuery();
+                
+                if (!rs.next()) {
+                    conn.rollback();
+                    return false; // Appointment not found
+                }
+                
+                String currentStatus = rs.getString("status");
+                if (!"Pending".equalsIgnoreCase(currentStatus)) {
+                    conn.rollback();
+                    LOGGER.log(Level.WARNING, 
+                        "Cannot accept appointment ID {0}: current status is {1}, not Pending", 
+                        new Object[]{appointmentId, currentStatus});
+                    return false;
+                }
+            }
+            
+            // Update the appointment status
+            String updateSql = "UPDATE appointments SET " +
+                              "status = ?, " + 
+                              "updated_at = CURRENT_TIMESTAMP, " +
+                              "notification_sent = false, " +  // Reset notification flag
+                              "accepted_by = ? " +
+                              "WHERE appointment_id = ?";
+                         
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                updateStmt.setString(1, status);
+                updateStmt.setInt(2, doctorId);
+                updateStmt.setInt(3, appointmentId);
+                
+                int affectedRows = updateStmt.executeUpdate();
+                
+                if (affectedRows == 0) {
+                    conn.rollback();
+                    return false; // No rows affected
+                }
+            }
+            
+            // Commit the transaction
+            conn.commit();
+            LOGGER.log(Level.INFO, "Appointment ID {0} accepted by doctor ID {1}", 
+                      new Object[]{appointmentId, doctorId});
+            return true;
+            
+        } catch (SQLException e) {
+            // Roll back on error
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error rolling back transaction", ex);
+                }
+            }
+            throw e;
+        } finally {
+            // Restore auto-commit state
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException e) {
+                    LOGGER.log(Level.SEVERE, "Error restoring auto-commit state", e);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Updates the status of an appointment and logs the change
+     * 
+     * @param appointmentId The ID of the appointment to update
+     * @param status The new status value
+     * @param actorId The ID of the user making the change (doctor or patient)
+     * @param isDoctor True if the actor is a doctor, false if patient
+     * @return true if the update was successful, false otherwise
+     * @throws SQLException If there is an error updating the database
+     */
+    public boolean updateAppointmentStatusWithLog(int appointmentId, String status, int actorId, boolean isDoctor) throws SQLException {
+        Connection conn = null;
+        PreparedStatement updateStmt = null;
+        boolean autoCommit = true;
+        
+        try {
+            conn = DatabaseConnection.getConnection();
+            autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);  // Start transaction
+            
+            // First update the appointment status
+            String updateSql = "UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE appointment_id = ?";
+            updateStmt = conn.prepareStatement(updateSql);
+            updateStmt.setString(1, status);
+            updateStmt.setInt(2, appointmentId);
+            
+            int affectedRows = updateStmt.executeUpdate();
+            
+            if (affectedRows == 0) {
+                conn.rollback();
+                return false;  // No appointment found with that ID
+            }
+            
+            // Commit the transaction
+            conn.commit();
+            return true;
+            
+        } catch (SQLException e) {
+            // Roll back transaction on error
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error rolling back transaction", ex);
+                }
+            }
+            throw e;
+        } finally {
+            // Restore auto-commit state
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException e) {
+                    LOGGER.log(Level.SEVERE, "Error restoring auto-commit state", e);
+                }
+            }
+            
+            // Close resources
+            if (updateStmt != null) {
+                try {
+                    updateStmt.close();
+                } catch (SQLException e) {
+                    LOGGER.log(Level.SEVERE, "Error closing statement", e);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Retrieves all pending appointment requests for a doctor
+     * 
+     * @param doctorId The ID of the doctor
+     * @return A list of pending appointment requests
+     * @throws SQLException If there is an error querying the database
+     */
+    public List<Appointment> getPendingAppointmentRequests(int doctorId) throws SQLException {
+        if (userManager == null) {
+            throw new IllegalStateException("UserManager not set, cannot resolve patient references");
+        }
+        
+        String sql = "SELECT * FROM appointments WHERE doctor_id = ? AND status = 'Pending' ORDER BY appointment_date";
+                     
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, doctorId);
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            List<Appointment> pendingRequests = new ArrayList<>();
+            Doctor doctor = userManager.getDoctorById(doctorId);
+            
+            if (doctor == null) {
+                LOGGER.log(Level.WARNING, "Doctor with ID {0} not found in UserManager", doctorId);
+                return pendingRequests; // Return empty list if doctor not found
+            }
+            
+            while (rs.next()) {
+                // Get patient ID from result set
+                int patientId = rs.getInt("patient_id");
+                Patient patient = userManager.getPatientById(patientId);
+                
+                if (patient == null) {
+                    LOGGER.log(Level.WARNING, "Patient with ID {0} not found for appointment {1}",
+                              new Object[]{patientId, rs.getInt("appointment_id")});
+                    continue; // Skip this appointment if patient not found
+                }
+                
+                Appointment appointment = createAppointmentFromResultSet(rs, patient);
+                if (appointment != null) {
+                    // Set doctor explicitly since we already have it
+                    appointment.setDoctor(doctor);
+                    pendingRequests.add(appointment);
+                }
+            }
+            
+            LOGGER.log(Level.INFO, "Loaded {0} pending appointment requests for doctor ID: {1}", 
+                      new Object[]{pendingRequests.size(), doctorId});
+            return pendingRequests;
         }
     }
     
@@ -302,7 +513,7 @@ public class AppointmentDatabaseHandler {
         String notes = rs.getString("notes");
         Timestamp createdAt = rs.getTimestamp("created_at");
         
-        // Create and return the Appointment object
+        // Create the Appointment object
         Appointment appointment = new Appointment(
             appointmentId,
             appointmentDate,
@@ -314,6 +525,52 @@ public class AppointmentDatabaseHandler {
             createdAt
         );
         
+        // Set notification status if the column exists in the result set
+        try {
+            boolean notificationSent = rs.getBoolean("notification_sent");
+            if (notificationSent) {
+                appointment.markNotificationSent();
+            }
+        } catch (SQLException e) {
+            // Column might not exist in older database schema, ignore this error
+            LOGGER.log(Level.FINE, "notification_sent column not found in result set", e);
+        }
+        
         return appointment;
+    }
+    
+    /**
+     * Updates an appointment's notification status
+     * 
+     * @param appointmentId The ID of the appointment
+     * @param notificationSent Whether a notification has been sent
+     * @return true if the update was successful, false otherwise
+     * @throws SQLException If there is an error updating the database
+     */
+    public boolean updateNotificationStatus(int appointmentId, boolean notificationSent) throws SQLException {
+        String sql = "UPDATE appointments SET notification_sent = ?, notification_sent_at = ? WHERE appointment_id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setBoolean(1, notificationSent);
+            
+            if (notificationSent) {
+                stmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+            } else {
+                stmt.setNull(2, Types.TIMESTAMP);
+            }
+            
+            stmt.setInt(3, appointmentId);
+            
+            int affectedRows = stmt.executeUpdate();
+            
+            if (affectedRows > 0) {
+                LOGGER.log(Level.INFO, "Appointment ID {0} notification status updated to: {1}", 
+                          new Object[]{appointmentId, notificationSent});
+                return true;
+            } else {
+                LOGGER.log(Level.WARNING, "No appointment found with ID: {0}", appointmentId);
+                return false;
+            }
+        }
     }
 }

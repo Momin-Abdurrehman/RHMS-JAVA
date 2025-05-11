@@ -14,6 +14,8 @@ public class Appointment {
     private String purpose; // Reason for the appointment
     private String notes; // Additional notes about the appointment
     private Date createdAt; // Timestamp when the appointment was created
+    private boolean notificationSent; // Track if notification has been sent to patient
+    private Date lastStatusChangeDate; // When status was last changed
 
     /**
      * Complete constructor with all fields including appointmentId
@@ -28,6 +30,8 @@ public class Appointment {
         this.status = status;
         this.notes = notes;
         this.createdAt = createdAt;
+        this.notificationSent = false;
+        this.lastStatusChangeDate = createdAt;
     }
 
     /**
@@ -58,7 +62,17 @@ public class Appointment {
     public void setPatient(Patient patient) { this.patient = patient; }
     
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStatus(String status) { 
+        // Record previous status for tracking changes
+        String oldStatus = this.status;
+        this.status = status;
+        this.lastStatusChangeDate = new Date();
+        
+        // Reset notification flag when status changes
+        if (oldStatus == null || !oldStatus.equals(status)) {
+            this.notificationSent = false;
+        }
+    }
     
     public String getPurpose() { return purpose; }
     public void setPurpose(String purpose) { this.purpose = purpose; }
@@ -68,6 +82,12 @@ public class Appointment {
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+    
+    public boolean isNotificationSent() { return notificationSent; }
+    public void setNotificationSent(boolean notificationSent) { this.notificationSent = notificationSent; }
+    
+    public Date getLastStatusChangeDate() { return lastStatusChangeDate; }
+    public void setLastStatusChangeDate(Date lastStatusChangeDate) { this.lastStatusChangeDate = lastStatusChangeDate; }
 
     /**
      * Check if this appointment has been saved to the database
@@ -75,6 +95,34 @@ public class Appointment {
      */
     public boolean isStoredInDatabase() {
         return appointmentId > 0;
+    }
+
+    /**
+     * Mark that a notification has been sent for this appointment
+     */
+    public void markNotificationSent() {
+        this.notificationSent = true;
+    }
+    
+    /**
+     * Check if the appointment is a new request that needs doctor's acceptance
+     * @return true if it's a pending appointment request
+     */
+    public boolean isPendingRequest() {
+        return "Pending".equals(status);
+    }
+    
+    /**
+     * Check if the appointment is upcoming (confirmed and in the future)
+     * @return true if appointment is confirmed and in the future
+     */
+    public boolean isUpcomingAppointment() {
+        if (!"Confirmed".equals(status)) {
+            return false;
+        }
+        
+        Date now = new Date();
+        return appointmentDate.after(now);
     }
 
     // overriding toString to print details of appointment

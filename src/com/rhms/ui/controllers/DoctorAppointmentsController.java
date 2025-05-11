@@ -49,6 +49,7 @@ public class DoctorAppointmentsController {
     @FXML private Button markCompletedButton;
     @FXML private Button cancelAppointmentButton;
     @FXML private Button provideFeedbackButton;
+    @FXML private Button acceptRequestButton; // New button for accepting appointment requests
     @FXML private Button refreshButton;
     @FXML private Button closeButton;
     
@@ -146,6 +147,11 @@ public class DoctorAppointmentsController {
         markCompletedButton.setDisable(true);
         cancelAppointmentButton.setDisable(true);
         provideFeedbackButton.setDisable(true);
+        
+        // Also disable the accept request button until a pending appointment is selected
+        if (acceptRequestButton != null) {
+            acceptRequestButton.setDisable(true);
+        }
     }
 
     /**
@@ -156,6 +162,9 @@ public class DoctorAppointmentsController {
             markCompletedButton.setDisable(true);
             cancelAppointmentButton.setDisable(true);
             provideFeedbackButton.setDisable(true);
+            if (acceptRequestButton != null) {
+                acceptRequestButton.setDisable(true);
+            }
             return;
         }
         
@@ -172,6 +181,11 @@ public class DoctorAppointmentsController {
         
         // Allow feedback for completed appointments
         provideFeedbackButton.setDisable(!isCompleted);
+        
+        // Only allow accepting if status is pending
+        if (acceptRequestButton != null) {
+            acceptRequestButton.setDisable(!isPending);
+        }
     }
 
     /**
@@ -450,6 +464,77 @@ public class DoctorAppointmentsController {
     }
 
     /**
+     * Handle accepting a pending appointment request
+     */
+    @FXML
+    void handleAcceptRequest(ActionEvent event) {
+        Appointment selectedAppointment = appointmentsTable.getSelectionModel().getSelectedItem();
+        if (selectedAppointment == null) {
+            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select an appointment request to accept.");
+            return;
+        }
+        
+        if (!"Pending".equalsIgnoreCase(selectedAppointment.getStatus())) {
+            showAlert(Alert.AlertType.WARNING, "Invalid Action", 
+                     "Only pending appointment requests can be accepted.");
+            return;
+        }
+        
+        // Ask for confirmation
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Accept Appointment Request");
+        confirmAlert.setHeaderText("Accept appointment request from " + selectedAppointment.getPatient().getName());
+        confirmAlert.setContentText("Do you want to accept this appointment request for " + 
+                                   dateFormat.format(selectedAppointment.getAppointmentDate()) + " at " +
+                                   timeFormat.format(selectedAppointment.getAppointmentDate()) + "?");
+        
+        Optional<ButtonType> result = confirmAlert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                // Use the specialized acceptAppointmentRequest method
+                boolean success = appointmentManager.acceptAppointmentRequest(selectedAppointment);
+                
+                if (success) {
+                    showAlert(Alert.AlertType.INFORMATION, "Success", 
+                             "Appointment request has been accepted and confirmed.");
+                    
+                    // Send notification to patient (this could be implemented in a real system)
+                    notifyPatientOfAcceptedAppointment(selectedAppointment);
+                    
+                    loadAppointments(); // Refresh the view
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Error", 
+                             "Failed to accept appointment request.");
+                }
+            } catch (AppointmentManager.AppointmentException e) {
+                LOGGER.log(Level.SEVERE, "Error accepting appointment request", e);
+                showAlert(Alert.AlertType.ERROR, "Error", 
+                         "Failed to accept appointment request: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Send notification to patient about accepted appointment
+     * In a real system, this would send an email, SMS, or in-app notification
+     */
+    private void notifyPatientOfAcceptedAppointment(Appointment appointment) {
+        if (appointment == null || appointment.getPatient() == null) {
+            return;
+        }
+        
+        Patient patient = appointment.getPatient();
+        
+        // In a real system, this would use a notification service
+        LOGGER.log(Level.INFO, "Would send notification to patient {0} (email: {1}) about accepted appointment", 
+                  new Object[]{patient.getName(), patient.getEmail()});
+                  
+        // Log the notification for audit purposes
+        System.out.println("Notification sent to patient " + patient.getName() + 
+                          " about accepted appointment on " + dateFormat.format(appointment.getAppointmentDate()));
+    }
+
+    /**
      * Utility method to show alerts
      */
     private void showAlert(Alert.AlertType type, String title, String content) {
@@ -460,3 +545,4 @@ public class DoctorAppointmentsController {
         alert.showAndWait();
     }
 }
+

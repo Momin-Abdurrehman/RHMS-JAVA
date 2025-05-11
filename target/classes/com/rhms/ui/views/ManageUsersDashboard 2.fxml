@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="900.0" prefWidth="1400.0" 
+            styleClass="manage-users-container"
+            xmlns="http://javafx.com/javafx/17" 
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.rhms.ui.controllers.ManageUsersDashboardController">
+    <top>
+        <VBox spacing="10.0" alignment="CENTER">
+            <padding>
+                <Insets top="15.0" right="15.0" bottom="15.0" left="15.0"/>
+            </padding>
+            <children>
+                <Label text="Manage Users" styleClass="section-title">
+                    <font>
+                        <Font name="System Bold" size="18.0"/>
+                    </font>
+                </Label>
+                <HBox spacing="10.0" alignment="CENTER">
+                    <ComboBox fx:id="userTypeFilter" promptText="Filter by User Type"/>
+                    <TextField fx:id="searchField" promptText="Search by name or email" HBox.hgrow="ALWAYS"/>
+                    <Button text="Search" onAction="#handleSearch"/>
+                </HBox>
+            </children>
+        </VBox>
+    </top>
+    
+    <center>
+        <SplitPane dividerPositions="0.65" orientation="HORIZONTAL">
+            <!-- User Table View -->
+            <VBox spacing="10.0">
+                <padding>
+                    <Insets top="10.0" right="10.0" bottom="10.0" left="15.0"/>
+                </padding>
+                <children>
+                    <Label text="Users List" styleClass="subsection-title" />
+                    <TableView fx:id="usersTableView" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="idColumn" text="ID" prefWidth="70.0"/>
+                            <TableColumn fx:id="nameColumn" text="Name" prefWidth="150.0"/>
+                            <TableColumn fx:id="emailColumn" text="Email" prefWidth="180.0"/>
+                            <TableColumn fx:id="userTypeColumn" text="User Type" prefWidth="120.0"/>
+                        </columns>
+                    </TableView>
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Label fx:id="totalUsersLabel" text="Total Users: 0"/>
+                        <Button text="Remove User" onAction="#handleRemoveUser" styleClass="danger-button"/>
+                    </HBox>
+                </children>
+            </VBox>
+            
+            <!-- User Details Form -->
+            <VBox spacing="15.0" styleClass="form-container">
+                <padding>
+                    <Insets top="10.0" right="15.0" bottom="10.0" left="10.0"/>
+                </padding>
+                <children>
+                    <TitledPane text="User Details" expanded="true">
+                        <content>
+                            <GridPane vgap="10" hgap="10">
+                                <padding>
+                                    <Insets top="15.0" right="15.0" bottom="15.0" left="15.0"/>
+                                </padding>
+                                
+                                <Label text="User Type:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                <ComboBox fx:id="userTypeComboBox" promptText="Select Type" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.hgrow="ALWAYS" maxWidth="Infinity" />
+                                
+                                <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                <TextField fx:id="nameField" promptText="Full Name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                
+                                <Label text="Email:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <TextField fx:id="emailField" promptText="Email Address" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                
+                                <Label text="Username:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <TextField fx:id="usernameField" promptText="Username" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                
+                                <Label text="Password:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                <PasswordField fx:id="passwordField" promptText="Password" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                
+                                <Label text="Phone:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <TextField fx:id="phoneField" promptText="Phone Number" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                
+                                <Label text="Address:" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                <TextField fx:id="addressField" promptText="Address" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                                
+                                <!-- Doctor-specific fields (will be hidden/shown based on user type) -->
+                                <VBox fx:id="doctorFieldsContainer" spacing="10" GridPane.columnSpan="2" GridPane.rowIndex="7">
+                                    <Label text="Doctor Specific Information" styleClass="subsection-label" />
+                                    <GridPane vgap="10" hgap="10">
+                                        <Label text="Specialization:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextField fx:id="specializationField" promptText="Medical Specialization" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                        
+                                        <Label text="Experience (years):" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <Spinner fx:id="experienceYearsSpinner" min="0" max="50" editable="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    </GridPane>
+                                </VBox>
+                                
+                                <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.columnSpan="2" GridPane.rowIndex="8">
+                                    <Button fx:id="clearButton" text="Clear Form" onAction="#handleClearForm" />
+                                    <Button fx:id="addUserButton" text="Add User" styleClass="primary-button" onAction="#handleAddUser" />
+                                </HBox>
+                                
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="NEVER" minWidth="100" />
+                                    <ColumnConstraints hgrow="ALWAYS" minWidth="200" />
+                                </columnConstraints>
+                            </GridPane>
+                        </content>
+                    </TitledPane>
+                    
+                    <HBox alignment="CENTER">
+                        <Label fx:id="statusLabel" styleClass="status-label" />
+                    </HBox>
+                    
+                    <Region VBox.vgrow="ALWAYS" />
+                    
+                    <!-- Bottom action buttons -->
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Button text="Close" onAction="#handleClose" />
+                    </HBox>
+                </children>
+            </VBox>
+        </SplitPane>
+    </center>
+</BorderPane>

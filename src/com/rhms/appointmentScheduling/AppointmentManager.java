@@ -1,6 +1,8 @@
 package com.rhms.appointmentScheduling;
 
 import com.rhms.Database.AppointmentDatabaseHandler;
+import com.rhms.notifications.AppointmentNotificationService;
+import com.rhms.notifications.NotificationService;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 
@@ -18,6 +20,7 @@ import java.util.logging.Logger;
 public class AppointmentManager {
     private static final Logger LOGGER = Logger.getLogger(AppointmentManager.class.getName());
     private AppointmentDatabaseHandler dbHandler;
+    private AppointmentNotificationService notificationService;
 
     public AppointmentManager(AppointmentDatabaseHandler dbHandler) {
         if (dbHandler == null) {
@@ -25,7 +28,19 @@ public class AppointmentManager {
             throw new IllegalArgumentException("Database handler cannot be null");
         }
         this.dbHandler = dbHandler;
-        LOGGER.log(Level.INFO, "AppointmentManager initialized successfully");
+        
+        // Initialize notification services
+        NotificationService coreNotificationService = new NotificationService();
+        this.notificationService = new AppointmentNotificationService(coreNotificationService);
+        
+        LOGGER.log(Level.INFO, "AppointmentManager initialized successfully with notification support");
+    }
+
+    /**
+     * Expose the AppointmentDatabaseHandler for external use (e.g., notification status updates).
+     */
+    public AppointmentDatabaseHandler getDbHandler() {
+        return dbHandler;
     }
 
     /**
@@ -146,7 +161,7 @@ public class AppointmentManager {
     }
 
     /**
-     * Update the status of an appointment
+     * Update the status of an appointment and send notifications if needed
      *
      * @param appointment The appointment to update
      * @param newStatus The new status value
@@ -166,6 +181,9 @@ public class AppointmentManager {
             throw new AppointmentException("Appointment status cannot be empty");
         }
         
+        // Save old status for notification purposes
+        String oldStatus = appointment.getStatus();
+        
         // Validate appointment is in database
         if (!appointment.isStoredInDatabase()) {
             LOGGER.log(Level.WARNING, "Cannot update appointment that has not been saved to database: {0}", 
@@ -179,8 +197,8 @@ public class AppointmentManager {
             throw new AppointmentException("Invalid appointment ID");
         }
         
-        LOGGER.log(Level.INFO, "Attempting to update appointment {0} status to {1}", 
-                  new Object[]{appointmentId, newStatus});
+        LOGGER.log(Level.INFO, "Attempting to update appointment {0} status from {1} to {2}", 
+                  new Object[]{appointmentId, oldStatus, newStatus});
 
         try {
             // Check if database handler is still valid
@@ -197,6 +215,17 @@ public class AppointmentManager {
                     appointment.setStatus(newStatus);
                     LOGGER.log(Level.INFO, "Successfully updated appointment {0} status to {1}", 
                               new Object[]{appointmentId, newStatus});
+                    
+                    // Send notification if status changed
+                    if (!oldStatus.equals(newStatus) && notificationService != null) {
+                        boolean notified = notificationService.notifyStatusChange(appointment, oldStatus, newStatus);
+                        if (notified) {
+                            appointment.markNotificationSent();
+                            LOGGER.log(Level.INFO, "Notification sent for appointment {0} status change: {1} -> {2}", 
+                                      new Object[]{appointmentId, oldStatus, newStatus});
+                        }
+                    }
+                    
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, "Failed to update in-memory appointment status: {0}", e.getMessage());
                     // The database was updated successfully, so we still return true
@@ -224,6 +253,79 @@ public class AppointmentManager {
             // Catch any other unexpected exceptions
             LOGGER.log(Level.SEVERE, "Unexpected error while updating appointment status", e);
             throw new AppointmentException("An unexpected error occurred while updating the appointment status: " + e.getMessage(), e);
+        }
+        
+        // This line should not be reached if the exceptions are properly thrown
+    }
+
+    /**
+     * Accept an appointment request from a patient
+     * Updates the status to "Confirmed" and sends a notification to the patient
+     * 
+     * @param appointment The appointment to accept
+     * @return true if accepted successfully, false otherwise
+     * @throws AppointmentException If there's an error accepting the appointment
+     */
+    public boolean acceptAppointmentRequest(Appointment appointment) throws AppointmentException {
+        // Validate appointment
+        if (appointment == null) {
+            LOGGER.log(Level.SEVERE, "Attempted to accept null appointment");
+            throw new AppointmentException("Cannot accept null appointment");
+        }
+        
+        // Verify appointment is in "Pending" status
+        if (!"Pending".equals(appointment.getStatus())) {
+            LOGGER.log(Level.WARNING, "Cannot accept appointment that is not in Pending status: {0}", 
+                      appointment.getStatus());
+            throw new AppointmentException("Only pending appointments can be accepted");
+        }
+        
+        // Verify appointment has a doctor
+        Doctor doctor = appointment.getDoctor();
+        if (doctor == null) {
+            LOGGER.log(Level.SEVERE, "Cannot accept appointment with null doctor");
+            throw new AppointmentException("Appointment doctor cannot be null");
+        }
+        
+        int appointmentId = appointment.getAppointmentId();
+        int doctorId = doctor.getUserID();
+        
+        LOGGER.log(Level.INFO, "Doctor {0} accepting appointment {1}", 
+                  new Object[]{doctorId, appointmentId});
+        
+        try {
+            // Use special database method for accepting (could include additional tracking)
+            boolean accepted = dbHandler.acceptAppointment(appointmentId, "Confirmed", doctorId);
+            
+            if (accepted) {
+                // Update in-memory status
+                String oldStatus = appointment.getStatus();
+                appointment.setStatus("Confirmed");
+                
+                // Send notification to patient
+                if (notificationService != null) {
+                    boolean notified = notificationService.notifyAppointmentAccepted(appointment);
+                    if (notified) {
+                        appointment.markNotificationSent();
+                        LOGGER.log(Level.INFO, "Acceptance notification sent for appointment {0}", appointmentId);
+                    } else {
+                        LOGGER.log(Level.WARNING, "Failed to send acceptance notification for appointment {0}", 
+                                 appointmentId);
+                    }
+                }
+                
+                LOGGER.log(Level.INFO, "Successfully accepted appointment {0}", appointmentId);
+                return true;
+            } else {
+                LOGGER.log(Level.WARNING, "Failed to accept appointment {0} in database", appointmentId);
+                return false;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error accepting appointment " + appointmentId, e);
+            throw new AppointmentException("Database error while accepting appointment: " + e.getMessage(), e);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error accepting appointment " + appointmentId, e);
+            throw new AppointmentException("Unexpected error while accepting appointment: " + e.getMessage(), e);
         }
     }
 

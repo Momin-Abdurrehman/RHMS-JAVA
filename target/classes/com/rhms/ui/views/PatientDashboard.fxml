@@ -5,11 +5,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="900.0" prefWidth="1400.0" styleClass="dashboard-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.PatientDashboardController">
+<BorderPane prefHeight="900.0" prefWidth="1400.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.PatientDashboardController">
     <left>
-        <VBox prefHeight="200.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" BorderPane.alignment="CENTER">
+        <VBox prefHeight="200.0" prefWidth="200.0" spacing="10.0" style="-fx-background-color: #2c3e50;" BorderPane.alignment="CENTER">
             <children>
-                <VBox alignment="CENTER" prefHeight="120.0" prefWidth="200.0" styleClass="user-profile-box">
+                <VBox alignment="CENTER" prefHeight="120.0" prefWidth="200.0" style="-fx-background-color: #34495e;">
                     <children>
                         <Label fx:id="nameLabel" styleClass="user-name" text="Patient Name" />
                         <Label styleClass="user-role" text="Patient" />
@@ -23,6 +23,7 @@
                 <Button mnemonicParsing="false" onAction="#handleFeedback" styleClass="sidebar-button" text="Doctor Feedback" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleEmergencyAlert" styleClass="sidebar-button" text="Emergency Alert" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleUploadVitals" styleClass="sidebar-button" text="Upload Vitals" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleChatWithDoctor" styleClass="sidebar-button" text="Chat with Doctor" maxWidth="Infinity" />
                 <Region VBox.vgrow="ALWAYS" />
                 <Button mnemonicParsing="false" onAction="#handleLogout" styleClass="logout-button" text="Logout" maxWidth="Infinity" />
             </children>

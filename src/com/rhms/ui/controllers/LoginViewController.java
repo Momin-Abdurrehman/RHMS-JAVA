@@ -8,14 +8,24 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.io.File;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LoginViewController {
+
+    private static final Logger LOGGER = Logger.getLogger(LoginViewController.class.getName());
 
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
@@ -28,114 +38,193 @@ public class LoginViewController {
     private User currentUser;
 
     public void initialize() {
-        dbHandler = new UserDatabaseHandler();
-        
-        // Add enter key support for login
-        passwordField.setOnAction(event -> handleLogin(event));
+        try {
+            // Initialize user manager if not already set
+            if (userManager == null) {
+                userManager = new UserManager();
+                LOGGER.info("UserManager initialized in LoginViewController");
+            }
+
+            dbHandler = new UserDatabaseHandler();
+            LOGGER.info("UserDatabaseHandler initialized in LoginViewController");
+
+            // Add enter key support for login
+            passwordField.setOnAction(event -> handleLogin(event));
+            loginButton.setOnAction(event -> handleLogin(event));
+
+            LOGGER.info("LoginViewController initialization complete");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error during LoginViewController initialization", e);
+            showErrorMessage("Initialization error: " + e.getMessage());
+        }
     }
 
     public void setUserManager(UserManager userManager) {
         this.userManager = userManager;
+        LOGGER.info("UserManager set externally in LoginViewController");
     }
 
     @FXML
     private void handleLogin(ActionEvent event) {
-        String username = usernameField.getText().trim();
-        String password = passwordField.getText().trim();
-        
-        // Basic validation
-        if (username.isEmpty() || password.isEmpty()) {
-            showErrorMessage("Username and password cannot be empty");
-            return;
-        }
-        
-        // Attempt login
-        User user = dbHandler.getUserByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
+        try {
+            String username = usernameField.getText().trim();
+            String password = passwordField.getText().trim();
+
+            LOGGER.info("Login attempt with username: " + username);
+
+            // Basic validation
+            if (username.isEmpty() || password.isEmpty()) {
+                showErrorMessage("Username and password cannot be empty");
+                return;
+            }
+
+            // Attempt login
+            User user = dbHandler.getUserByUsername(username);
+            if (user == null) {
+                showErrorMessage("Invalid username or password");
+                passwordField.clear();
+                LOGGER.warning("Login failed: User not found for username: " + username);
+                return;
+            }
+
+            if (!user.getPassword().equals(password)) {
+                showErrorMessage("Invalid username or password");
+                passwordField.clear();
+                LOGGER.warning("Login failed: Incorrect password for username: " + username);
+                return;
+            }
+
+            // Login successful
             currentUser = user;
-            messageLabel.setText("");
-            
+            messageLabel.setText("Login successful!");
+            LOGGER.info("Login successful for user: " + username);
+
             // Navigate to appropriate dashboard based on user type
+            String viewName = getDashboardViewName(user);
+            LOGGER.info("Loading dashboard: " + viewName + " for user type: " + user.getClass().getSimpleName());
+
             try {
-                String viewName = getDashboardViewName(user);
-                
-                // Load dashboard FXML
-                URL dashboardUrl = findResource("com/rhms/ui/views/" + viewName);
-                
+                // Load dashboard FXML with absolute path first
+                String fxmlPath = "/com/rhms/ui/views/" + viewName;
+                URL dashboardUrl = getClass().getResource(fxmlPath);
+
+                if (dashboardUrl == null) {
+                    LOGGER.warning("Could not find dashboard at: " + fxmlPath);
+                    // Try alternate path formats
+                    dashboardUrl = findResource("com/rhms/ui/views/" + viewName);
+                }
+
                 if (dashboardUrl == null) {
                     showErrorMessage("Could not find dashboard view: " + viewName);
+                    LOGGER.severe("Dashboard view not found: " + viewName);
                     return;
                 }
-                
+
+                LOGGER.info("Dashboard resource found at: " + dashboardUrl);
                 FXMLLoader loader = new FXMLLoader(dashboardUrl);
                 Parent dashboardView = loader.load();
-                
+
                 // Pass user to the dashboard controller
                 Object controller = loader.getController();
                 if (controller instanceof DashboardController) {
-                    ((DashboardController) controller).setUser(user);
-                    ((DashboardController) controller).setUserManager(userManager);
-                    ((DashboardController) controller).initializeDashboard();
+                    LOGGER.info("Setting up controller: " + controller.getClass().getName());
+                    DashboardController dashboardController = (DashboardController) controller;
+                    dashboardController.setUser(user);
+                    dashboardController.setUserManager(userManager);
+                    dashboardController.initializeDashboard();
+                } else {
+                    LOGGER.warning("Controller does not implement DashboardController: " +
+                                 (controller != null ? controller.getClass().getName() : "null"));
                 }
-                
+
                 // Setup new scene
                 Scene scene = new Scene(dashboardView);
-                
+
                 // Load CSS
                 URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
                 if (cssUrl != null) {
                     scene.getStylesheets().add(cssUrl.toExternalForm());
+                    LOGGER.info("CSS loaded successfully");
+                } else {
+                    LOGGER.warning("CSS not found");
                 }
-                
+
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 stage.setScene(scene);
                 stage.setTitle("RHMS - " + getUserTypeString(user) + " Dashboard");
                 stage.show();
-                
+                LOGGER.info("Dashboard displayed successfully");
+
             } catch (IOException e) {
                 showErrorMessage("Error loading dashboard: " + e.getMessage());
+                LOGGER.log(Level.SEVERE, "Error loading dashboard", e);
                 e.printStackTrace();
             }
-        } else {
-            showErrorMessage("Invalid username or password");
-            passwordField.clear();
+        } catch (Exception e) {
+            showErrorMessage("Unexpected error: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Unexpected error in handleLogin", e);
+            e.printStackTrace();
         }
     }
-    
     @FXML
     private void handleRegister(ActionEvent event) {
+        // Registration handling code here
+    }
+
+    private void loadDashboardForUser(User user) {
         try {
-            // Load registration view
-            URL registrationUrl = findResource("com/rhms/ui/views/RegistrationDashboard.fxml");
+            String fxmlFile;
+
+            // Determine which dashboard to load based on user role
+            if (user instanceof Patient) {
+                fxmlFile = "PatientDashboard.fxml";
+            } else {
+                fxmlFile = "StaffDashboard.fxml";
+            }
             
-            if (registrationUrl == null) {
-                showErrorMessage("Could not find registration view");
+            // Load the resource bundle for internationalization
+            ResourceBundle bundle = ResourceBundle.getBundle("com.rhms.ui.resources.UIResources",
+                                                           Locale.getDefault());
+
+            // Create the FXML loader with the resource bundle
+            URL url = findResource("com/rhms/ui/views/" + fxmlFile);
+            if (url == null) {
+                showErrorMessage("Error loading dashboard: Could not find " + fxmlFile);
                 return;
             }
             
-            FXMLLoader loader = new FXMLLoader(registrationUrl);
-            Parent registrationView = loader.load();
+            FXMLLoader loader = new FXMLLoader(url, bundle);
+            Parent dashboardView = loader.load();
             
-            // Pass userManager to registration controller
-            RegistrationController controller = loader.getController();
+            // Get the controller and initialize it with user data
+            DashboardController controller = loader.getController();
+            controller.setUser(user);
             controller.setUserManager(userManager);
+            controller.initializeDashboard();
+
+            // Set up the scene
+            Scene scene = dashboardView.getScene();
+            if (scene == null) {
+                scene = new Scene(dashboardView);
+            }
             
-            // Setup new scene
-            Scene scene = new Scene(registrationView);
-            
-            // Load CSS
+            // Apply CSS if available
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());
             }
             
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            // Show the dashboard in the current stage
+            Stage stage = (Stage) loginButton.getScene().getWindow();
             stage.setScene(scene);
-            stage.setTitle("RHMS - Registration");
+            stage.setTitle("RHMS - Dashboard");
             stage.show();
             
         } catch (IOException e) {
-            showErrorMessage("Error loading registration page: " + e.getMessage());
+            showErrorMessage("Error loading dashboard: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            showErrorMessage("Error initializing dashboard: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -144,25 +233,40 @@ public class LoginViewController {
      * Helper method to find resources using multiple approaches
      */
     private URL findResource(String path) {
+        LOGGER.info("Attempting to find resource: " + path);
+
+        // Try various class loaders and approaches
         URL url = getClass().getClassLoader().getResource(path);
-        
-        // Try alternate approaches if the resource wasn't found
-        if (url == null) {
-            url = getClass().getResource("/" + path);
+        if (url != null) {
+            LOGGER.info("Found resource using getClassLoader(): " + url);
+            return url;
+        }
+
+        url = getClass().getResource("/" + path);
+        if (url != null) {
+            LOGGER.info("Found resource using getResource with leading slash: " + url);
+            return url;
+        }
+
+        url = getClass().getResource(path);
+        if (url != null) {
+            LOGGER.info("Found resource using getResource without leading slash: " + url);
+            return url;
         }
         
-        if (url == null) {
-            try {
-                File file = new File("src/" + path);
-                if (file.exists()) {
-                    url = file.toURI().toURL();
-                }
-            } catch (Exception e) {
-                // Silently handle exception - will return null if file not found
+        try {
+            File file = new File("src/" + path);
+            if (file.exists()) {
+                url = file.toURI().toURL();
+                LOGGER.info("Found resource as file: " + url);
+                return url;
             }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error checking file existence", e);
         }
         
-        return url;
+        LOGGER.warning("Resource not found after all attempts: " + path);
+        return null;
     }
     
     private String getDashboardViewName(User user) {
@@ -191,5 +295,11 @@ public class LoginViewController {
     
     private void showErrorMessage(String message) {
         messageLabel.setText(message);
+        LOGGER.warning("Error message displayed: " + message);
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

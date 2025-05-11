@@ -198,7 +198,7 @@ public class UserDatabaseHandler {
     }
 
     // Fetch a user by their ID
-    private User getUserById(int userId) {
+    public User getUserById(int userId) {
         String sql = "SELECT * FROM Users WHERE user_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, userId);

@@ -13,7 +13,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +41,15 @@ public class AssignDoctorController {
     @FXML private TableColumn<DoctorPatientAssignment, String> assignmentDoctorColumn;
     @FXML private TableColumn<DoctorPatientAssignment, String> assignmentPatientColumn;
 
+    // Fields for doctor requests
+    @FXML private TableView<DoctorRequest> requestsTable;
+    @FXML private TableColumn<DoctorRequest, String> requestPatientColumn;
+    @FXML private TableColumn<DoctorRequest, String> requestTypeColumn;
+    @FXML private TableColumn<DoctorRequest, String> requestSpecializationColumn;
+    @FXML private TableColumn<DoctorRequest, String> requestDateColumn;
+    @FXML private TableColumn<DoctorRequest, String> requestStatusColumn;
+    @FXML private Button refreshRequestsButton;
+
     @FXML private TextArea messageArea;
     @FXML private Button assignButton;
     @FXML private Button removeButton;
@@ -44,6 +59,8 @@ public class AssignDoctorController {
     private ObservableList<Doctor> doctors;
     private ObservableList<Patient> patients;
     private ObservableList<DoctorPatientAssignment> assignments;
+    private ObservableList<DoctorRequest> doctorRequests = FXCollections.observableArrayList();
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     /**
      * Initialize the controller with user manager
@@ -77,8 +94,21 @@ public class AssignDoctorController {
         assignmentPatientColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getPatient().getName()));
 
+        // Initialize table columns for doctor requests - updated for new schema
+        requestPatientColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getPatientName()));
+        requestTypeColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getRequestType()));
+        requestSpecializationColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getDoctorSpecialization()));
+        requestDateColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(formatDate(cellData.getValue().getRequestDate())));
+        requestStatusColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getStatus()));
+
         // Load data
         loadDoctorsAndPatients();
+        loadDoctorRequests();
 
         // Add selection listeners
         doctorTable.getSelectionModel().selectedItemProperty().addListener(
@@ -93,6 +123,14 @@ public class AssignDoctorController {
 
         // Set initial message
         messageArea.setText("Select a doctor and patient to create an assignment.");
+    }
+
+    /**
+     * Format date for display
+     */
+    private String formatDate(Date date) {
+        if (date == null) return "N/A";
+        return dateFormat.format(date);
     }
 
     /**
@@ -147,6 +185,49 @@ public class AssignDoctorController {
     }
 
     /**
+     * Load doctor requests from database - updated for new schema
+     */
+    private void loadDoctorRequests() {
+        doctorRequests.clear();
+        
+        try {
+            Connection conn = com.rhms.Database.DatabaseConnection.getConnection();
+            String query = "SELECT r.request_id, r.user_id, u.name AS patient_name, r.request_type, " +
+                           "r.doctor_specialization, r.additional_details, r.request_date, r.status " +
+                           "FROM Doctor_Requests r " +
+                           "JOIN Users u ON r.user_id = u.user_id " +
+                           "ORDER BY r.request_date DESC";
+            
+            try (PreparedStatement stmt = conn.prepareStatement(query);
+                 ResultSet rs = stmt.executeQuery()) {
+                
+                while (rs.next()) {
+                    int requestId = rs.getInt("request_id");
+                    int userId = rs.getInt("user_id");
+                    String patientName = rs.getString("patient_name");
+                    String requestType = rs.getString("request_type");
+                    String specialization = rs.getString("doctor_specialization");
+                    String additionalDetails = rs.getString("additional_details");
+                    Date requestDate = rs.getTimestamp("request_date");
+                    String status = rs.getString("status");
+                    
+                    DoctorRequest request = new DoctorRequest(
+                            requestId, userId, patientName, requestType, specialization,
+                            additionalDetails, requestDate, status);
+                    doctorRequests.add(request);
+                }
+            }
+            
+            requestsTable.setItems(doctorRequests);
+            messageArea.appendText("\nLoaded " + doctorRequests.size() + " doctor requests.");
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error loading doctor requests", e);
+            messageArea.appendText("\nError loading doctor requests: " + e.getMessage());
+        }
+    }
+
+    /**
      * Update button state based on selections
      */
     private void updateButtonState() {
@@ -159,6 +240,15 @@ public class AssignDoctorController {
 
         // Remove button enabled if an assignment is selected
         removeButton.setDisable(selectedAssignment == null);
+    }
+
+    /**
+     * Handle refreshing the doctor requests table
+     */
+    @FXML
+    private void handleRefreshRequests() {
+        loadDoctorRequests();
+        messageArea.setText("Doctor requests refreshed.");
     }
 
     /**
@@ -243,8 +333,9 @@ public class AssignDoctorController {
         // Refresh the patients table to update "Has Doctor" column
         patientTable.refresh();
 
-        // Reload assignments
+        // Reload assignments and requests
         loadExistingAssignments();
+        loadDoctorRequests();
     }
 
     /**
@@ -295,4 +386,41 @@ public class AssignDoctorController {
             return 31 * doctor.getUserID() + patient.getUserID();
         }
     }
+    
+    /**
+     * Inner class to represent a doctor request - updated for new schema
+     */
+    public static class DoctorRequest {
+        private final int requestId;
+        private final int userId;
+        private final String patientName;
+        private final String requestType;
+        private final String doctorSpecialization;
+        private final String additionalDetails;
+        private final Date requestDate;
+        private final String status;
+        
+        public DoctorRequest(int requestId, int userId, String patientName, 
+                            String requestType, String doctorSpecialization, 
+                            String additionalDetails, Date requestDate, String status) {
+            this.requestId = requestId;
+            this.userId = userId;
+            this.patientName = patientName;
+            this.requestType = requestType;
+            this.doctorSpecialization = doctorSpecialization;
+            this.additionalDetails = additionalDetails;
+            this.requestDate = requestDate;
+            this.status = status;
+        }
+        
+        public int getRequestId() { return requestId; }
+        public int getUserId() { return userId; }
+        public String getPatientName() { return patientName; }
+        public String getRequestType() { return requestType; }
+        public String getDoctorSpecialization() { return doctorSpecialization; }
+        public String getAdditionalDetails() { return additionalDetails; }
+        public Date getRequestDate() { return requestDate; }
+        public String getStatus() { return status; }
+    }
 }
+

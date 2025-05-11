@@ -3,6 +3,8 @@ package com.rhms.ui.controllers;
 import com.rhms.Database.AppointmentDatabaseHandler;
 import com.rhms.appointmentScheduling.Appointment;
 import com.rhms.appointmentScheduling.AppointmentManager;
+import com.rhms.notifications.Notification;
+import com.rhms.notifications.NotificationService;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.UserManager;
@@ -13,10 +15,17 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -26,8 +35,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class PatientAppointmentsController {
+public class PatientAppointmentsController implements Initializable {
+    private static final Logger LOGGER = Logger.getLogger(PatientAppointmentsController.class.getName());
 
     @FXML private TableView<Appointment> appointmentsTable;
     @FXML private TableColumn<Appointment, String> dateColumn;
@@ -39,6 +52,7 @@ public class PatientAppointmentsController {
 
     @FXML private Label totalAppointmentsLabel;
     @FXML private Label upcomingAppointmentsLabel;
+    @FXML private Label notificationCountLabel;
 
     @FXML private Label dateValueLabel;
     @FXML private Label timeValueLabel;
@@ -50,22 +64,40 @@ public class PatientAppointmentsController {
     @FXML private Button scheduleButton;
     @FXML private Button cancelButton;
     @FXML private Button closeButton;
+    @FXML private Button viewNotificationsButton;
 
     private Patient currentPatient;
     private UserManager userManager;
     private AppointmentManager appointmentManager;
+    private NotificationService notificationService;
     private ObservableList<Appointment> appointmentList;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // This method will be called by JavaFX after @FXML fields are injected
+        // We don't do much here since we need the patient and userManager objects first
+        // Those will be set in the initialize(Patient, UserManager) method
+    }
+
     public void initialize(Patient patient, UserManager userManager) {
         this.currentPatient = patient;
         this.userManager = userManager;
 
+        // Initialize services
         AppointmentDatabaseHandler dbHandler = new AppointmentDatabaseHandler(userManager);
         this.appointmentManager = new AppointmentManager(dbHandler);
+        this.notificationService = new NotificationService();
 
+        setupTableColumns();
+        setupEventHandlers();
+        loadAppointments();
+        updateNotificationBadge();
+    }
+
+    private void setupTableColumns() {
         dateColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(dateFormat.format(cellData.getValue().getAppointmentDate())));
 
@@ -86,20 +118,94 @@ public class PatientAppointmentsController {
         notesColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getNotes()));
 
+        // Add custom cell factory for status column to highlight accepted (confirmed) appointments
+        statusColumn.setCellFactory(column -> new TableCell<Appointment, String>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(status);
+                    
+                    // Set style based on status
+                    if ("Confirmed".equalsIgnoreCase(status)) {
+                        setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                    } else if ("Pending".equalsIgnoreCase(status)) {
+                        setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
+                    } else if ("Cancelled".equalsIgnoreCase(status)) {
+                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    } else if ("Completed".equalsIgnoreCase(status)) {
+                        setStyle("-fx-text-fill: blue; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("");
+                    }
+                    
+                    // Special styling for newly accepted appointments that have not been seen
+                    Appointment appointment = getTableView().getItems().get(getIndex());
+                    if ("Confirmed".equalsIgnoreCase(status) && 
+                        !appointment.isNotificationSent()) {
+                        setStyle("-fx-text-fill: green; -fx-font-weight: bold; -fx-background-color: #e6ffe6;");
+                    }
+                }
+            }
+        });
+    }
+    
+    private void setupEventHandlers() {
         appointmentsTable.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldSelection, newSelection) -> displayAppointmentDetails(newSelection));
 
         cancelButton.setDisable(true);
 
-        loadAppointments();
-
         appointmentsTable.setRowFactory(tv -> {
-            TableRow<Appointment> row = new TableRow<>();
+            TableRow<Appointment> row = new TableRow<Appointment>() {
+                @Override
+                protected void updateItem(Appointment appointment, boolean empty) {
+                    super.updateItem(appointment, empty);
+                    
+                    if (empty || appointment == null) {
+                        setStyle("");
+                    } else if ("Confirmed".equals(appointment.getStatus()) && 
+                               !appointment.isNotificationSent()) {
+                        // Highlight newly confirmed appointments
+                        setStyle("-fx-background-color: #e6ffe6;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            };
+            
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     displayAppointmentDetails(row.getItem());
+                    
+                    // Mark this appointment's notification as seen if it's newly confirmed
+                    Appointment appointment = row.getItem();
+                    if ("Confirmed".equals(appointment.getStatus()) && 
+                        !appointment.isNotificationSent()) {
+                        try {
+                            // Update the notification status in the database
+                            appointmentManager.getDbHandler().updateNotificationStatus(
+                                appointment.getAppointmentId(), true);
+                                
+                            // Update in-memory object
+                            appointment.markNotificationSent();
+                            
+                            // Refresh the table to update highlighting
+                            appointmentsTable.refresh();
+                            
+                            // Update notification badge
+                            updateNotificationBadge();
+                        } catch (Exception e) {
+                            LOGGER.log(Level.WARNING, "Failed to mark notification as seen", e);
+                        }
+                    }
                 }
             });
+            
             return row;
         });
 
@@ -132,6 +238,40 @@ public class PatientAppointmentsController {
                         ("Pending".equals(appointment.getStatus()) || "Confirmed".equals(appointment.getStatus())))
                 .count();
         upcomingAppointmentsLabel.setText("Upcoming: " + upcoming);
+    }
+    
+    /**
+     * Update the notification badge/count label with the number of unread appointment notifications
+     */
+    private void updateNotificationBadge() {
+        if (notificationCountLabel != null) {
+            try {
+                // Count appointments with unseen notifications (Confirmed but not marked as notification sent)
+                long unreadCount = appointmentList.stream()
+                    .filter(a -> "Confirmed".equals(a.getStatus()) && !a.isNotificationSent())
+                    .count();
+                
+                if (unreadCount > 0) {
+                    notificationCountLabel.setText(String.valueOf(unreadCount));
+                    notificationCountLabel.setVisible(true);
+                    
+                    // Update the viewNotificationsButton to show there are new notifications
+                    if (viewNotificationsButton != null) {
+                        viewNotificationsButton.setStyle("-fx-base: #ffcc00;"); // Highlight the button
+                    }
+                } else {
+                    notificationCountLabel.setVisible(false);
+                    
+                    // Reset button style
+                    if (viewNotificationsButton != null) {
+                        viewNotificationsButton.setStyle("");
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error updating notification badge", e);
+                notificationCountLabel.setVisible(false);
+            }
+        }
     }
 
     private void displayAppointmentDetails(Appointment appointment) {
@@ -222,12 +362,202 @@ public class PatientAppointmentsController {
         }
     }
 
-    private URL findResource(String path) {
-        URL url = getClass().getClassLoader().getResource(path);
-        if (url == null) {
-            url = getClass().getResource("/" + path);
+    @FXML
+    public void handleViewNotifications(ActionEvent event) {
+        try {
+            // Create a dialog for viewing notifications
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("Appointment Notifications");
+            dialog.setHeaderText("Recent Appointment Updates");
+            
+            // Set button types
+            ButtonType markAllReadType = new ButtonType("Mark All as Read", ButtonBar.ButtonData.APPLY);
+            ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+            dialog.getDialogPane().getButtonTypes().addAll(markAllReadType, closeButtonType);
+            
+            // Create content area
+            VBox contentBox = new VBox(10);
+            contentBox.setPadding(new Insets(20));
+            
+            // Find appointments with unseen notifications
+            List<Appointment> unreadNotifications = appointmentList.stream()
+                .filter(a -> "Confirmed".equals(a.getStatus()) && !a.isNotificationSent())
+                .collect(java.util.stream.Collectors.toList());
+                
+            // Find recent status changes (even if marked as read)
+            Date cutoffDate = new Date(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)); // 7 days ago
+            List<Appointment> recentStatusChanges = appointmentList.stream()
+                .filter(a -> a.getLastStatusChangeDate() != null && 
+                           a.getLastStatusChangeDate().after(cutoffDate))
+                .collect(java.util.stream.Collectors.toList());
+            
+            // Add unread notifications section
+            Label unreadLabel = new Label("Unread Notifications (" + unreadNotifications.size() + ")");
+            unreadLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            contentBox.getChildren().add(unreadLabel);
+            
+            if (unreadNotifications.isEmpty()) {
+                Label emptyUnreadLabel = new Label("No unread notifications");
+                emptyUnreadLabel.setStyle("-fx-font-style: italic;");
+                contentBox.getChildren().add(emptyUnreadLabel);
+            } else {
+                VBox notificationsBox = new VBox(5);
+                
+                for (Appointment appointment : unreadNotifications) {
+                    HBox notificationEntry = createNotificationEntry(appointment, true);
+                    notificationsBox.getChildren().add(notificationEntry);
+                }
+                
+                contentBox.getChildren().add(notificationsBox);
+            }
+            
+            // Add separator
+            Separator separator = new Separator();
+            separator.setPadding(new Insets(10, 0, 10, 0));
+            contentBox.getChildren().add(separator);
+            
+            // Add recent status changes section
+            Label recentLabel = new Label("Recent Appointment Updates (" + recentStatusChanges.size() + ")");
+            recentLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            contentBox.getChildren().add(recentLabel);
+            
+            if (recentStatusChanges.isEmpty()) {
+                Label emptyRecentLabel = new Label("No recent appointment updates");
+                emptyRecentLabel.setStyle("-fx-font-style: italic;");
+                contentBox.getChildren().add(emptyRecentLabel);
+            } else {
+                VBox recentBox = new VBox(5);
+                
+                for (Appointment appointment : recentStatusChanges) {
+                    boolean isUnread = !appointment.isNotificationSent();
+                    HBox notificationEntry = createNotificationEntry(appointment, isUnread);
+                    recentBox.getChildren().add(notificationEntry);
+                }
+                
+                ScrollPane scrollPane = new ScrollPane(recentBox);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setPrefHeight(300);
+                scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                contentBox.getChildren().add(scrollPane);
+            }
+            
+            dialog.getDialogPane().setContent(contentBox);
+            dialog.getDialogPane().setPrefWidth(600);
+            
+            // Handle mark all as read button
+            Button markAllReadButton = (Button) dialog.getDialogPane().lookupButton(markAllReadType);
+            markAllReadButton.setOnAction(e -> {
+                try {
+                    for (Appointment appointment : unreadNotifications) {
+                        appointmentManager.getDbHandler().updateNotificationStatus(
+                            appointment.getAppointmentId(), true);
+                        appointment.markNotificationSent();
+                    }
+                    
+                    showInfo("All notifications marked as read.");
+                    
+                    // Refresh the table to update highlighting
+                    appointmentsTable.refresh();
+                    
+                    // Update notification badge
+                    updateNotificationBadge();
+                    
+                    // Close the dialog
+                    dialog.setResult(null);
+                    dialog.close();
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Failed to mark notifications as read", ex);
+                    showError("Error", "Failed to mark notifications as read: " + ex.getMessage());
+                }
+            });
+            
+            // Apply CSS if available
+            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                dialog.getDialogPane().getStylesheets().add(cssUrl.toExternalForm());
+            }
+            
+            // Show dialog
+            dialog.showAndWait();
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error displaying notifications", e);
+            showError("Error", "Failed to display notifications: " + e.getMessage());
         }
-        return url;
+    }
+
+    /**
+     * Create a notification entry UI element for an appointment
+     */
+    private HBox createNotificationEntry(Appointment appointment, boolean isUnread) {
+        HBox entryBox = new HBox(10);
+        entryBox.setPadding(new Insets(8, 5, 8, 5));
+        
+        // Unread indicator
+        Circle statusDot = new Circle(6);
+        if (isUnread) {
+            statusDot.setFill(Color.ORANGE);
+            entryBox.setStyle("-fx-background-color: #f9f9e0;");
+        } else {
+            statusDot.setFill(Color.LIGHTGRAY);
+        }
+        
+        // Appointment info
+        VBox infoBox = new VBox(3);
+        
+        // Title with date and time
+        String appointmentDate = dateFormat.format(appointment.getAppointmentDate());
+        String appointmentTime = timeFormat.format(appointment.getAppointmentDate());
+        Label titleLabel = new Label("Appointment on " + appointmentDate + " at " + appointmentTime);
+        titleLabel.setStyle("-fx-font-weight: bold;");
+        
+        // Status info
+        String doctorName = appointment.getDoctor() != null ? 
+                "Dr. " + appointment.getDoctor().getName() : "Not assigned";
+        Label statusLabel = new Label("Status: " + appointment.getStatus() + " with " + doctorName);
+        
+        // Date of status change
+        Label dateLabel = new Label("Updated: " + 
+                (appointment.getLastStatusChangeDate() != null ? 
+                    new SimpleDateFormat("MMM d, yyyy h:mm a").format(appointment.getLastStatusChangeDate()) : 
+                    "Unknown"));
+        dateLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
+        
+        infoBox.getChildren().addAll(titleLabel, statusLabel, dateLabel);
+        HBox.setHgrow(infoBox, Priority.ALWAYS);
+        
+        // Mark as read button (only for unread notifications)
+        if (isUnread) {
+            Button markReadButton = new Button("Mark Read");
+            markReadButton.setStyle("-fx-font-size: 10px;");
+            
+            markReadButton.setOnAction(e -> {
+                try {
+                    appointmentManager.getDbHandler().updateNotificationStatus(
+                        appointment.getAppointmentId(), true);
+                    appointment.markNotificationSent();
+                    
+                    // Update UI
+                    statusDot.setFill(Color.LIGHTGRAY);
+                    entryBox.setStyle("");
+                    markReadButton.setDisable(true);
+                    
+                    // Refresh the table to update highlighting
+                    appointmentsTable.refresh();
+                    
+                    // Update notification badge
+                    updateNotificationBadge();
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Failed to mark notification as read", ex);
+                }
+            });
+            
+            entryBox.getChildren().addAll(statusDot, infoBox, markReadButton);
+        } else {
+            entryBox.getChildren().addAll(statusDot, infoBox);
+        }
+        
+        return entryBox;
     }
 
     @FXML
@@ -271,6 +601,14 @@ public class PatientAppointmentsController {
     public void handleClose(ActionEvent event) {
         Stage stage = (Stage) closeButton.getScene().getWindow();
         stage.close();
+    }
+
+    private URL findResource(String path) {
+        URL url = getClass().getClassLoader().getResource(path);
+        if (url == null) {
+            url = getClass().getResource("/" + path);
+        }
+        return url;
     }
 
     private void showError(String title, String message) {
