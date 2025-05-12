@@ -28,23 +28,6 @@ public class ManageUsersDashboardController {
     @FXML private Label totalUsersLabel;
     @FXML private Label statusLabel;
 
-    // User form fields
-    @FXML private ComboBox<String> userTypeComboBox;
-    @FXML private TextField nameField;
-    @FXML private TextField emailField;
-    @FXML private TextField usernameField;
-    @FXML private PasswordField passwordField;
-    @FXML private TextField phoneField;
-    @FXML private TextField addressField;
-    @FXML private VBox doctorFieldsContainer;
-    @FXML private TextField specializationField;
-    @FXML private Spinner<Integer> experienceYearsSpinner;
-    @FXML private Button addUserButton;
-
-    // Add this field for patient-specific input
-    @FXML private TextField emergencyContactField;
-    @FXML private VBox patientFieldsContainer;
-
     private UserManager userManager;
     private ObservableList<User> allUsers = FXCollections.observableArrayList();
     private FilteredList<User> filteredUsers;
@@ -56,29 +39,6 @@ public class ManageUsersDashboardController {
         // Setup user type options
         userTypeFilter.getItems().addAll("All Users", "Administrators", "Doctors", "Patients");
         userTypeFilter.setValue("All Users");
-
-        userTypeComboBox.getItems().addAll("Administrator", "Doctor", "Patient");
-        userTypeComboBox.setValue("Patient");
-
-        // Setup doctor and patient fields visibility
-        doctorFieldsContainer.setVisible(false);
-        doctorFieldsContainer.setManaged(false);
-        if (patientFieldsContainer != null) {
-            patientFieldsContainer.setVisible(true);
-            patientFieldsContainer.setManaged(true);
-        }
-
-        // Handle user type selection for showing/hiding doctor-specific fields
-        userTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
-            boolean isDoctorSelected = "Doctor".equals(newVal);
-            boolean isPatientSelected = "Patient".equals(newVal);
-            doctorFieldsContainer.setVisible(isDoctorSelected);
-            doctorFieldsContainer.setManaged(isDoctorSelected);
-            if (patientFieldsContainer != null) {
-                patientFieldsContainer.setVisible(isPatientSelected);
-                patientFieldsContainer.setManaged(isPatientSelected);
-            }
-        });
 
         // Setup table columns
         setupTableColumns();
@@ -196,64 +156,6 @@ public class ManageUsersDashboardController {
     @FXML
     public void handleSearch(ActionEvent event) {
         updateFilter();
-    }
-
-    /**
-     * Handle adding a new user
-     */
-    @FXML
-    public void handleAddUser(ActionEvent event) {
-        if (!validateForm()) {
-            return;
-        }
-
-        // Get form values
-        String userType = userTypeComboBox.getValue();
-        String name = nameField.getText().trim();
-        String email = emailField.getText().trim();
-        String password = passwordField.getText().trim();
-        String phone = phoneField.getText().trim();
-        String address = addressField.getText().trim();
-
-        User newUser = null;
-
-        try {
-            // Create user based on selected type
-            switch (userType) {
-                case "Administrator":
-                    newUser = userManager.registerAdministrator(name, email, password, phone, address);
-                    break;
-
-                case "Doctor":
-                    String specialization = specializationField.getText().trim();
-                    int experienceYears = experienceYearsSpinner.getValue();
-                    newUser = userManager.registerDoctor(name, email, password, phone, address,
-                                                       specialization, experienceYears);
-                    break;
-
-                case "Patient":
-                    String emergencyContact = emergencyContactField != null ? emergencyContactField.getText().trim() : "";
-                    newUser = userManager.registerPatient(name, email, password, phone, address, emergencyContact);
-                    break;
-            }
-
-            if (newUser != null) {
-                statusLabel.setText("User created successfully!");
-                statusLabel.setStyle("-fx-text-fill: green;");
-
-                // Reload the user list
-                loadUsers();
-                clearForm();
-            } else {
-                statusLabel.setText("Failed to create user. Email may already exist.");
-                statusLabel.setStyle("-fx-text-fill: red;");
-            }
-
-        } catch (Exception e) {
-            statusLabel.setText("Error: " + e.getMessage());
-            statusLabel.setStyle("-fx-text-fill: red;");
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -397,92 +299,12 @@ public class ManageUsersDashboardController {
     }
 
     /**
-     * Handle clearing the form
-     */
-    @FXML
-    public void handleClearForm(ActionEvent event) {
-        clearForm();
-    }
-
-    /**
      * Handle closing the dialog
      */
     @FXML
     public void handleClose(ActionEvent event) {
         Stage stage = (Stage) totalUsersLabel.getScene().getWindow();
         stage.close();
-    }
-
-    /**
-     * Clear all form fields
-     */
-    private void clearForm() {
-        nameField.clear();
-        emailField.clear();
-        usernameField.clear();
-        passwordField.clear();
-        phoneField.clear();
-        addressField.clear();
-        specializationField.clear();
-        experienceYearsSpinner.getValueFactory().setValue(0);
-        if (emergencyContactField != null) emergencyContactField.clear();
-    }
-
-    /**
-     * Validate the form fields
-     * @return true if all required fields are filled in correctly
-     */
-    private boolean validateForm() {
-        StringBuilder errorMsg = new StringBuilder();
-
-        if (userTypeComboBox.getValue() == null) {
-            errorMsg.append("User Type is required.\n");
-        }
-
-        if (nameField.getText().trim().isEmpty()) {
-            errorMsg.append("Name is required.\n");
-        }
-
-        if (emailField.getText().trim().isEmpty()) {
-            errorMsg.append("Email is required.\n");
-        } else if (!emailField.getText().contains("@")) {
-            errorMsg.append("Email must be a valid email address.\n");
-        }
-
-        if (passwordField.getText().trim().isEmpty()) {
-            errorMsg.append("Password is required.\n");
-        } else if (passwordField.getText().length() < 6) {
-            errorMsg.append("Password must be at least 6 characters long.\n");
-        }
-
-        if (phoneField.getText().trim().isEmpty()) {
-            errorMsg.append("Phone is required.\n");
-        }
-
-        if (addressField.getText().trim().isEmpty()) {
-            errorMsg.append("Address is required.\n");
-        }
-
-        // Doctor-specific validations
-        if ("Doctor".equals(userTypeComboBox.getValue())) {
-            if (specializationField.getText().trim().isEmpty()) {
-                errorMsg.append("Specialization is required for doctors.\n");
-            }
-        }
-
-        // Patient-specific validation
-        if ("Patient".equals(userTypeComboBox.getValue())) {
-            if (emergencyContactField == null || emergencyContactField.getText().trim().isEmpty()) {
-                errorMsg.append("Emergency contact is required for patients.\n");
-            }
-        }
-
-        if (errorMsg.length() > 0) {
-            showAlert(Alert.AlertType.ERROR, "Form Validation Error", errorMsg.toString());
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -494,37 +316,6 @@ public class ManageUsersDashboardController {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
-    }
-
-    /**
-     * Handle table row selection to populate form fields for editing
-     */
-    @FXML
-    private void handleRowSelection() {
-        User selectedUser = usersTableView.getSelectionModel().getSelectedItem();
-        if (selectedUser != null) {
-            // Populate form fields with user data
-            nameField.setText(selectedUser.getName());
-            emailField.setText(selectedUser.getEmail());
-            usernameField.setText(selectedUser.getUsername());
-            phoneField.setText(selectedUser.getPhone());
-            addressField.setText(selectedUser.getAddress());
-
-            // Set appropriate user type
-            if (selectedUser instanceof Administrator) {
-                userTypeComboBox.setValue("Administrator");
-            } else if (selectedUser instanceof Doctor) {
-                userTypeComboBox.setValue("Doctor");
-                Doctor doctor = (Doctor) selectedUser;
-                specializationField.setText(doctor.getSpecialization());
-                experienceYearsSpinner.getValueFactory().setValue(doctor.getExperienceYears());
-            } else if (selectedUser instanceof Patient) {
-                userTypeComboBox.setValue("Patient");
-            }
-
-            // Change button text to indicate editing mode
-            addUserButton.setText("Update User");
-        }
     }
 
     /**
@@ -540,4 +331,3 @@ public class ManageUsersDashboardController {
         }
     }
 }
-

@@ -28,6 +28,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.scene.control.ButtonBar;
+import javafx.stage.Modality;
 
 import java.io.IOException;
 import java.io.File;
@@ -39,6 +40,11 @@ public class AdminDashboardController implements DashboardController {
     @FXML private Label nameLabel;
     @FXML private TextArea outputArea;
     @FXML private VBox contentArea;
+    
+    // Statistics labels
+    @FXML private Label doctorCountLabel;
+    @FXML private Label patientCountLabel;
+    @FXML private Label adminCountLabel;
 
     private Administrator currentAdmin;
     private UserManager userManager;
@@ -62,8 +68,35 @@ public class AdminDashboardController implements DashboardController {
         nameLabel.setText(currentAdmin.getName());
         outputArea.setText("Welcome, " + currentAdmin.getName() + "!\n\n" +
                 "Select an option from the sidebar to begin managing the system.");
-
-
+        
+        // Update system statistics
+        updateSystemStatistics();
+    }
+    
+    /**
+     * Updates the statistics displayed on the dashboard
+     */
+    private void updateSystemStatistics() {
+        if (userManager != null) {
+            List<Doctor> doctors = userManager.getAllDoctors();
+            List<Patient> patients = userManager.getAllPatients();
+            List<Administrator> admins = userManager.getAllAdministrators();
+            
+            doctorCountLabel.setText(String.valueOf(doctors.size()));
+            patientCountLabel.setText(String.valueOf(patients.size()));
+            adminCountLabel.setText(String.valueOf(admins.size()));
+            
+            // Log statistics to output area
+            appendToOutput("System Statistics Updated: " +
+                    doctors.size() + " doctors, " + 
+                    patients.size() + " patients, " + 
+                    admins.size() + " administrators");
+        } else {
+            doctorCountLabel.setText("N/A");
+            patientCountLabel.setText("N/A");
+            adminCountLabel.setText("N/A");
+            appendToOutput("Error: User manager not initialized. Cannot display statistics.");
+        }
     }
 
     @FXML
@@ -160,6 +193,9 @@ public class AdminDashboardController implements DashboardController {
             showError("Error loading manage users view: " + e.getMessage());
             e.printStackTrace();
         }
+        
+        // After returning from manage users, update statistics
+        updateSystemStatistics();
     }
 
     /**
@@ -200,6 +236,9 @@ public class AdminDashboardController implements DashboardController {
         }
 
         outputArea.setText(assignments.toString());
+        
+        // After assignments are updated, refresh the statistics
+        updateSystemStatistics();
     }
 
     @FXML
@@ -304,6 +343,78 @@ public class AdminDashboardController implements DashboardController {
         dialog.showAndWait();
     }
 
+    @FXML
+    private void handleAddAdmin(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/rhms/ui/views/AddAdminView.fxml"));
+            Parent root = loader.load();
+
+            AddAdminDashboardController controller = loader.getController();
+            controller.setUserManager(userManager);
+
+            Stage stage = new Stage();
+            stage.setTitle("Register New Administrator");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            
+            // Update statistics when admin dialog is closed
+            stage.setOnHidden(e -> updateSystemStatistics());
+            
+            stage.showAndWait();
+
+            appendToOutput("Add Admin dialog opened.");
+        } catch (IOException e) {
+            appendToOutput("Error opening Add Admin dialog: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void handleSendEmail(ActionEvent event) {
+        try {
+            URL sendEmailUrl = findResource("com/rhms/ui/views/SendEmailView.fxml");
+
+            if (sendEmailUrl == null) {
+                showError("Could not find SendEmailView.fxml resource");
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(sendEmailUrl);
+            Parent sendEmailView = loader.load();
+
+            // Get controller and initialize it with user manager
+            SendEmailDashboardController controller = loader.getController();
+            controller.setUserManager(userManager);
+
+            // Create new stage for email dialog
+            Stage emailStage = new Stage();
+            Scene scene = new Scene(sendEmailView);
+
+            // Load CSS
+            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                scene.getStylesheets().add(cssUrl.toExternalForm());
+            }
+
+            emailStage.setScene(scene);
+            emailStage.setTitle("RHMS - Send Email Notification");
+            emailStage.initModality(Modality.APPLICATION_MODAL);
+
+            // Only set owner if the window is available
+            if (outputArea.getScene() != null && outputArea.getScene().getWindow() != null) {
+                emailStage.initOwner(outputArea.getScene().getWindow());
+            }
+
+            emailStage.show();
+            
+            appendToOutput("Email notification window opened.");
+
+        } catch (IOException e) {
+            showError("Error loading email notification dialog: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void handleLogout() {
         try {
@@ -401,5 +512,8 @@ public class AdminDashboardController implements DashboardController {
         alert.setContentText(message);
         alert.showAndWait();
     }
-}
 
+    private void appendToOutput(String message) {
+        outputArea.appendText(message + "\n");
+    }
+}

@@ -38,10 +38,18 @@
                         styleClass="sidebar-button"
                         maxWidth="Infinity"
                         onAction="#handleDownloadReport"/>
+                <Button text="Send Email Notification"
+                        styleClass="sidebar-button"
+                        maxWidth="Infinity"
+                        onAction="#handleSendEmail"/>
                 <Button text="View System Logs"
                         styleClass="sidebar-button"
                         maxWidth="Infinity"
                         onAction="#handleViewLogs"/>
+                <Button text="Add Admin"
+                        styleClass="sidebar-button"
+                        maxWidth="Infinity"
+                        onAction="#handleAddAdmin"/>
                 <Region VBox.vgrow="ALWAYS"/>
                 <Button text="Logout"
                         styleClass="logout-button"
@@ -70,6 +78,61 @@
                         <Font name="System Bold" size="24.0"/>
                     </font>
                 </Label>
+                
+                <!-- System Statistics Panel -->
+                <HBox styleClass="statistics-panel" spacing="20.0" alignment="CENTER">
+                    <!-- Doctor Statistics -->
+                    <VBox styleClass="stat-box" alignment="CENTER" spacing="10.0" minWidth="250.0" minHeight="150.0">
+                        <padding>
+                            <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
+                        </padding>
+                        <Label text="TOTAL DOCTORS" styleClass="stat-label">
+                            <font>
+                                <Font name="System Bold" size="14.0"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="doctorCountLabel" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="36.0"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                    
+                    <!-- Patient Statistics -->
+                    <VBox styleClass="stat-box" alignment="CENTER" spacing="10.0" minWidth="250.0" minHeight="150.0">
+                        <padding>
+                            <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
+                        </padding>
+                        <Label text="TOTAL PATIENTS" styleClass="stat-label">
+                            <font>
+                                <Font name="System Bold" size="14.0"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="patientCountLabel" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="36.0"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                    
+                    <!-- Admin Statistics -->
+                    <VBox styleClass="stat-box" alignment="CENTER" spacing="10.0" minWidth="250.0" minHeight="150.0">
+                        <padding>
+                            <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
+                        </padding>
+                        <Label text="TOTAL ADMINISTRATORS" styleClass="stat-label">
+                            <font>
+                                <Font name="System Bold" size="14.0"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="adminCountLabel" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="36.0"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                </HBox>
+                
                 <TextArea fx:id="outputArea"
                           editable="false"
                           wrapText="true"

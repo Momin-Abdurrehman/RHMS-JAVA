@@ -19,8 +19,8 @@ public class EmailNotification implements Notifiable {
     private static final Logger LOGGER = Logger.getLogger(EmailNotification.class.getName());
     
     // Gmail credentials for sending emails
-    private final String senderEmail = "momin332472@gmail.com"; // My Gmail
-    private final String senderPassword = "evhe zjge jpsm hiwb"; // My Gmail App Password
+    private final String senderEmail = "remotehospitalsystem@gmail.com"; // My Gmail
+    private final String senderPassword = "vcgs lcil ubcp cept "; // My Gmail App Password
 
     // Sends an email notification to the specified recipient
     @Override

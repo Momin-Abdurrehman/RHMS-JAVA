@@ -1,13 +1,13 @@
 package com.rhms.ui.controllers;
 
+import com.rhms.Database.VitalSignDatabaseHandler;
 import com.rhms.doctorPatientInteraction.Feedback;
+import com.rhms.doctorPatientInteraction.Prescription;
 import com.rhms.healthDataHandling.VitalSign;
-import com.rhms.healthDataHandling.VitalsDatabase;
 import com.rhms.userManagement.Doctor;
-import com.rhms.healthDataHandling.MedicalRecord;
 import com.rhms.userManagement.Patient;
-
 import com.rhms.userManagement.UserManager;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -19,9 +19,14 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,10 +51,6 @@ public class DoctorPatientDetailsController {
     @FXML private TableColumn<VitalSign, String> bpColumn;
     @FXML private TableColumn<VitalSign, String> heartRateColumn;
     @FXML private TableColumn<VitalSign, String> tempColumn;
-
-
-    // Medical history tab
-    @FXML private ListView<String> medicalHistoryList;
 
     // Previous feedback tab
     @FXML private ListView<String> feedbackList;
@@ -76,7 +77,6 @@ public class DoctorPatientDetailsController {
         setupPatientInfo();
         setupVitalsTable();
         loadVitalsData();
-        loadMedicalHistory();
         loadPreviousFeedback();
 
         LOGGER.log(Level.INFO, "DoctorPatientDetailsController initialized for patient: {0}", patient.getName());
@@ -131,50 +131,183 @@ public class DoctorPatientDetailsController {
     }
 
     /**
-     * Load vitals data from the patient's history
+     * Load vitals data directly from the database
      */
     private void loadVitalsData() {
-        List<VitalSign> vitals = currentPatient.getVitalsHistory();
-        if (vitals != null && !vitals.isEmpty()) {
+        List<VitalSign> vitals = new ArrayList<>();
+        
+        try {
+            // Create a new VitalSignDatabaseHandler to access the database
+            VitalSignDatabaseHandler vitalHandler = new VitalSignDatabaseHandler();
+            
+            // Fetch vitals for this patient directly from the database
+            vitals = vitalHandler.getVitalSignsForPatient(currentPatient.getUserID());
+            
+            LOGGER.log(Level.INFO, "Loaded {0} vital records from database for patient ID {1}", 
+                      new Object[]{vitals.size(), currentPatient.getUserID()});
+            
             // Sort by date (newest first)
             vitals.sort(Comparator.comparing(VitalSign::getTimestamp).reversed());
+            
+            // Update the UI
             vitalsTable.setItems(FXCollections.observableArrayList(vitals));
-        } else {
-            LOGGER.log(Level.INFO, "No vitals data available for patient: {0}", currentPatient.getName());
-            vitalsTable.setPlaceholder(new Label("No vitals data available"));
+            
+            // Also update the Patient object's vital history
+            currentPatient.getVitalsDatabase().addVitalRecords(vitals);
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error loading vital signs: {0}", e.getMessage());
+            vitalsTable.setPlaceholder(new Label("Error loading vital signs data"));
+        }
+        
+        // Set a placeholder message if no vitals are available
+        if (vitals == null || vitals.isEmpty()) {
+            vitalsTable.setPlaceholder(new Label("No vital signs data available for this patient"));
         }
     }
 
     /**
-     * Load medical history for the patient
+     * Load previous feedback and prescriptions directly from the database
      */
-    private void loadMedicalHistory() {
-        List<MedicalRecord> records = currentPatient.getMedicalRecords();
-        List<String> formattedRecords = new ArrayList<>();
-
-        if (records != null && !records.isEmpty()) {
-            // Sort by date (most recent first)
-            records.sort(Comparator.comparing(MedicalRecord::getDate).reversed());
-
-            for (MedicalRecord record : records) {
-                String doctorName = record.getRecordedBy() != null ? record.getRecordedBy().getName() : "Unknown Doctor";
-
-                StringBuilder recordText = new StringBuilder();
-                recordText.append(dateTimeFormat.format(record.getDate()))
-                        .append(" - ").append(record.getCondition())
-                        .append("\nRecorded by: Dr. ").append(doctorName)
-                        .append("\n").append(record.getDescription());
-
-                formattedRecords.add(recordText.toString());
+    private void loadPreviousFeedback() {
+        List<String> displayItems = new ArrayList<>();
+        
+        try {
+            if (userManager != null && userManager.dbHandler != null && userManager.dbHandler.connection != null) {
+                Connection conn = userManager.dbHandler.connection;
+                
+                // SQL to fetch feedback with prescriptions and doctor information
+                String sql = "SELECT f.feedback_id, f.doctor_id, f.comments, f.timestamp, " +
+                             "u.name as doctor_name, d.specialization, " +
+                             "p.prescription_id, p.medication_name, p.dosage, p.schedule, p.duration, p.instructions " +
+                             "FROM feedback_by_doctor f " +
+                             "JOIN Doctors d ON f.doctor_id = d.doctor_id " +
+                             "JOIN Users u ON d.user_id = u.user_id " +
+                             "LEFT JOIN prescription p ON f.feedback_id = p.feedback_id " +
+                             "WHERE f.patient_id = ? " +
+                             "ORDER BY f.timestamp DESC";
+                
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setInt(1, currentPatient.getUserID());
+                    
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (!rs.isBeforeFirst()) { // No records found
+                            displayItems.add("No previous feedback available");
+                        } else {
+                            while (rs.next()) {
+                                String doctorName = rs.getString("doctor_name");
+                                if (doctorName == null) doctorName = "Unknown Doctor";
+                                
+                                String specialization = rs.getString("specialization");
+                                if (specialization != null && !specialization.isEmpty()) {
+                                    doctorName += " (" + specialization + ")";
+                                }
+                                
+                                Date feedbackDate = rs.getTimestamp("timestamp");
+                                String comments = rs.getString("comments");
+                                
+                                StringBuilder feedbackText = new StringBuilder();
+                                feedbackText.append(dateTimeFormat.format(feedbackDate))
+                                        .append(" - Dr. ").append(doctorName).append("\n")
+                                        .append(comments);
+                                
+                                // Add prescription info if available
+                                String medicationName = rs.getString("medication_name");
+                                if (medicationName != null && !medicationName.isEmpty()) {
+                                    feedbackText.append("\n\n💊 Prescription: ")
+                                            .append(medicationName);
+                                    
+                                    String dosage = rs.getString("dosage");
+                                    if (dosage != null && !dosage.isEmpty()) {
+                                        feedbackText.append("\n• Dosage: ").append(dosage);
+                                    }
+                                    
+                                    String schedule = rs.getString("schedule"); 
+                                    if (schedule != null && !schedule.isEmpty()) {
+                                        feedbackText.append("\n• Schedule: ").append(schedule);
+                                    }
+                                    
+                                    String duration = rs.getString("duration");
+                                    if (duration != null && !duration.isEmpty()) {
+                                        feedbackText.append("\n• Duration: ").append(duration);
+                                    }
+                                    
+                                    String instructions = rs.getString("instructions");
+                                    if (instructions != null && !instructions.isEmpty()) {
+                                        feedbackText.append("\n• Instructions: ").append(instructions);
+                                    }
+                                }
+                                
+                                displayItems.add(feedbackText.toString());
+                            }
+                        }
+                    }
+                }
+                
+                LOGGER.log(Level.INFO, "Loaded {0} feedback items from database for patient ID {1}",
+                        new Object[]{displayItems.size(), currentPatient.getUserID()});
+                
+            } else {
+                // Fallback to using in-memory feedback data
+                LOGGER.log(Level.WARNING, "Database connection not available, falling back to in-memory feedback data");
+                
+                // Get feedback provided by all doctors to this patient
+                List<Feedback> allFeedback = currentPatient.getAllFeedback();
+                
+                if (allFeedback == null || allFeedback.isEmpty()) {
+                    displayItems.add("No previous feedback available");
+                } else {
+                    // Sort feedback by timestamp (most recent first)
+                    allFeedback.sort(Comparator.comparing(Feedback::getTimestamp).reversed());
+                    
+                    for (Feedback feedback : allFeedback) {
+                        StringBuilder feedbackText = new StringBuilder();
+                        String doctorName = feedback.getDoctor() != null ? 
+                                feedback.getDoctor().getName() : "Unknown Doctor";
+                        
+                        feedbackText.append(dateTimeFormat.format(feedback.getTimestamp()))
+                                .append(" - Dr. ").append(doctorName).append("\n")
+                                .append(feedback.getMessage());
+                        
+                        // Add prescription info if available
+                        if (feedback.hasPrescription()) {
+                            Prescription prescription = feedback.getPrescription();
+                            feedbackText.append("\n\n💊 Prescription: ")
+                                    .append(prescription.getMedicationName());
+                                    
+                            if (prescription.getDosage() != null && !prescription.getDosage().isEmpty()) {
+                                feedbackText.append("\n• Dosage: ").append(prescription.getDosage());
+                            }
+                            
+                            if (prescription.getSchedule() != null && !prescription.getSchedule().isEmpty()) {
+                                feedbackText.append("\n• Schedule: ").append(prescription.getSchedule());
+                            }
+                            
+                            if (prescription.getDuration() != null && !prescription.getDuration().isEmpty()) {
+                                feedbackText.append("\n• Duration: ").append(prescription.getDuration());
+                            }
+                            
+                            if (prescription.getInstructions() != null && !prescription.getInstructions().isEmpty()) {
+                                feedbackText.append("\n• Instructions: ").append(prescription.getInstructions());
+                            }
+                        }
+                        
+                        displayItems.add(feedbackText.toString());
+                    }
+                }
             }
-        } else {
-            formattedRecords.add("No medical history available");
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error while loading feedback: {0}", e.getMessage());
+            displayItems.add("Error loading feedback: " + e.getMessage());
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error loading feedback: {0}", e.getMessage());
+            displayItems.add("Error loading feedback: " + e.getMessage());
         }
 
-        medicalHistoryList.setItems(FXCollections.observableArrayList(formattedRecords));
+        feedbackList.setItems(FXCollections.observableArrayList(displayItems));
 
-        // Set up custom cell factory for better display
-        medicalHistoryList.setCellFactory(listView -> new ListCell<String>() {
+        // Setup custom cell factory for better display
+        feedbackList.setCellFactory(listView -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -187,101 +320,16 @@ public class DoctorPatientDetailsController {
                     setWrapText(true);
                     setPrefWidth(0); // Enable text wrapping
 
-                    // Add some styling to make records easier to read
-                    if (!item.equals("No medical history available")) {
+                    // Add some styling to make feedback easier to read
+                    if (!item.equals("No previous feedback available") && 
+                        !item.startsWith("Error loading")) {
                         setStyle("-fx-background-color: #f8f9fa; -fx-padding: 5;");
+                    } else if (item.startsWith("Error loading")) {
+                        setStyle("-fx-background-color: #ffebee; -fx-padding: 5;"); // Light red for errors
                     }
                 }
             }
         });
-    }
-
-    /**
-     * Load previous feedback for the patient
-     */
-    private void loadPreviousFeedback() {
-        try {
-            // Retrieve all feedback for this patient
-            List<Feedback> feedbackHistory = new ArrayList<>();
-
-            // Get feedback provided by the current doctor
-            List<Feedback> doctorFeedback = currentDoctor.getFeedbackForPatient(currentPatient);
-            if (doctorFeedback != null) {
-                feedbackHistory.addAll(doctorFeedback);
-            }
-
-            // Get feedback provided by all doctors to this patient
-            List<Feedback> allFeedback = currentPatient.getAllFeedback();
-            if (allFeedback != null) {
-                // Add feedback from other doctors that isn't already in our list
-                for (Feedback feedback : allFeedback) {
-                    if (!feedbackHistory.contains(feedback) && feedback.getDoctor() != null) {
-                        feedbackHistory.add(feedback);
-                    }
-                }
-            }
-
-            // Sort feedback by timestamp (most recent first)
-            feedbackHistory.sort(Comparator.comparing(Feedback::getTimestamp).reversed());
-
-            if (feedbackHistory.isEmpty()) {
-                feedbackList.setItems(FXCollections.observableArrayList("No previous feedback available"));
-                return;
-            }
-
-            // Convert feedback objects to formatted strings for display
-            List<String> displayItems = new ArrayList<>();
-            for (Feedback feedback : feedbackHistory) {
-                StringBuilder feedbackText = new StringBuilder();
-                String doctorName = feedback.getDoctor() != null ? feedback.getDoctor().getName() : "Unknown Doctor";
-
-                feedbackText.append(dateTimeFormat.format(feedback.getTimestamp()))
-                        .append(" - Dr. ").append(doctorName).append("\n")
-                        .append(feedback.getMessage());
-
-                // Add prescription info if available
-                if (feedback.hasPrescription()) {
-                    feedbackText.append("\n\nPrescription: ")
-                            .append(feedback.getPrescription().getMedicationName())
-                            .append(" - ").append(feedback.getPrescription().getDosage())
-                            .append(" - ").append(feedback.getPrescription().getSchedule());
-                }
-
-                displayItems.add(feedbackText.toString());
-            }
-
-            feedbackList.setItems(FXCollections.observableArrayList(displayItems));
-
-            // Setup custom cell factory for better display
-            feedbackList.setCellFactory(listView -> new ListCell<String>() {
-                @Override
-                protected void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-
-                    if (empty || item == null) {
-                        setText(null);
-                        setStyle("-fx-background-color: transparent;");
-                    } else {
-                        setText(item);
-                        setWrapText(true);
-                        setPrefWidth(0); // Enable text wrapping
-
-                        // Add some styling to make feedback easier to read
-                        if (!item.equals("No previous feedback available")) {
-                            setStyle("-fx-background-color: #f8f9fa; -fx-padding: 5;");
-                        }
-                    }
-                }
-            });
-
-            LOGGER.log(Level.INFO, "Loaded {0} feedback items for patient {1}",
-                    new Object[]{feedbackHistory.size(), currentPatient.getName()});
-
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error loading feedback for patient " + currentPatient.getName(), e);
-            feedbackList.setItems(FXCollections.observableArrayList(
-                    "Error loading feedback: " + e.getMessage()));
-        }
     }
 
     /**
@@ -301,7 +349,7 @@ public class DoctorPatientDetailsController {
             stage.setTitle("Provide Feedback - " + currentPatient.getName());
             stage.setScene(new Scene(feedbackView));
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.getScene().getWindow().setUserData(userManager); // Pass UserManager
+            stage.setUserData(userManager); // Pass UserManager
 
             // Apply CSS if available
             Scene scene = stage.getScene();
@@ -310,11 +358,7 @@ public class DoctorPatientDetailsController {
             // Show dialog and wait for feedback submission
             stage.showAndWait();
 
-            // After dialog closes, retrieve feedback and prescription from controller
-            com.rhms.doctorPatientInteraction.Feedback feedback = controller.getSubmittedFeedback();
-            // No need to save to DB here, it's handled in DoctorFeedbackController
-
-            // Refresh feedback list
+            // After dialog closes, refresh the feedback list to show the new entry
             loadPreviousFeedback();
 
         } catch (IOException e) {
