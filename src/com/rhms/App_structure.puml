@@ -1,0 +1,662 @@
+@startuml
+
+/' diagram meta data start
+config=StructureConfiguration;
+{
+  "projectClassification": {
+    "searchMode": "OpenProject", // OpenProject, AllProjects
+    "includedProjects": "",
+    "pathEndKeywords": "*.impl",
+    "isClientPath": "",
+    "isClientName": "",
+    "isTestPath": "",
+    "isTestName": "",
+    "isMappingPath": "",
+    "isMappingName": "",
+    "isDataAccessPath": "",
+    "isDataAccessName": "",
+    "isDataStructurePath": "",
+    "isDataStructureName": "",
+    "isInterfaceStructuresPath": "",
+    "isInterfaceStructuresName": "",
+    "isEntryPointPath": "",
+    "isEntryPointName": "",
+    "treatFinalFieldsAsMandatory": false
+  },
+  "graphRestriction": {
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "removeByInheritance": "", // inheritance/annotation based filtering is done in a second step
+    "removeByAnnotation": "",
+    "removeByClassPackage": "", // cleanup the graph after inheritance/annotation based filtering is done
+    "removeByClassName": "",
+    "cutMappings": false,
+    "cutEnum": true,
+    "cutTests": true,
+    "cutClient": true,
+    "cutDataAccess": false,
+    "cutInterfaceStructures": false,
+    "cutDataStructures": false,
+    "cutGetterAndSetter": true,
+    "cutConstructors": true
+  },
+  "graphTraversal": {
+    "forwardDepth": 3,
+    "backwardDepth": 3,
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "hideMappings": false,
+    "hideDataStructures": false,
+    "hidePrivateMethods": true,
+    "hideInterfaceCalls": true, // indirection: implementation -> interface (is hidden) -> implementation
+    "onlyShowApplicationEntryPoints": false, // root node is included
+    "useMethodCallsForStructureDiagram": "ForwardOnly" // ForwardOnly, BothDirections, No
+  },
+  "details": {
+    "aggregation": "GroupByClass", // ByClass, GroupByClass, None
+    "showClassGenericTypes": true,
+    "showMethods": true,
+    "showMethodParameterNames": true,
+    "showMethodParameterTypes": true,
+    "showMethodReturnType": true,
+    "showPackageLevels": 2,
+    "showDetailedClassStructure": true
+  },
+  "rootClass": "com.rhms.App",
+  "extensionCallbackMethod": "" // qualified.class.name#methodName - signature: public static String method(String)
+}
+diagram meta data end '/
+
+
+
+digraph g {
+    rankdir="TB"
+    splines=polyline
+    
+
+'nodes 
+subgraph cluster_3499612 { 
+   	label=rhms
+	labeljust=l
+	fillcolor="#ececec"
+	style=filled
+   
+   App660216151[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)App</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- createDemoUsersIfNeeded()</TD></TR>
+<TR><TD ALIGN="LEFT" >- createInitialAdminIfNeeded()</TD></TR>
+<TR><TD ALIGN="LEFT" >- findDoctorByEmail(email: String): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >- initializeSystem()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ main(args: String[])</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+subgraph cluster_1196923775 { 
+   	label=appointmentScheduling
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   Appointment1163657970[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Appointment</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointmentDate: Date [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentId: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   createdAt: Date [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctor: Doctor [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   notes: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patient: Patient [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   purpose: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   status: String [0..1]</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+AppointmentManager1163657970[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AppointmentManager</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   dbHandler: AppointmentDatabaseHandler [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ cancelAppointment(appointmentId: int): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadDoctorAppointments(doctor: Doctor): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadPatientAppointments(patient: Patient): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointment: Appointment): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ updateAppointmentStatus(appointment: Appointment, newStatus: String): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_1246049283 { 
+   	label=healthDataHandling
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   CSVVitalsUploader1042794128[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)CSVVitalsUploader</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- parseVitalSignLine(line: String): VitalSign</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadVitalsFromCSV(patient: Patient, filePath: String): int</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadVitalsFromCSVWithReport(patient: Patient, filePath: String): VitalsUploadReport</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+VitalSign1042794128[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)VitalSign</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   bloodPressure: double [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   heartRate: double [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   oxygenLevel: double [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   temperature: double [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timestamp: Date [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ displayVitals()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+VitalsDatabase1042794128[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)VitalsDatabase</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   patient: Patient [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   vitals: ArrayList&lt;VitalSign&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addVitalRecord(vitalSign: VitalSign)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addVitalRecords(vitalSigns: List&lt;VitalSign&gt;)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayAllVitals()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getSortedVitals(ascending: boolean): List&lt;VitalSign&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getVitalsFromLastDays(days: int): List&lt;VitalSign&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getVitalsInDateRange(start: Date, end: Date): List&lt;VitalSign&gt;</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+VitalsUploadReport1042794128[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)VitalsUploadReport</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   errorCount: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   errors: List&lt;VitalsUploadError&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   successCount: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   successfulVitals: List&lt;VitalSign&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addError(lineNumber: int, lineContent: String, errorMessage: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addSuccess(vitalSign: VitalSign)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ generateReport(): String</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_147172323 { 
+   	label=emergencyAlert
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   EmergencyAlert124153808[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)EmergencyAlert</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   emailNotifier: EmailNotification [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   notificationService: NotificationService [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ alertDoctorOfAbnormalVitals(patient: Patient, vitalSign: VitalSign)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ checkVitals(patient: Patient, vitals: VitalSign)</TD></TR>
+<TR><TD ALIGN="LEFT" >- logAlert(doctor: Doctor, patient: Patient, vitalSign: VitalSign)</TD></TR>
+<TR><TD ALIGN="LEFT" >- sendAbnormalVitalsAlert(doctor: Doctor, patient: Patient, vitalSign: VitalSign)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+NotificationService124153808[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)NotificationService</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- logAlert(message: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- sendEmail(message: String, patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ sendEmergencyAlert(message: String, patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >- sendSMS(message: String, patient: Patient)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PanicButton124153808[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PanicButton</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   isActive: boolean [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   lastTriggered: LocalDateTime [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   notificationService: NotificationService [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patient: Patient [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ disable()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ enable()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ triggerAlert(reason: String)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_185282970 { 
+   	label=loginSystem
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   AuthenticationService435272909[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AuthenticationService</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   dbHandler: UserDatabaseHandler [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- generateSessionToken(): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ login(username: String, password: String): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ logout(sessionToken: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ validateSession(sessionToken: String): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Session435272909[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Session</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   creationTime: LocalDateTime [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   lastActivityTime: LocalDateTime [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   sessionToken: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   user: User [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ updateActivity()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_1951307539 { 
+   	label=Database
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   AppointmentDatabaseHandler1676144448[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AppointmentDatabaseHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   connection: Connection [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addAppointment(appointment: Appointment): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >- createAppointmentFromResultSet(rs: ResultSet, patient: Patient): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForDoctor(doctorId: int): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForPatient(patientId: int): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ saveAppointment(appointment: Appointment): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ updateAppointmentStatus(appointmentId: int, status: String): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+DoctorPatientAssignmentHandler1676144448[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)DoctorPatientAssignmentHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   connection: Connection [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ assignDoctorToPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >- ensureTableExists()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getAllAssignments(userDbHandler: UserDatabaseHandler): List&lt;DoctorPatientAssignment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getAssignedDoctorsForPatient(patientId: int, userDbHandler: UserDatabaseHandler): List&lt;Doctor&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getPatientsForDoctor(doctorId: int, userDbHandler: UserDatabaseHandler): List&lt;Patient&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >- refreshConnectionIfNeeded()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeDoctorFromPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+UserDatabaseHandler1676144448[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)UserDatabaseHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   connection: Connection [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addUser(user: User): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ deleteSession(sessionToken: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getDoctorById(doctorId: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getPatientById(patientId: int): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getSessionByToken(sessionToken: String): Session</TD></TR>
+<TR><TD ALIGN="LEFT" >- getUserById(userId: int): User</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getUserByUsername(username: String): User</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isEmailExists(email: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isUsernameExists(username: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ saveSession(session: Session): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ updateSessionActivity(session: Session): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_1993615202 { 
+   	label=doctorPatientInteraction
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   Feedback1185503473[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Feedback</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   comments: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctor: Doctor [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patient: Patient [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   prescription: Prescription [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timestamp: Date [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ displayFeedback()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+MedicalHistory1185503473[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)MedicalHistory</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   pastConsultations: ArrayList&lt;Feedback&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addConsultation(feedback: Feedback)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayMedicalHistory()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_85584960 { 
+   	label=userManagement
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   Administrator108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Administrator</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   doctors: ArrayList&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   lastAuditTime: LocalDateTime [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patients: ArrayList&lt;Patient&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   systemConfiguration: Map&lt;String, String&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   systemLogs: ArrayList&lt;String&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ assignPatientToDoctor(patient: Patient, doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ clearLogs()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayAdminInfo()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findDoctorById(doctorId: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findPatientById(patientId: int): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getSystemConfiguration(key: String): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ logActivity(activity: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ performSystemAudit()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removePatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ verifyInDatabase(username: String, password: String): Administrator</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewSystemLogs()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Doctor108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Doctor</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointments: List&lt;Appointment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignedPatients: List&lt;Patient&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   experienceYears: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   feedbackByPatient: Map&lt;Integer, List&lt;Feedback&gt;&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   specialization: String [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- addFeedbackToHistory(patient: Patient, feedback: Feedback)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ clearPatients()</TD></TR>
+<TR><TD ALIGN="LEFT" >- containsPatient(patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayDoctorInfo()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getFeedbackForPatient(patient: Patient): List&lt;Feedback&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ provideFeedback(patient: Patient, message: String): Feedback</TD></TR>
+<TR><TD ALIGN="LEFT" >+ provideFeedback(patient: Patient, message: String, prescription: Prescription): Feedback</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removePatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewAllPatients()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewPatientHistory(patient: Patient)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Patient108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Patient</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointments: ArrayList&lt;Appointment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignedDoctors: ArrayList&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorFeedback: ArrayList&lt;String&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   medicalHistory: MedicalHistory [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   medicalRecords: ArrayList&lt;String&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   panicButton: PanicButton [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   vitalsDatabase: VitalsDatabase [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addAppointment(appointment: Appointment)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addAssignedDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addVitalSign(vitalSign: VitalSign)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ cancelAppointment(appointment: Appointment, appointmentManager: AppointmentManager): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ clearAssignedDoctors()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ disablePanicButton()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayPatientInfo()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ enablePanicButton()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ receiveFeedback(feedback: Feedback)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeAssignedDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointment: Appointment)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointmentDescription: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointment: Appointment, appointmentManager: AppointmentManager): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ triggerPanicButton(reason: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadMedicalRecord(record: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadVitalsFromCSV(filePath: String): int</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadVitalsFromCSVWithReport(filePath: String): VitalsUploadReport</TD></TR>
+<TR><TD ALIGN="LEFT" >+ verifyInDatabase(username: String, password: String): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewDoctorFeedback()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+User108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)User</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >#   address: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   email: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   name: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   password: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   phone: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userID: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   username: String [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- generateDefaultUsername(name: String, userID: int): String</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+UserManager108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)UserManager</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   administrators: List&lt;Administrator&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentDbHandler: AppointmentDatabaseHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignmentHandler: DoctorPatientAssignmentHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   authService: AuthenticationService [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dbHandler: UserDatabaseHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctors: List&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nextUserId: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patients: List&lt;Patient&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   users: Map&lt;Integer, User&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ assignDoctorToPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findUserByEmail(email: String): User</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findUserById(userId: int): User</TD></TR>
+<TR><TD ALIGN="LEFT" >- generateUserId(): int</TD></TR>
+<TR><TD ALIGN="LEFT" >- generateUsername(name: String, userId: int): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getDoctorById(doctorId: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getPatientById(patientId: int): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getSortedVitals(b: boolean): List&lt;VitalSign&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isEmailExists(email: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAllAssignmentsFromDatabase()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAssignmentsForDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAssignmentsForPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadDoctorPatientAssignments()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadUsers()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ registerAdministrator(name: String, email: String, password: String, phone: String, address: String): Administrator</TD></TR>
+<TR><TD ALIGN="LEFT" >+ registerDoctor(name: String, email: String, password: String, phone: String, address: String, specialization: String, experienceYears: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ registerPatient(name: String, email: String, password: String, phone: String, address: String): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeDoctorFromPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ syncUsersFromDatabase()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+} 
+
+'edges    
+App660216151 -> Patient108603475[label="createDemoUsersIfNeeded() -> addAssignedDoctor()"];
+Appointment1163657970 -> Doctor108603475[label="doctor
+[0..1]"];
+Appointment1163657970 -> Patient108603475[label="patient
+[0..1]"];
+AppointmentManager1163657970 -> AppointmentDatabaseHandler1676144448[label="dbHandler
+[0..1]"];
+AppointmentManager1163657970 -> Patient108603475[label="scheduleAppointment() -> addAppointment()"];
+AuthenticationService435272909 -> Session435272909[label="validateSession() -> updateActivity()"];
+AuthenticationService435272909 -> UserDatabaseHandler1676144448[label="dbHandler
+[0..1]"];
+MedicalHistory1185503473 -> Feedback1185503473[label="pastConsultations
+[0..*]"];
+PanicButton124153808 -> NotificationService124153808[label="notificationService
+[0..1]"];
+PanicButton124153808 -> Patient108603475[label="patient
+[0..1]"];
+Patient108603475 -> Appointment1163657970[label="appointments
+[0..*]"];
+Patient108603475 -> Doctor108603475[label="assignedDoctors
+[0..*]"];
+Patient108603475 -> MedicalHistory1185503473[label="medicalHistory
+[0..1]"];
+Patient108603475 -> PanicButton124153808[label="panicButton
+[0..1]"];
+Patient108603475 -> UserDatabaseHandler1676144448[label="verifyInDatabase() -> getUserByUsername()"];
+Patient108603475 -> VitalsDatabase1042794128[label="vitalsDatabase
+[0..1]"];
+User108603475 -> Administrator108603475[arrowhead=none, arrowtail=empty, dir=both];
+User108603475 -> Doctor108603475[arrowhead=none, arrowtail=empty, dir=both];
+User108603475 -> Patient108603475[arrowhead=none, arrowtail=empty, dir=both];
+UserManager108603475 -> Administrator108603475[label="administrators
+[0..*]"];
+UserManager108603475 -> AppointmentDatabaseHandler1676144448[label="appointmentDbHandler
+[0..1]"];
+UserManager108603475 -> AuthenticationService435272909[label="authService
+[0..1]"];
+UserManager108603475 -> Doctor108603475[label="doctors
+[0..*]"];
+UserManager108603475 -> DoctorPatientAssignmentHandler1676144448[label="assignmentHandler
+[0..1]"];
+UserManager108603475 -> Patient108603475[label="patients
+[0..*]"];
+UserManager108603475 -> User108603475[label="users
+[0..*]"];
+UserManager108603475 -> UserDatabaseHandler1676144448[label="dbHandler
+[0..1]"];
+VitalsDatabase1042794128 -> Patient108603475[label="patient
+[0..1]"];
+VitalsDatabase1042794128 -> VitalSign1042794128[label="vitals
+[0..*]"];
+    
+}
+@enduml

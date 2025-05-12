@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="700.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.DoctorPatientDetailsController">
+    <top>
+        <VBox spacing="10.0" styleClass="header-section">
+            <padding>
+                <Insets top="20.0" right="20.0" bottom="10.0" left="20.0" />
+            </padding>
+            <children>
+                <Label fx:id="patientNameLabel" styleClass="section-title" text="Patient Name">
+                    <font>
+                        <Font name="System Bold" size="24.0" />
+                    </font>
+                </Label>
+                <GridPane vgap="5.0" hgap="15.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER" minWidth="80.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" />
+                        <ColumnConstraints hgrow="NEVER" minWidth="80.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints vgrow="SOMETIMES" />
+                        <RowConstraints vgrow="SOMETIMES" />
+                    </rowConstraints>
+                    <children>
+                        <Label fx:id="patientIdLabel" text="ID: " GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <Label fx:id="emailLabel" text="Email" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Label text="Phone:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                        <Label fx:id="phoneLabel" text="Phone" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                        
+                        <Label text="Address:" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.valignment="TOP" />
+                        <TextArea fx:id="addressTextArea" editable="false" prefHeight="60.0" prefWidth="200.0" wrapText="true" 
+                                GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="1" />
+                    </children>
+                </GridPane>
+            </children>
+        </VBox>
+    </top>
+    
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+            <tabs>
+                <Tab text="Vitals History">
+                    <content>
+                        <VBox spacing="10.0">
+                            <padding>
+                                <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
+                            </padding>
+                            <children>
+                                <TableView fx:id="vitalsTable" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn fx:id="dateColumn" text="Date/Time" prefWidth="150.0" />
+                                        <TableColumn fx:id="bpColumn" text="Blood Pressure" prefWidth="120.0" />
+                                        <TableColumn fx:id="heartRateColumn" text="Heart Rate" prefWidth="100.0" />
+                                        <TableColumn fx:id="tempColumn" text="Temperature" prefWidth="100.0" />
+                                        <TableColumn fx:id="glucoseColumn" text="Blood Glucose" prefWidth="100.0" />
+                                    </columns>
+                                </TableView>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Previous Feedback">
+                    <content>
+                        <VBox spacing="10.0">
+                            <padding>
+                                <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
+                            </padding>
+                            <children>
+                                <ListView fx:id="feedbackList" VBox.vgrow="ALWAYS" />
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+    
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="footer-section">
+            <padding>
+                <Insets top="10.0" right="20.0" bottom="20.0" left="20.0" />
+            </padding>
+            <children>
+                <Button fx:id="provideFeedbackButton" onAction="#handleProvideFeedback" text="Provide Feedback" />
+                <Button fx:id="closeButton" onAction="#handleClose" text="Close" />
+            </children>
+        </HBox>
+    </bottom>
+</BorderPane>

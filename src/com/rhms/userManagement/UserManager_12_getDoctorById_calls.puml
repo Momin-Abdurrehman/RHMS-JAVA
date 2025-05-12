@@ -1,0 +1,351 @@
+@startuml
+
+/' diagram meta data start
+config=CallConfiguration;
+{
+  "rootMethod": "com.rhms.userManagement.UserManager#getDoctorById(int)",
+  "projectClassification": {
+    "searchMode": "OpenProject", // OpenProject, AllProjects
+    "includedProjects": "",
+    "pathEndKeywords": "*.impl",
+    "isClientPath": "",
+    "isClientName": "",
+    "isTestPath": "",
+    "isTestName": "",
+    "isMappingPath": "",
+    "isMappingName": "",
+    "isDataAccessPath": "",
+    "isDataAccessName": "",
+    "isDataStructurePath": "",
+    "isDataStructureName": "",
+    "isInterfaceStructuresPath": "",
+    "isInterfaceStructuresName": "",
+    "isEntryPointPath": "",
+    "isEntryPointName": "",
+    "treatFinalFieldsAsMandatory": false
+  },
+  "graphRestriction": {
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "removeByInheritance": "", // inheritance/annotation based filtering is done in a second step
+    "removeByAnnotation": "",
+    "removeByClassPackage": "", // cleanup the graph after inheritance/annotation based filtering is done
+    "removeByClassName": "",
+    "cutMappings": false,
+    "cutEnum": true,
+    "cutTests": true,
+    "cutClient": true,
+    "cutDataAccess": true,
+    "cutInterfaceStructures": true,
+    "cutDataStructures": true,
+    "cutGetterAndSetter": true,
+    "cutConstructors": true
+  },
+  "graphTraversal": {
+    "forwardDepth": 3,
+    "backwardDepth": 3,
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "hideMappings": false,
+    "hideDataStructures": false,
+    "hidePrivateMethods": true,
+    "hideInterfaceCalls": true, // indirection: implementation -> interface (is hidden) -> implementation
+    "onlyShowApplicationEntryPoints": false, // root node is included
+    "useMethodCallsForStructureDiagram": "ForwardOnly" // ForwardOnly, BothDirections, No
+  },
+  "details": {
+    "aggregation": "GroupByClass", // ByClass, GroupByClass, None
+    "showMethodParametersTypes": false,
+    "showMethodParametersNames": false,
+    "showMethodReturnType": false,
+    "showPackageLevels": 2,
+    "showCallOrder": false,
+    "edgeMode": "MethodsOnly", // TypesOnly, MethodsOnly, TypesAndMethods, MethodsAndDirectTypeUsage
+    "showDetailedClassStructure": false
+  },
+  "rootClass": "com.rhms.userManagement.UserManager",
+  "extensionCallbackMethod": "" // qualified.class.name#methodName - signature: public static String method(String)
+}
+diagram meta data end '/
+
+
+
+digraph g {
+    rankdir="LR"
+    splines=polyline
+    
+
+'nodes 
+subgraph cluster_3499612 { 
+   	label=rhms
+	labeljust=l
+	fillcolor="#ececec"
+	style=filled
+   
+   subgraph cluster_1177773926 { 
+   	label=ui
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   subgraph cluster_1115017815 { 
+   	label=PatientAppointmentsController
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   PatientAppointmentsController1319010786XXXhandleCancelAppointment1067311644[
+	label="+ handleCancelAppointment()"
+	style=filled
+	fillcolor=white
+	tooltip="PatientAppointmentsController
+
+null"
+	fontcolor=darkgreen
+];
+
+PatientAppointmentsController1319010786XXXhandleScheduleAppointment1067311644[
+	label="+ handleScheduleAppointment()"
+	style=filled
+	fillcolor=white
+	tooltip="PatientAppointmentsController
+
+null"
+	fontcolor=darkgreen
+];
+
+PatientAppointmentsController1319010786XXXinitialize483754871[
+	label="+ initialize()"
+	style=filled
+	fillcolor=white
+	tooltip="PatientAppointmentsController
+
+null"
+	fontcolor=darkgreen
+];
+} 
+
+subgraph cluster_1471229367 { 
+   	label=PatientDashboardController
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   PatientDashboardController1319010786XXXhandleViewAssignedDoctors1067311644[
+	label="+ handleViewAssignedDoctors()"
+	style=filled
+	fillcolor=white
+	tooltip="PatientDashboardController
+
+null"
+	fontcolor=darkgreen
+];
+
+PatientDashboardController1319010786XXXinitializeDashboard0[
+	label="+ initializeDashboard()"
+	style=filled
+	fillcolor=white
+	tooltip="PatientDashboardController
+
+&#10;  Initializes the dashboard with user-specific data&#10; "
+	fontcolor=darkgreen
+];
+} 
+
+subgraph cluster_1484531685 { 
+   	label=DoctorAppointmentsController
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   DoctorAppointmentsController1319010786XXXinitializeData30036335[
+	label="+ initializeData()"
+	style=filled
+	fillcolor=white
+	tooltip="DoctorAppointmentsController
+
+&#10;  Initialize controller with doctor, user manager, and appointment manager&#10; "
+	fontcolor=darkgreen
+];
+} 
+
+subgraph cluster_1963124869 { 
+   	label=DoctorDashboardController
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   DoctorDashboardController1319010786XXXhandleAppointments1067311644[
+	label="+ handleAppointments()"
+	style=filled
+	fillcolor=white
+	tooltip="DoctorDashboardController
+
+null"
+	fontcolor=darkgreen
+];
+
+DoctorDashboardController1319010786XXXinitializeDashboard0[
+	label="+ initializeDashboard()"
+	style=filled
+	fillcolor=white
+	tooltip="DoctorDashboardController
+
+&#10;  Initializes the dashboard with user-specific data&#10; "
+	fontcolor=darkgreen
+];
+} 
+} 
+
+subgraph cluster_1196923775 { 
+   	label=appointmentScheduling
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   subgraph cluster_1381059570 { 
+   	label=AppointmentManager
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   AppointmentManager1163657970XXXloadDoctorAppointments2052357439[
+	label="+ loadDoctorAppointments()"
+	style=filled
+	fillcolor=white
+	tooltip="AppointmentManager
+
+&#10;  Load all appointments for a specific doctor&#10; &#10;  @param doctor The doctor whose appointments to load&#10;  @return List of appointments for the doctor&#10;  @throws AppointmentException If there's an error loading appointments&#10; "
+	fontcolor=darkgreen
+];
+
+AppointmentManager1163657970XXXloadPatientAppointments873235173[
+	label="+ loadPatientAppointments()"
+	style=filled
+	fillcolor=white
+	tooltip="AppointmentManager
+
+&#10;  Load all appointments for a specific patient&#10; &#10;  @param patient The patient whose appointments to load&#10;  @return List of appointments for the patient&#10;  @throws AppointmentException If there's an error loading appointments&#10; "
+	fontcolor=darkgreen
+];
+} 
+} 
+
+subgraph cluster_1951307539 { 
+   	label=Database
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   subgraph cluster_1904099134 { 
+   	label=AppointmentDatabaseHandler
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   AppointmentDatabaseHandler1676144448XXXloadAppointmentsForDoctor104431[
+	label="+ loadAppointmentsForDoctor()"
+	style=filled
+	fillcolor=white
+	tooltip="AppointmentDatabaseHandler
+
+&#10;  Retrieves all appointments for a specific doctor&#10;  &#10;  @param doctorId The ID of the doctor&#10;  @return A list of appointments for the doctor&#10;  @throws SQLException If there is an error querying the database&#10; "
+	fontcolor=darkgreen
+];
+
+AppointmentDatabaseHandler1676144448XXXloadAppointmentsForPatient104431[
+	label="+ loadAppointmentsForPatient()"
+	style=filled
+	fillcolor=white
+	tooltip="AppointmentDatabaseHandler
+
+&#10;  Retrieves all appointments for a specific patient&#10;  &#10;  @param patientId The ID of the patient&#10;  @return A list of appointments for the patient&#10;  @throws SQLException If there is an error querying the database&#10; "
+	fontcolor=darkgreen
+];
+} 
+} 
+
+subgraph cluster_85584960 { 
+   	label=userManagement
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   subgraph cluster_879193049 { 
+   	label=UserManager
+	labeljust=l
+	fillcolor=white
+	style=filled
+   
+   UserManager108603475XXXgetDoctorById104431[
+	label="+ getDoctorById()"
+	style=filled
+	fillcolor=white
+	tooltip="UserManager
+
+null"
+	penwidth=4
+	fontcolor=darkgreen
+];
+
+UserManager108603475XXXloadAppointmentsForDoctor2052357439[
+	label="+ loadAppointmentsForDoctor()"
+	style=filled
+	fillcolor=white
+	tooltip="UserManager
+
+&#10;  Load appointments for a specific doctor from the database&#10;  @param doctor The doctor for whom to load appointments&#10; "
+	fontcolor=darkgreen
+];
+
+UserManager108603475XXXloadAppointmentsForPatient873235173[
+	label="+ loadAppointmentsForPatient()"
+	style=filled
+	fillcolor=white
+	tooltip="UserManager
+
+&#10;  Load appointments for a specific patient from the database&#10;  @param patient The patient for whom to load appointments&#10; "
+	fontcolor=darkgreen
+];
+
+UserManager108603475XXXloadAssignmentsForPatient873235173[
+	label="+ loadAssignmentsForPatient()"
+	style=filled
+	fillcolor=white
+	tooltip="UserManager
+
+&#10;  Load assignments specifically for one patient&#10;  This is used when initializing the patient dashboard&#10;  @param patient The patient whose doctor assignments should be loaded&#10; "
+	fontcolor=darkgreen
+];
+} 
+} 
+} 
+
+'edges    
+AppointmentDatabaseHandler1676144448XXXloadAppointmentsForDoctor104431 -> UserManager108603475XXXgetDoctorById104431;
+AppointmentDatabaseHandler1676144448XXXloadAppointmentsForPatient104431 -> UserManager108603475XXXgetDoctorById104431;
+AppointmentManager1163657970XXXloadDoctorAppointments2052357439 -> AppointmentDatabaseHandler1676144448XXXloadAppointmentsForDoctor104431;
+AppointmentManager1163657970XXXloadPatientAppointments873235173 -> AppointmentDatabaseHandler1676144448XXXloadAppointmentsForPatient104431;
+DoctorAppointmentsController1319010786XXXinitializeData30036335 -> AppointmentManager1163657970XXXloadDoctorAppointments2052357439;
+DoctorDashboardController1319010786XXXhandleAppointments1067311644 -> AppointmentManager1163657970XXXloadDoctorAppointments2052357439;
+DoctorDashboardController1319010786XXXinitializeDashboard0 -> AppointmentManager1163657970XXXloadDoctorAppointments2052357439;
+PatientAppointmentsController1319010786XXXhandleCancelAppointment1067311644 -> AppointmentManager1163657970XXXloadPatientAppointments873235173;
+PatientAppointmentsController1319010786XXXhandleScheduleAppointment1067311644 -> AppointmentManager1163657970XXXloadPatientAppointments873235173;
+PatientAppointmentsController1319010786XXXinitialize483754871 -> AppointmentManager1163657970XXXloadPatientAppointments873235173;
+PatientDashboardController1319010786XXXhandleViewAssignedDoctors1067311644 -> UserManager108603475XXXloadAssignmentsForPatient873235173;
+PatientDashboardController1319010786XXXinitializeDashboard0 -> UserManager108603475XXXloadAppointmentsForPatient873235173;
+PatientDashboardController1319010786XXXinitializeDashboard0 -> UserManager108603475XXXloadAssignmentsForPatient873235173;
+UserManager108603475XXXloadAppointmentsForDoctor2052357439 -> AppointmentDatabaseHandler1676144448XXXloadAppointmentsForDoctor104431;
+UserManager108603475XXXloadAppointmentsForPatient873235173 -> AppointmentDatabaseHandler1676144448XXXloadAppointmentsForPatient104431;
+UserManager108603475XXXloadAssignmentsForPatient873235173 -> UserManager108603475XXXgetDoctorById104431;
+    
+}
+@enduml

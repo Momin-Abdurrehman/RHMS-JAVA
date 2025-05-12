@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="900.0" prefWidth="1400.0" styleClass="dashboard-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.DoctorDashboardController">
+    <left>
+        <VBox prefHeight="200.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" BorderPane.alignment="CENTER">
+            <children>
+                <VBox alignment="CENTER" prefHeight="120.0" prefWidth="200.0" styleClass="user-profile-box">
+                    <children>
+                        <Label fx:id="nameLabel" styleClass="user-name" text="Doctor Name" />
+                        <Label styleClass="user-role" text="Doctor" />
+                    </children>
+                </VBox>
+                <Button mnemonicParsing="false" onAction="#handlePatients" styleClass="sidebar-button" text="My Patients" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleAppointments" styleClass="sidebar-button" text="Appointments" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleProvideFeedback" styleClass="sidebar-button" text="Provide Feedback" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleVideoCall" styleClass="sidebar-button" text="Start Video Call" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleChatWithPatient" styleClass="sidebar-button" text="Chat with Patient" maxWidth="Infinity" />
+                <Region VBox.vgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#handleLogout" styleClass="logout-button" text="Logout" maxWidth="Infinity" />
+            </children>
+            <padding>
+                <Insets bottom="15.0" left="10.0" right="10.0" top="10.0" />
+            </padding>
+        </VBox>
+    </left>
+    <center>
+        <VBox fx:id="contentArea" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <children>
+                <Label styleClass="section-title" text="Doctor Dashboard">
+                    <font>
+                        <Font name="System Bold" size="24.0" />
+                    </font>
+                </Label>
+                <VBox prefHeight="200.0" prefWidth="100.0" styleClass="content-pane">
+                    <VBox.margin>
+                        <Insets top="20.0" />
+                    </VBox.margin>
+                    <children>
+                        <Label styleClass="module-title" text="Assigned Patients">
+                            <VBox.margin>
+                                <Insets bottom="10.0" />
+                            </VBox.margin>
+                        </Label>
+                        <TableView fx:id="patientsTable" prefHeight="180.0" prefWidth="200.0">
+                            <columns>
+                                <TableColumn fx:id="patientNameColumn" prefWidth="200.0" text="Patient Name" />
+                                <TableColumn fx:id="patientContactColumn" prefWidth="150.0" text="Contact" />
+                                <TableColumn fx:id="lastCheckupColumn" prefWidth="150.0" text="Last Checkup" />
+                                <TableColumn fx:id="vitalStatusColumn" prefWidth="150.0" text="Vital Status" />
+                            </columns>
+                        </TableView>
+                    </children>
+                    <padding>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                    </padding>
+                </VBox>
+                <VBox prefHeight="200.0" prefWidth="100.0" styleClass="content-pane">
+                    <VBox.margin>
+                        <Insets top="20.0" />
+                    </VBox.margin>
+                    <children>
+                        <Label styleClass="module-title" text="Upcoming Appointments">
+                            <VBox.margin>
+                                <Insets bottom="10.0" />
+                            </VBox.margin>
+                        </Label>
+                        <TableView fx:id="appointmentsTable" prefHeight="180.0" prefWidth="200.0">
+                            <columns>
+                                <TableColumn fx:id="dateColumn" prefWidth="150.0" text="Date" />
+                                <TableColumn fx:id="timeColumn" prefWidth="100.0" text="Time" />
+                                <TableColumn fx:id="patientColumn" prefWidth="200.0" text="Patient" />
+                                <TableColumn fx:id="statusColumn" prefWidth="100.0" text="Status" />
+                            </columns>
+                        </TableView>
+                    </children>
+                    <padding>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                    </padding>
+                </VBox>
+            </children>
+        </VBox>
+    </center>
+</BorderPane>

@@ -1,0 +1,947 @@
+@startuml
+
+/' diagram meta data start
+config=StructureConfiguration;
+{
+  "projectClassification": {
+    "searchMode": "OpenProject", // OpenProject, AllProjects
+    "includedProjects": "",
+    "pathEndKeywords": "*.impl",
+    "isClientPath": "",
+    "isClientName": "",
+    "isTestPath": "",
+    "isTestName": "",
+    "isMappingPath": "",
+    "isMappingName": "",
+    "isDataAccessPath": "",
+    "isDataAccessName": "",
+    "isDataStructurePath": "",
+    "isDataStructureName": "",
+    "isInterfaceStructuresPath": "",
+    "isInterfaceStructuresName": "",
+    "isEntryPointPath": "",
+    "isEntryPointName": "",
+    "treatFinalFieldsAsMandatory": false
+  },
+  "graphRestriction": {
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "removeByInheritance": "", // inheritance/annotation based filtering is done in a second step
+    "removeByAnnotation": "",
+    "removeByClassPackage": "", // cleanup the graph after inheritance/annotation based filtering is done
+    "removeByClassName": "",
+    "cutMappings": false,
+    "cutEnum": true,
+    "cutTests": true,
+    "cutClient": true,
+    "cutDataAccess": true,
+    "cutInterfaceStructures": true,
+    "cutDataStructures": true,
+    "cutGetterAndSetter": true,
+    "cutConstructors": true
+  },
+  "graphTraversal": {
+    "forwardDepth": 3,
+    "backwardDepth": 3,
+    "classPackageExcludeFilter": "",
+    "classPackageIncludeFilter": "",
+    "classNameExcludeFilter": "",
+    "classNameIncludeFilter": "",
+    "methodNameExcludeFilter": "",
+    "methodNameIncludeFilter": "",
+    "hideMappings": false,
+    "hideDataStructures": false,
+    "hidePrivateMethods": true,
+    "hideInterfaceCalls": true, // indirection: implementation -> interface (is hidden) -> implementation
+    "onlyShowApplicationEntryPoints": false, // root node is included
+    "useMethodCallsForStructureDiagram": "ForwardOnly" // ForwardOnly, BothDirections, No
+  },
+  "details": {
+    "aggregation": "GroupByClass", // ByClass, GroupByClass, None
+    "showClassGenericTypes": true,
+    "showMethods": true,
+    "showMethodParameterNames": true,
+    "showMethodParameterTypes": true,
+    "showMethodReturnType": true,
+    "showPackageLevels": 2,
+    "showDetailedClassStructure": true
+  },
+  "rootClass": "com.rhms.userManagement.UserManager",
+  "extensionCallbackMethod": "" // qualified.class.name#methodName - signature: public static String method(String)
+}
+diagram meta data end '/
+
+
+
+digraph g {
+    rankdir="TB"
+    splines=polyline
+    
+
+'nodes 
+subgraph cluster_3499612 { 
+   	label=rhms
+	labeljust=l
+	fillcolor="#ececec"
+	style=filled
+   
+   subgraph cluster_1177773926 { 
+   	label=ui
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   AdminDashboardController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AdminDashboardController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   contentArea: VBox [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentAdmin: Administrator [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nameLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   outputArea: TextArea [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- findResource(path: String): URL</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleAssignDoctor(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleLogout()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleManageUsers(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleViewLogs(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleViewUsers(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initializeDashboard()</TD></TR>
+<TR><TD ALIGN="LEFT" >- refreshAssignmentsView()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showError(message: String)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+AssignDoctorController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AssignDoctorController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   assignButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignmentDoctorColumn: TableColumn&lt;DoctorPatientAssignment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignmentPatientColumn: TableColumn&lt;DoctorPatientAssignment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignmentTable: TableView&lt;DoctorPatientAssignment&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignments: ObservableList&lt;DoctorPatientAssignment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   closeButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorIdColumn: TableColumn&lt;Doctor, Integer&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorNameColumn: TableColumn&lt;Doctor, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorSpecialtyColumn: TableColumn&lt;Doctor, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorTable: TableView&lt;Doctor&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctors: ObservableList&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   messageArea: TextArea [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientAssignedColumn: TableColumn&lt;Patient, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientIdColumn: TableColumn&lt;Patient, Integer&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientNameColumn: TableColumn&lt;Patient, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientTable: TableView&lt;Patient&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patients: ObservableList&lt;Patient&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   removeButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- handleAssign()</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleClose()</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleRemove()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initialize(userManager: UserManager)</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadDoctorsAndPatients()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadExistingAssignments()</TD></TR>
+<TR><TD ALIGN="LEFT" >- refreshData()</TD></TR>
+<TR><TD ALIGN="LEFT" >- updateButtonState()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+DoctorAppointmentsController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)DoctorAppointmentsController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   allAppointments: List&lt;Appointment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentManager: AppointmentManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentsTable: TableView&lt;Appointment&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   cancelAppointmentButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   cancelledAppointmentsLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   closeButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   completedAppointmentsLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentDoctor: Doctor [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   filteredAppointments: ObservableList&lt;Appointment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   fromDatePicker: DatePicker [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   markCompletedButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   pendingAppointmentsLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   provideFeedbackButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   purposeColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   refreshButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   searchField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   statusColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   statusFilterComboBox: ComboBox&lt;String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   toDatePicker: DatePicker [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   totalAppointmentsLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- applyFilters()</TD></TR>
+<TR><TD ALIGN="LEFT" ># handleApplyDateFilter(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" ># handleCancelAppointment(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" ># handleClearFilters(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" ># handleClose(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" ># handleMarkCompleted(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" ># handleProvideFeedback(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" ># handleRefresh(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initializeData(doctor: Doctor, userManager: UserManager, appointmentManager: AppointmentManager)</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadAppointments()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showAlert(type: AlertType, title: String, content: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- updateAppointmentCounts()</TD></TR>
+<TR><TD ALIGN="LEFT" >- updateButtonStates(selectedAppointment: Appointment)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+DoctorDashboardController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)DoctorDashboardController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointmentManager: AppointmentManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentsTable: TableView&lt;Appointment&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   contentArea: VBox [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentDoctor: Doctor [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   lastCheckupColumn: TableColumn&lt;Patient, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nameLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientContactColumn: TableColumn&lt;Patient, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientNameColumn: TableColumn&lt;Patient, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientsTable: TableView&lt;Patient&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   statusColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   vitalStatusColumn: TableColumn&lt;Patient, String&gt; [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ handleAppointments(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleLogout()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handlePatients(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleProvideFeedback(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleVideoCall(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initializeDashboard()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadAppointments()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadAssignmentsForDoctor()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadPatients()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showMessage(message: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- updateAppointmentStatus(appointment: Appointment, newStatus: String): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+DoctorPatientDetailsController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)DoctorPatientDetailsController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   addressTextArea: TextArea [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   bpColumn: TableColumn&lt;VitalSign, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   closeButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentDoctor: Doctor [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentPatient: Patient [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateColumn: TableColumn&lt;VitalSign, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateTimeFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   emailLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   feedbackList: ListView&lt;String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   heartRateColumn: TableColumn&lt;VitalSign, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   medicalHistoryList: ListView&lt;String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientIdLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patientNameLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   phoneLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   provideFeedbackButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   tempColumn: TableColumn&lt;VitalSign, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   vitalsTable: TableView&lt;VitalSign&gt; [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- formatBloodPressure(bloodPressure: double): String</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleClose()</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleProvideFeedback()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initializeData(doctor: Doctor, patient: Patient, userManager: UserManager)</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadMedicalHistory()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadPreviousFeedback()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadVitalsData()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showAlert(type: AlertType, title: String, content: String)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+LoginHandler1844058119[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)LoginHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   dbHandler: UserDatabaseHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- getUserType(user: User): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ login(scanner: Scanner): User</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+LoginViewController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)LoginViewController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   currentUser: User [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dbHandler: UserDatabaseHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   loginButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   messageLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   passwordField: PasswordField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   registerButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   usernameField: TextField [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- findResource(path: String): URL</TD></TR>
+<TR><TD ALIGN="LEFT" >- getDashboardViewName(user: User): String</TD></TR>
+<TR><TD ALIGN="LEFT" >- getUserTypeString(user: User): String</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleLogin(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleRegister(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initialize()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showErrorMessage(message: String)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+ManageUsersDashboardController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)ManageUsersDashboardController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   addUserButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   addressField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   allUsers: ObservableList&lt;User&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorFieldsContainer: VBox [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   emailColumn: TableColumn&lt;User, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   emailField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   experienceYearsSpinner: Spinner&lt;Integer&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   filteredUsers: FilteredList&lt;User&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   idColumn: TableColumn&lt;User, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nameColumn: TableColumn&lt;User, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nameField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   passwordField: PasswordField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   phoneField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   searchField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   specializationField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   statusLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   totalUsersLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userTypeColumn: TableColumn&lt;User, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userTypeComboBox: ComboBox&lt;String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userTypeFilter: ComboBox&lt;String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   usernameField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   usersTableView: TableView&lt;User&gt; [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- clearForm()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleAddUser(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleClearForm(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleClose(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleRefresh(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleRemoveUser(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleRowSelection()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleSearch(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initialize()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadUsers()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showAlert(alertType: AlertType, title: String, content: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- updateFilter()</TD></TR>
+<TR><TD ALIGN="LEFT" >- validateForm(): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+MenuController1844058119[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)MenuController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   currentUser: User [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- displayAllUsers()</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleDoctorPatientAssignment()</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleEmergencyAlert(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleLogin()</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleManageAppointments(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleProvideFeedback(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleRegistration()</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleScheduleAppointment(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleViewPatientHistory(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleVitalsUpload(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >- registerAdmin(name: String, email: String, password: String, phone: String, address: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- registerDoctor(name: String, email: String, password: String, phone: String, address: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- registerPatient(name: String, email: String, password: String, phone: String, address: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- showAdminMenu(admin: Administrator)</TD></TR>
+<TR><TD ALIGN="LEFT" >- showDoctorMenu(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ showMainMenu()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showPatientMenu(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >- showUserMenu()</TD></TR>
+<TR><TD ALIGN="LEFT" >- togglePanicButton(patient: Patient)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PatientAppointmentsController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PatientAppointmentsController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointmentList: ObservableList&lt;Appointment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentManager: AppointmentManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentsTable: TableView&lt;Appointment&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   cancelButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   closeButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentPatient: Patient [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateValueLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorValueLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   notesColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   notesTextArea: TextArea [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   purposeColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   purposeValueLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   scheduleButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   statusColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   statusValueLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeValueLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   totalAppointmentsLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   upcomingAppointmentsLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- clearAppointmentDetails()</TD></TR>
+<TR><TD ALIGN="LEFT" >- displayAppointmentDetails(appointment: Appointment)</TD></TR>
+<TR><TD ALIGN="LEFT" >- findResource(path: String): URL</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleCancelAppointment(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleClose(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleScheduleAppointment(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initialize(patient: Patient, userManager: UserManager)</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadAppointments()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showError(title: String, message: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- showInfo(message: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- updateAppointmentCounts()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+PatientDashboardController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)PatientDashboardController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointmentManager: AppointmentManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentsTable: TableView&lt;Appointment&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   bloodPressureLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   contentArea: VBox [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentPatient: Patient [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dateFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   decimalFormat: DecimalFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   heartRateLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nameLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   oxygenLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   statusColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   temperatureLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeColumn: TableColumn&lt;Appointment, String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeFormat: SimpleDateFormat [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- findResource(path: String): URL</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleAppointments(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleEmergencyAlert(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleFeedback(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleLogout()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleRequestDoctor(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleUploadVitals(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleViewAssignedDoctors(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleViewMedicalHistory(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleVitals(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initializeDashboard()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadAppointments()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadLatestVitals()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showMessage(message: String)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+RegistrationController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)RegistrationController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   addressField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   adminController: AdminDashboardController [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorFieldsContainer: VBox [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   emailField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   experienceYearsField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   messageLabel: Label [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nameField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   passwordField: PasswordField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   phoneField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   specializationField: TextField [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userTypeComboBox: ComboBox&lt;String&gt; [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- clearFields()</TD></TR>
+<TR><TD ALIGN="LEFT" >- findResource(path: String): URL</TD></TR>
+<TR><TD ALIGN="LEFT" >- goBackToLogin(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >- handleCancel(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleRegister(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initialize()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showMessage(message: String, isError: boolean)</TD></TR>
+<TR><TD ALIGN="LEFT" >- validateInput(): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+ScheduleAppointmentController1319010786[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)ScheduleAppointmentController</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointmentDate: DatePicker [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentManager: AppointmentManager [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   availableDoctors: List&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   cancelButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   currentPatient: Patient [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorComboBox: ComboBox&lt;String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   purposeTextArea: TextArea [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   scheduleButton: Button [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   timeComboBox: ComboBox&lt;String&gt; [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- closeDialog()</TD></TR>
+<TR><TD ALIGN="LEFT" >- formatTime(time: LocalTime): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleCancel(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ handleScheduleAppointment(event: ActionEvent)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ initialize(location: URL, resources: ResourceBundle)</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadDoctors()</TD></TR>
+<TR><TD ALIGN="LEFT" >- parseTime(timeStr: String): LocalTime</TD></TR>
+<TR><TD ALIGN="LEFT" >- populateTimeSlots()</TD></TR>
+<TR><TD ALIGN="LEFT" >- showError(title: String, message: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >- updateScheduleButtonState()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_1196923775 { 
+   	label=appointmentScheduling
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   AppointmentManager1163657970[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AppointmentManager</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   dbHandler: AppointmentDatabaseHandler [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ cancelAppointment(appointmentId: int): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadDoctorAppointments(doctor: Doctor): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadPatientAppointments(patient: Patient): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointment: Appointment): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ updateAppointmentStatus(appointment: Appointment, newStatus: String): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_185282970 { 
+   	label=loginSystem
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   AuthenticationService435272909[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AuthenticationService</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   dbHandler: UserDatabaseHandler [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- generateSessionToken(): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ login(username: String, password: String): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ logout(sessionToken: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ validateSession(sessionToken: String): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Session435272909[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Session</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   creationTime: LocalDateTime [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   lastActivityTime: LocalDateTime [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   sessionToken: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   user: User [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ updateActivity()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_1951307539 { 
+   	label=Database
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   AppointmentDatabaseHandler1676144448[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)AppointmentDatabaseHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   connection: Connection [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userManager: UserManager [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addAppointment(appointment: Appointment): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >- createAppointmentFromResultSet(rs: ResultSet, patient: Patient): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForDoctor(doctorId: int): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForPatient(patientId: int): List&lt;Appointment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ saveAppointment(appointment: Appointment): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ updateAppointmentStatus(appointmentId: int, status: String): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+DoctorPatientAssignmentHandler1676144448[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)DoctorPatientAssignmentHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   connection: Connection [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ assignDoctorToPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >- ensureTableExists()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getAllAssignments(userDbHandler: UserDatabaseHandler): List&lt;DoctorPatientAssignment&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getAssignedDoctorsForPatient(patientId: int, userDbHandler: UserDatabaseHandler): List&lt;Doctor&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getPatientsForDoctor(doctorId: int, userDbHandler: UserDatabaseHandler): List&lt;Patient&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >- refreshConnectionIfNeeded()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeDoctorFromPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+UserDatabaseHandler1676144448[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)UserDatabaseHandler</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   connection: Connection [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addUser(user: User): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ deleteSession(sessionToken: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getDoctorById(doctorId: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getPatientById(patientId: int): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getSessionByToken(sessionToken: String): Session</TD></TR>
+<TR><TD ALIGN="LEFT" >- getUserById(userId: int): User</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getUserByUsername(username: String): User</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isEmailExists(email: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isUsernameExists(username: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ saveSession(session: Session): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ updateSessionActivity(session: Session): boolean</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+
+subgraph cluster_85584960 { 
+   	label=userManagement
+	labeljust=l
+	fillcolor="#d8d8d8"
+	style=filled
+   
+   Administrator108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Administrator</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   doctors: ArrayList&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   lastAuditTime: LocalDateTime [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patients: ArrayList&lt;Patient&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   systemConfiguration: Map&lt;String, String&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   systemLogs: ArrayList&lt;String&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ assignPatientToDoctor(patient: Patient, doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ clearLogs()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayAdminInfo()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findDoctorById(doctorId: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findPatientById(patientId: int): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getSystemConfiguration(key: String): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ logActivity(activity: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ performSystemAudit()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removePatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ verifyInDatabase(username: String, password: String): Administrator</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewSystemLogs()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Doctor108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Doctor</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointments: List&lt;Appointment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignedPatients: List&lt;Patient&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   experienceYears: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   feedbackByPatient: Map&lt;Integer, List&lt;Feedback&gt;&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   specialization: String [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- addFeedbackToHistory(patient: Patient, feedback: Feedback)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ clearPatients()</TD></TR>
+<TR><TD ALIGN="LEFT" >- containsPatient(patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayDoctorInfo()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getFeedbackForPatient(patient: Patient): List&lt;Feedback&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ provideFeedback(patient: Patient, message: String): Feedback</TD></TR>
+<TR><TD ALIGN="LEFT" >+ provideFeedback(patient: Patient, message: String, prescription: Prescription): Feedback</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removePatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewAllPatients()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewPatientHistory(patient: Patient)</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+Patient108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)Patient</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   appointments: ArrayList&lt;Appointment&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignedDoctors: ArrayList&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctorFeedback: ArrayList&lt;String&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   medicalHistory: MedicalHistory [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   medicalRecords: ArrayList&lt;String&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   panicButton: PanicButton [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   vitalsDatabase: VitalsDatabase [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ addAppointment(appointment: Appointment)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addAssignedDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ addVitalSign(vitalSign: VitalSign)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ cancelAppointment(appointment: Appointment, appointmentManager: AppointmentManager): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ clearAssignedDoctors()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ disablePanicButton()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ displayPatientInfo()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ enablePanicButton()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ receiveFeedback(feedback: Feedback)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeAssignedDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointment: Appointment)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointmentDescription: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ scheduleAppointment(appointment: Appointment, appointmentManager: AppointmentManager): Appointment</TD></TR>
+<TR><TD ALIGN="LEFT" >+ triggerPanicButton(reason: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadMedicalRecord(record: String)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadVitalsFromCSV(filePath: String): int</TD></TR>
+<TR><TD ALIGN="LEFT" >+ uploadVitalsFromCSVWithReport(filePath: String): VitalsUploadReport</TD></TR>
+<TR><TD ALIGN="LEFT" >+ verifyInDatabase(username: String, password: String): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ viewDoctorFeedback()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+User108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)User</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >#   address: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   email: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   name: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   password: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >#   phone: String [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   userID: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   username: String [0..1]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >- generateDefaultUsername(name: String, userID: int): String</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+
+UserManager108603475[
+	label=<<TABLE BORDER="1" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
+<TR><TD ALIGN="LEFT" >(C)UserManager</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >-   administrators: List&lt;Administrator&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   appointmentDbHandler: AppointmentDatabaseHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   assignmentHandler: DoctorPatientAssignmentHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   authService: AuthenticationService [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   dbHandler: UserDatabaseHandler [0..1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   doctors: List&lt;Doctor&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   nextUserId: int [1]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   patients: List&lt;Patient&gt; [0..*]</TD></TR>
+<TR><TD ALIGN="LEFT" >-   users: Map&lt;Integer, User&gt; [0..*]</TD></TR>
+<HR/>
+<TR><TD ALIGN="LEFT" >+ assignDoctorToPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findUserByEmail(email: String): User</TD></TR>
+<TR><TD ALIGN="LEFT" >+ findUserById(userId: int): User</TD></TR>
+<TR><TD ALIGN="LEFT" >- generateUserId(): int</TD></TR>
+<TR><TD ALIGN="LEFT" >- generateUsername(name: String, userId: int): String</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getDoctorById(doctorId: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getPatientById(patientId: int): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ getSortedVitals(b: boolean): List&lt;VitalSign&gt;</TD></TR>
+<TR><TD ALIGN="LEFT" >+ isEmailExists(email: String): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAllAssignmentsFromDatabase()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAppointmentsForPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAssignmentsForDoctor(doctor: Doctor)</TD></TR>
+<TR><TD ALIGN="LEFT" >+ loadAssignmentsForPatient(patient: Patient)</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadDoctorPatientAssignments()</TD></TR>
+<TR><TD ALIGN="LEFT" >- loadUsers()</TD></TR>
+<TR><TD ALIGN="LEFT" >+ registerAdministrator(name: String, email: String, password: String, phone: String, address: String): Administrator</TD></TR>
+<TR><TD ALIGN="LEFT" >+ registerDoctor(name: String, email: String, password: String, phone: String, address: String, specialization: String, experienceYears: int): Doctor</TD></TR>
+<TR><TD ALIGN="LEFT" >+ registerPatient(name: String, email: String, password: String, phone: String, address: String): Patient</TD></TR>
+<TR><TD ALIGN="LEFT" >+ removeDoctorFromPatient(doctor: Doctor, patient: Patient): boolean</TD></TR>
+<TR><TD ALIGN="LEFT" >+ syncUsersFromDatabase()</TD></TR>
+</TABLE>>
+	style=filled
+	margin=0
+	shape=plaintext
+	fillcolor="#FFFFFF"
+];
+} 
+} 
+
+'edges    
+AdminDashboardController1319010786 -> DoctorDashboardController1319010786[arrowhead=none];
+AdminDashboardController1319010786 -> PatientDashboardController1319010786[arrowhead=none];
+AdminDashboardController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+Administrator108603475 -> Doctor108603475[label="doctors
+[0..*]"];
+Administrator108603475 -> Patient108603475[label="patients
+[0..*]"];
+Administrator108603475 -> UserDatabaseHandler1676144448[label="verifyInDatabase() -> getUserByUsername()"];
+AppointmentDatabaseHandler1676144448 -> UserManager108603475[label="userManager
+[0..1]"];
+AppointmentManager1163657970 -> AppointmentDatabaseHandler1676144448[label="dbHandler
+[0..1]"];
+AssignDoctorController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+AuthenticationService435272909 -> Session435272909[label="validateSession() -> updateActivity()"];
+AuthenticationService435272909 -> UserDatabaseHandler1676144448[label="dbHandler
+[0..1]"];
+DoctorAppointmentsController1319010786 -> AppointmentManager1163657970[label="appointmentManager
+[0..1]"];
+DoctorAppointmentsController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+DoctorDashboardController1319010786 -> AppointmentManager1163657970[label="appointmentManager
+[0..1]"];
+DoctorDashboardController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+DoctorPatientDetailsController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+LoginHandler1844058119 -> UserManager108603475[label="userManager
+[0..1]"];
+LoginViewController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+ManageUsersDashboardController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+MenuController1844058119 -> UserManager108603475[label="userManager
+[0..1]"];
+PatientAppointmentsController1319010786 -> AppointmentManager1163657970[label="appointmentManager
+[0..1]"];
+PatientAppointmentsController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+PatientDashboardController1319010786 -> AppointmentManager1163657970[label="appointmentManager
+[0..1]"];
+PatientDashboardController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+RegistrationController1319010786 -> AdminDashboardController1319010786[label="adminController
+[0..1]"];
+RegistrationController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+ScheduleAppointmentController1319010786 -> AppointmentManager1163657970[label="appointmentManager
+[0..1]"];
+ScheduleAppointmentController1319010786 -> UserManager108603475[label="userManager
+[0..1]"];
+User108603475 -> Administrator108603475[arrowhead=none, arrowtail=empty, dir=both];
+UserManager108603475 -> Administrator108603475[label="administrators
+[0..*]"];
+UserManager108603475 -> AppointmentDatabaseHandler1676144448[label="appointmentDbHandler
+[0..1]"];
+UserManager108603475 -> AuthenticationService435272909[label="authService
+[0..1]"];
+UserManager108603475 -> Doctor108603475[label="doctors
+[0..*]"];
+UserManager108603475 -> DoctorPatientAssignmentHandler1676144448[label="assignmentHandler
+[0..1]"];
+UserManager108603475 -> Patient108603475[label="patients
+[0..*]"];
+UserManager108603475 -> User108603475[label="users
+[0..*]"];
+UserManager108603475 -> UserDatabaseHandler1676144448[label="dbHandler
+[0..1]"];
+    
+}
+@enduml

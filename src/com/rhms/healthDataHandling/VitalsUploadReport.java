@@ -12,7 +12,9 @@ public class VitalsUploadReport {
     private int errorCount;
     private List<VitalsUploadError> errors;
     private List<VitalSign> successfulVitals;
+    // Removed filePath as it's not used in the constructor anymore
 
+    // Constructor now takes no arguments
     public VitalsUploadReport() {
         this.successCount = 0;
         this.errorCount = 0;

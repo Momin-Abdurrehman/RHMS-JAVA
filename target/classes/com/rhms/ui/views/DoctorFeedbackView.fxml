@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="650.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.DoctorFeedbackController">
+    <top>
+        <VBox spacing="10.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="20.0" right="20.0" bottom="10.0" left="20.0" />
+            </padding>
+            <children>
+                <Label text="Provide Patient Feedback" styleClass="section-title">
+                    <font>
+                        <Font name="System Bold" size="18.0" />
+                    </font>
+                </Label>
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <children>
+                        <Label text="Patient:" />
+                        <Label fx:id="patientNameLabel" text="Patient Name" styleClass="patient-name-label" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </top>
+    
+    <center>
+        <VBox spacing="15.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="10.0" right="20.0" bottom="10.0" left="20.0" />
+            </padding>
+            <children>
+                <Label text="Feedback:" />
+                <TextArea fx:id="feedbackTextArea" prefHeight="100.0" prefWidth="200.0" wrapText="true" promptText="Enter your feedback, observations, and recommendations for the patient..." />
+                
+                <CheckBox fx:id="includePrescriptionCheckBox" text="Include Prescription(s)" />
+                
+                <VBox fx:id="prescriptionContainer" spacing="10.0">
+                    <TitledPane text="Add New Prescription" expanded="true" collapsible="true">
+                        <VBox spacing="10.0">
+                            <GridPane hgap="10.0" vgap="10.0">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="120.0" minWidth="100.0" prefWidth="100.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="120.0" minWidth="100.0" prefWidth="100.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="70.0" prefHeight="70.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                <children>
+                                    <Label text="Medication:" />
+                                    <TextField fx:id="medicationNameField" promptText="Medication name" GridPane.columnIndex="1" />
+                                    
+                                    <Label text="Dosage:" GridPane.columnIndex="2" />
+                                    <TextField fx:id="dosageField" promptText="e.g., 10mg, 5ml" GridPane.columnIndex="3" />
+                                    
+                                    <Label text="Frequency:" GridPane.rowIndex="1" />
+                                    <ComboBox fx:id="frequencyComboBox" prefWidth="150.0" promptText="Select frequency" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    
+                                    <Label text="Duration:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                                    <TextField fx:id="durationField" promptText="e.g., 7 days, 2 weeks" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                                    
+                                    <Label text="Instructions:" GridPane.rowIndex="2" GridPane.valignment="TOP" />
+                                    <TextArea fx:id="instructionsTextArea" prefHeight="70.0" promptText="Special instructions (e.g., take with food)" wrapText="true" 
+                                            GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="2" />
+                                </children>
+                            </GridPane>
+                            
+                            <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                                <Button fx:id="addPrescriptionButton" onAction="#handleAddPrescription" text="Add Prescription" />
+                            </HBox>
+                        </VBox>
+                    </TitledPane>
+                    
+                    <Label text="Current Prescriptions:" />
+                    <TableView fx:id="prescriptionsTable" prefHeight="150.0">
+                        <columns>
+                            <TableColumn fx:id="medicationColumn" prefWidth="150.0" text="Medication" />
+                            <TableColumn fx:id="dosageColumn" prefWidth="100.0" text="Dosage" />
+                            <TableColumn fx:id="frequencyColumn" prefWidth="150.0" text="Frequency" />
+                            <TableColumn fx:id="durationColumn" prefWidth="150.0" text="Duration" />
+                        </columns>
+                    </TableView>
+                    <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                        <Button fx:id="removePrescriptionButton" onAction="#handleRemovePrescription" text="Remove Selected" />
+                    </HBox>
+                </VBox>
+            </children>
+        </VBox>
+    </center>
+    
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" spacing="15.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="10.0" right="20.0" bottom="20.0" left="20.0" />
+            </padding>
+            <children>
+                <Button fx:id="submitButton" defaultButton="true" onAction="#handleSubmit" text="Submit Feedback" />
+                <Button fx:id="cancelButton" cancelButton="true" onAction="#handleCancel" text="Cancel" />
+            </children>
+        </HBox>
+    </bottom>
+</BorderPane>
