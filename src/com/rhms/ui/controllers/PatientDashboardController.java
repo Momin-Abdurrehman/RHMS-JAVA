@@ -14,9 +14,7 @@ import com.rhms.healthDataHandling.VitalSign;
 import com.rhms.healthDataHandling.CSVVitalsUploader;
 import com.rhms.healthDataHandling.VitalsUploadReport;
 import com.rhms.appointmentScheduling.Appointment;
-import com.rhms.notifications.NotificationService;
 
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,13 +24,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.HBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -43,6 +37,8 @@ import javafx.geometry.Insets;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Date;
@@ -77,7 +73,6 @@ public class PatientDashboardController implements DashboardController {
     private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     private DecimalFormat decimalFormat = new DecimalFormat("#.0");
     private AppointmentManager appointmentManager;
-    private NotificationService notificationService;
 
     @Override
     public void setUser(User user) {
@@ -91,7 +86,6 @@ public class PatientDashboardController implements DashboardController {
     @Override
     public void setUserManager(UserManager userManager) {
         this.userManager = userManager;
-        this.notificationService = new NotificationService();
 
         // Initialize the appointment manager for database operations
         AppointmentDatabaseHandler dbHandler = userManager.getAppointmentDbHandler();
@@ -374,8 +368,13 @@ public class PatientDashboardController implements DashboardController {
             existingFeedbackLabel.setStyle("-fx-font-weight: bold;");
             content.getChildren().add(existingFeedbackLabel);
 
-            // Get feedback from the patient object
-            ArrayList<String> feedbackList = currentPatient.getDoctorFeedback();
+            // Get feedback from the database instead of only from the patient object
+            ArrayList<String> feedbackList = new ArrayList<>();
+            if (userManager != null && currentPatient != null && userManager.dbHandler != null) {
+                feedbackList.addAll(userManager.dbHandler.getPatientFeedbacks(currentPatient.getUserID(), null));
+            } else {
+                feedbackList = currentPatient.getDoctorFeedback();
+            }
 
             if (feedbackList.isEmpty()) {
                 Label noFeedbackLabel = new Label("No feedback records found.");
@@ -400,7 +399,8 @@ public class PatientDashboardController implements DashboardController {
 
             // Populate with the patient's doctors
             ObservableList<String> doctorNames = FXCollections.observableArrayList();
-            for (Doctor doctor : currentPatient.getAssignedDoctors()) {
+            List<Doctor> assignedDoctors = currentPatient.getAssignedDoctors();
+            for (Doctor doctor : assignedDoctors) {
                 doctorNames.add("Dr. " + doctor.getName() + " (" + doctor.getSpecialization() + ")");
             }
 
@@ -483,9 +483,32 @@ public class PatientDashboardController implements DashboardController {
             // Show dialog and process result
             Optional<String> result = dialog.showAndWait();
             result.ifPresent(feedback -> {
-                // Save the feedback
-                currentPatient.getDoctorFeedback().add(feedback);
-                showMessage("Feedback submitted successfully!");
+                // Save the feedback to the database
+                int doctorIndex = doctorComboBox.getSelectionModel().getSelectedIndex();
+                if (doctorIndex >= 0 && doctorIndex < assignedDoctors.size()) {
+                    Doctor selectedDoctor = assignedDoctors.get(doctorIndex);
+                    Toggle selectedRating = ratingGroup.getSelectedToggle();
+                    int rating = selectedRating != null ? (int)selectedRating.getUserData() : 5;
+                    String feedbackText = feedbackTextArea.getText().trim();
+
+                    // Save to DB
+                    boolean success = false;
+                    if (userManager != null && userManager.dbHandler != null) {
+                        success = userManager.dbHandler.addPatientFeedback(
+                            currentPatient.getUserID(),
+                            selectedDoctor.getUserID(),
+                            feedbackText,
+                            rating
+                        );
+                    }
+                    if (success) {
+                        showMessage("Feedback submitted successfully!");
+                    } else {
+                        showMessage("Failed to submit feedback. Please try again.");
+                    }
+                } else {
+                    showMessage("Invalid doctor selection.");
+                }
             });
 
         } catch (Exception e) {
@@ -1148,48 +1171,92 @@ public class PatientDashboardController implements DashboardController {
             VBox content = new VBox(15);
             content.setPadding(new Insets(20, 20, 10, 20));
 
-            // --- Prescriptions Section ---
-            Label prescriptionsLabel = new Label("Prescriptions:");
-            prescriptionsLabel.setStyle("-fx-font-weight: bold;");
-            content.getChildren().add(prescriptionsLabel);
-
-            // Assuming Patient has a getPrescriptions() method returning List<String> or similar
-            List<String> prescriptions = null;
-            try {
-                prescriptions = currentPatient.getPrescriptions();
-            } catch (Exception e) {
-                prescriptions = null;
-            }
-            if (prescriptions == null || prescriptions.isEmpty()) {
-                Label noPrescriptions = new Label("No prescription records found.");
-                noPrescriptions.setStyle("-fx-font-style: italic;");
-                content.getChildren().add(noPrescriptions);
-            } else {
-                ListView<String> prescriptionsList = new ListView<>(FXCollections.observableArrayList(prescriptions));
-                prescriptionsList.setPrefHeight(100);
-                content.getChildren().add(prescriptionsList);
-            }
-
-            // --- Doctor Feedback Section ---
-            Label feedbackLabel = new Label("Doctor Feedback:");
-            feedbackLabel.setStyle("-fx-font-weight: bold;");
+            // --- Doctor Feedback & Prescriptions Section ---
+            Label feedbackLabel = new Label("Doctor Feedback & Prescriptions:");
+            feedbackLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-underline: true;");
             content.getChildren().add(feedbackLabel);
 
-            ArrayList<String> feedbackList = currentPatient.getDoctorFeedback();
-            if (feedbackList == null || feedbackList.isEmpty()) {
-                Label noFeedback = new Label("No feedback records found.");
+            // Load feedback and prescriptions from database (if available)
+            List<String> feedbackDisplayList = new ArrayList<>();
+            try {
+                if (userManager != null && userManager.dbHandler != null) {
+                    String sql = "SELECT f.timestamp, u.name AS doctor_name, f.comments, " +
+                            "p.medication_name, p.dosage, p.schedule, p.duration, p.instructions " +
+                            "FROM feedback_by_doctor f " +
+                            "JOIN Doctors d ON f.doctor_id = d.doctor_id " +
+                            "JOIN Users u ON d.user_id = u.user_id " +
+                            "LEFT JOIN prescription p ON f.feedback_id = p.feedback_id " +
+                            "WHERE f.patient_id = ? ORDER BY f.timestamp DESC";
+                    try (PreparedStatement stmt = userManager.dbHandler.connection.prepareStatement(sql)) {
+                        stmt.setInt(1, currentPatient.getUserID());
+                        ResultSet rs = stmt.executeQuery();
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+                        while (rs.next()) {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("🗓 Date: ").append(sdf.format(rs.getTimestamp("timestamp"))).append("\n");
+                            sb.append("👨‍⚕️ Doctor: Dr. ").append(rs.getString("doctor_name")).append("\n\n");
+                            sb.append("💬 Feedback:\n").append(rs.getString("comments")).append("\n");
+                            String med = rs.getString("medication_name");
+                            if (med != null && !med.isEmpty()) {
+                                sb.append("\n💊 Prescription:\n");
+                                sb.append("   • Medication: ").append(med).append("\n");
+                                String dosage = rs.getString("dosage");
+                                if (dosage != null && !dosage.isEmpty())
+                                    sb.append("   • Dosage: ").append(dosage).append("\n");
+                                String schedule = rs.getString("schedule");
+                                if (schedule != null && !schedule.isEmpty())
+                                    sb.append("   • Schedule: ").append(schedule).append("\n");
+                                String duration = rs.getString("duration");
+                                if (duration != null && !duration.isEmpty())
+                                    sb.append("   • Duration: ").append(duration).append("\n");
+                                String instructions = rs.getString("instructions");
+                                if (instructions != null && !instructions.trim().isEmpty())
+                                    sb.append("   • Instructions: ").append(instructions).append("\n");
+                            }
+                            feedbackDisplayList.add(sb.toString());
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                feedbackDisplayList.clear();
+                feedbackDisplayList.add("Error loading feedback and prescriptions: " + ex.getMessage());
+            }
+
+            if (feedbackDisplayList.isEmpty()) {
+                Label noFeedback = new Label("No feedback or prescription records found.");
                 noFeedback.setStyle("-fx-font-style: italic;");
                 content.getChildren().add(noFeedback);
             } else {
-                ListView<String> feedbackListView = new ListView<>(FXCollections.observableArrayList(feedbackList));
-                feedbackListView.setPrefHeight(100);
+                ListView<String> feedbackListView = new ListView<>();
+                feedbackListView.setPrefHeight(350);
+                feedbackListView.setItems(FXCollections.observableArrayList(feedbackDisplayList));
+                feedbackListView.setCellFactory(listView -> new ListCell<String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                            setStyle("-fx-background-color: transparent;");
+                        } else {
+                            setText(item);
+                            setWrapText(true);
+                            setPrefWidth(0);
+                            // Alternate background for card effect
+                            if (getIndex() % 2 == 0) {
+                                setStyle("-fx-background-color: #f8f9fa; -fx-padding: 12; -fx-border-color: #e0e0e0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 14px;");
+                            } else {
+                                setStyle("-fx-background-color: #eaf3fb; -fx-padding: 12; -fx-border-color: #d0d7de; -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 14px;");
+                            }
+                        }
+                    }
+                });
                 content.getChildren().add(feedbackListView);
             }
 
             // Set content
             dialog.getDialogPane().setContent(content);
             dialog.getDialogPane().setPrefWidth(700);
-            dialog.getDialogPane().setPrefHeight(400);
+            dialog.getDialogPane().setPrefHeight(500);
 
             // Apply CSS
             URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
@@ -1207,4 +1274,3 @@ public class PatientDashboardController implements DashboardController {
     }
 
 }
-

@@ -5,6 +5,7 @@ import com.rhms.doctorPatientInteraction.Prescription;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 
+import com.rhms.userManagement.UserManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -26,19 +27,19 @@ public class DoctorFeedbackController {
     @FXML private TextArea feedbackTextArea;
     @FXML private CheckBox includePrescriptionCheckBox;
     @FXML private VBox prescriptionContainer;
-    
+
     @FXML private TextField medicationNameField;
     @FXML private TextField dosageField;
     @FXML private ComboBox<String> frequencyComboBox;
     @FXML private TextField durationField;
     @FXML private TextArea instructionsTextArea;
-    
+
     @FXML private TableView<PrescriptionItem> prescriptionsTable;
     @FXML private TableColumn<PrescriptionItem, String> medicationColumn;
     @FXML private TableColumn<PrescriptionItem, String> dosageColumn;
     @FXML private TableColumn<PrescriptionItem, String> frequencyColumn;
     @FXML private TableColumn<PrescriptionItem, String> durationColumn;
-    
+
     @FXML private Button addPrescriptionButton;
     @FXML private Button removePrescriptionButton;
     @FXML private Button submitButton;
@@ -48,34 +49,40 @@ public class DoctorFeedbackController {
     private Patient currentPatient;
     private List<PrescriptionItem> prescriptionItems = new ArrayList<>();
 
+    private Feedback submittedFeedback;
+
+    public Feedback getSubmittedFeedback() {
+        return submittedFeedback;
+    }
+
     /**
      * Initialize the controller with doctor and patient data
      */
     public void initializeData(Doctor doctor, Patient patient) {
         this.currentDoctor = doctor;
         this.currentPatient = patient;
-        
+
         // Update UI with patient information
         patientNameLabel.setText(patient.getName());
-        
+
         // Set up the prescription section initially hidden
         prescriptionContainer.setVisible(false);
         prescriptionContainer.setManaged(false);
-        
+
         // Set up frequency combo box options
-        frequencyComboBox.getItems().addAll("Once daily", "Twice daily", "Three times daily", 
-                                           "Every 4 hours", "Every 6 hours", "Every 8 hours", 
-                                           "As needed", "Before meals", "After meals");
-        
+        frequencyComboBox.getItems().addAll("Once daily", "Twice daily", "Three times daily",
+                "Every 4 hours", "Every 6 hours", "Every 8 hours",
+                "As needed", "Before meals", "After meals");
+
         // Set up table columns
         setupTableColumns();
-        
+
         // Listener for the prescription checkbox
         includePrescriptionCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             prescriptionContainer.setVisible(newVal);
             prescriptionContainer.setManaged(newVal);
         });
-        
+
         LOGGER.log(Level.INFO, "DoctorFeedbackController initialized for patient: {0}", patient.getName());
     }
 
@@ -83,18 +90,18 @@ public class DoctorFeedbackController {
      * Set up the table columns for the prescriptions table
      */
     private void setupTableColumns() {
-        medicationColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getMedicationName()));
-        
-        dosageColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDosage()));
-        
-        frequencyColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFrequency()));
-        
-        durationColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDuration()));
-        
+        medicationColumn.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getMedicationName()));
+
+        dosageColumn.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDosage()));
+
+        frequencyColumn.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFrequency()));
+
+        durationColumn.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDuration()));
+
         prescriptionsTable.setItems(javafx.collections.FXCollections.observableArrayList(prescriptionItems));
     }
 
@@ -108,17 +115,17 @@ public class DoctorFeedbackController {
         String frequency = frequencyComboBox.getValue();
         String duration = durationField.getText().trim();
         String instructions = instructionsTextArea.getText().trim();
-        
+
         if (medication.isEmpty() || dosage.isEmpty() || frequency == null) {
-            showAlert(Alert.AlertType.ERROR, "Invalid Input", 
-                     "Please provide medication name, dosage, and frequency.");
+            showAlert(Alert.AlertType.ERROR, "Invalid Input",
+                    "Please provide medication name, dosage, and frequency.");
             return;
         }
-        
+
         PrescriptionItem item = new PrescriptionItem(medication, dosage, frequency, duration, instructions);
         prescriptionItems.add(item);
         prescriptionsTable.setItems(javafx.collections.FXCollections.observableArrayList(prescriptionItems));
-        
+
         // Clear fields for next entry
         medicationNameField.clear();
         dosageField.clear();
@@ -147,51 +154,68 @@ public class DoctorFeedbackController {
     @FXML
     void handleSubmit(ActionEvent event) {
         String feedbackText = feedbackTextArea.getText().trim();
-        
+
         if (feedbackText.isEmpty()) {
             showAlert(Alert.AlertType.ERROR, "Missing Feedback", "Please provide feedback text.");
             return;
         }
-        
+
         try {
-            // Create prescription(s) if needed
-            List<Prescription> prescriptions = new ArrayList<>();
-            if (includePrescriptionCheckBox.isSelected()) {
-                for (PrescriptionItem item : prescriptionItems) {
-                    Prescription p = new Prescription(
-                        item.getMedicationName(),
-                        item.getDosage(),
-                        item.getFrequency() + (item.getDuration().isEmpty() ? "" : " for " + item.getDuration())
-                    );
-                    if (!item.getInstructions().isEmpty()) {
-                        p.addInstructions(item.getInstructions());
-                    }
-                    prescriptions.add(p);
-                }
+            // Prescription is compulsory
+            if (!includePrescriptionCheckBox.isSelected() || prescriptionItems.isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Prescription Required", "At least one prescription is required.");
+                return;
             }
-            
-            // Provide feedback with or without prescriptions
-            if (prescriptions.isEmpty()) {
-                currentDoctor.provideFeedback(currentPatient, feedbackText);
-                LOGGER.log(Level.INFO, "Feedback provided to patient {0}", currentPatient.getName());
+
+            // Only one prescription allowed per feedback (per your DB schema)
+            PrescriptionItem item = prescriptionItems.get(0);
+            Prescription prescription = new Prescription(
+                    item.getMedicationName(),
+                    item.getDosage(),
+                    item.getFrequency(),
+                    item.getDuration(),
+                    item.getInstructions()
+            );
+
+            submittedFeedback = new Feedback(currentDoctor, currentPatient, feedbackText, prescription);
+
+            // --- Store feedback and prescription in the database immediately ---
+            // Find UserManager from parent window's user data if possible
+            UserManager userManager = null;
+            Stage stage = (Stage) submitButton.getScene().getWindow();
+
+            if (stage.getUserData() instanceof UserManager) {
+                userManager = (UserManager) stage.getUserData();
+            }
+
+            boolean dbSuccess = false;
+            String dbErrorMsg = null;
+            if (userManager != null && userManager.dbHandler != null) {
+                dbSuccess = userManager.dbHandler.addDoctorFeedback(submittedFeedback);
+                // If failed, try to get error from dbHandler (if implemented)
+                if (!dbSuccess) {
+                    dbErrorMsg = "Failed to save feedback and prescription to database. Please check database connection and required fields.";
+                }
             } else {
-                for (Prescription p : prescriptions) {
-                    currentDoctor.provideFeedback(currentPatient, feedbackText, p);
-                }
-                LOGGER.log(Level.INFO, "Feedback with {0} prescription(s) provided to patient {1}", 
-                          new Object[]{prescriptions.size(), currentPatient.getName()});
+                dbErrorMsg = "UserManager or database handler is not available. Please contact admin.";
+                submittedFeedback = null;
             }
-            
-            showAlert(Alert.AlertType.INFORMATION, "Success", 
-                     "Feedback successfully provided to " + currentPatient.getName());
-            
-            // Close the window
-            closeWindow();
-            
+
+            if (dbSuccess) {
+                showAlert(Alert.AlertType.INFORMATION, "Success",
+                        "Feedback and prescription successfully provided to " + currentPatient.getName());
+                closeWindow();
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Database Error",
+                        dbErrorMsg != null ? dbErrorMsg : "Unknown database error.");
+                submittedFeedback = null;
+            }
+
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error submitting feedback", e);
-            showAlert(Alert.AlertType.ERROR, "Error", 
-                     "Failed to submit feedback: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error",
+                    "Failed to submit feedback: " + e.getMessage());
+            submittedFeedback = null;
         }
     }
 
@@ -205,12 +229,12 @@ public class DoctorFeedbackController {
         alert.setTitle("Confirm Cancellation");
         alert.setHeaderText("Cancel Feedback");
         alert.setContentText("Are you sure you want to cancel? Any entered data will be lost.");
-        
+
         if (alert.showAndWait().get() == ButtonType.OK) {
             closeWindow();
         }
     }
-    
+
     /**
      * Close the feedback window
      */
@@ -218,7 +242,7 @@ public class DoctorFeedbackController {
         Stage stage = (Stage) cancelButton.getScene().getWindow();
         stage.close();
     }
-    
+
     /**
      * Show an alert dialog
      */
@@ -229,7 +253,9 @@ public class DoctorFeedbackController {
         alert.setContentText(content);
         alert.showAndWait();
     }
-    
+
+
+
     /**
      * Inner class to represent a prescription item in the table
      */
@@ -239,16 +265,16 @@ public class DoctorFeedbackController {
         private String frequency;
         private String duration;
         private String instructions;
-        
-        public PrescriptionItem(String medicationName, String dosage, String frequency, 
-                               String duration, String instructions) {
+
+        public PrescriptionItem(String medicationName, String dosage, String frequency,
+                                String duration, String instructions) {
             this.medicationName = medicationName;
             this.dosage = dosage;
             this.frequency = frequency;
             this.duration = duration;
             this.instructions = instructions;
         }
-        
+
         public String getMedicationName() { return medicationName; }
         public String getDosage() { return dosage; }
         public String getFrequency() { return frequency; }
@@ -256,3 +282,4 @@ public class DoctorFeedbackController {
         public String getInstructions() { return instructions; }
     }
 }
+

@@ -41,6 +41,10 @@ public class ManageUsersDashboardController {
     @FXML private Spinner<Integer> experienceYearsSpinner;
     @FXML private Button addUserButton;
 
+    // Add this field for patient-specific input
+    @FXML private TextField emergencyContactField;
+    @FXML private VBox patientFieldsContainer;
+
     private UserManager userManager;
     private ObservableList<User> allUsers = FXCollections.observableArrayList();
     private FilteredList<User> filteredUsers;
@@ -56,15 +60,24 @@ public class ManageUsersDashboardController {
         userTypeComboBox.getItems().addAll("Administrator", "Doctor", "Patient");
         userTypeComboBox.setValue("Patient");
 
-        // Setup doctor fields visibility
+        // Setup doctor and patient fields visibility
         doctorFieldsContainer.setVisible(false);
         doctorFieldsContainer.setManaged(false);
+        if (patientFieldsContainer != null) {
+            patientFieldsContainer.setVisible(true);
+            patientFieldsContainer.setManaged(true);
+        }
 
         // Handle user type selection for showing/hiding doctor-specific fields
         userTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
             boolean isDoctorSelected = "Doctor".equals(newVal);
+            boolean isPatientSelected = "Patient".equals(newVal);
             doctorFieldsContainer.setVisible(isDoctorSelected);
             doctorFieldsContainer.setManaged(isDoctorSelected);
+            if (patientFieldsContainer != null) {
+                patientFieldsContainer.setVisible(isPatientSelected);
+                patientFieldsContainer.setManaged(isPatientSelected);
+            }
         });
 
         // Setup table columns
@@ -219,7 +232,8 @@ public class ManageUsersDashboardController {
                     break;
 
                 case "Patient":
-                    newUser = userManager.registerPatient(name, email, password, phone, address);
+                    String emergencyContact = emergencyContactField != null ? emergencyContactField.getText().trim() : "";
+                    newUser = userManager.registerPatient(name, email, password, phone, address, emergencyContact);
                     break;
             }
 
@@ -268,37 +282,76 @@ public class ManageUsersDashboardController {
             boolean removed = false;
             try {
                 // Remove from database
-                // Remove related assignments and appointments if needed
                 com.rhms.Database.DatabaseConnection.getConnection().setAutoCommit(false);
                 java.sql.Connection conn = com.rhms.Database.DatabaseConnection.getConnection();
 
-                // Remove doctor-patient assignments and appointments if Doctor or Patient
-                if (selectedUser instanceof Doctor) {
-                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
-                            "DELETE FROM doctor_patient_assignments WHERE doctor_id = ?")) {
-                        stmt.setInt(1, selectedUser.getUserID());
-                        stmt.executeUpdate();
-                    }
-                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
-                            "DELETE FROM appointments WHERE doctor_id = ?")) {
-                        stmt.setInt(1, selectedUser.getUserID());
-                        stmt.executeUpdate();
-                    }
-                } else if (selectedUser instanceof Patient) {
-                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
-                            "DELETE FROM doctor_patient_assignments WHERE patient_id = ?")) {
-                        stmt.setInt(1, selectedUser.getUserID());
-                        stmt.executeUpdate();
-                    }
-                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
-                            "DELETE FROM appointments WHERE patient_id = ?")) {
-                        stmt.setInt(1, selectedUser.getUserID());
-                        stmt.executeUpdate();
-                    }
-
+                // --- Delete from chat_messages (as sender or receiver) ---
+                try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM chat_messages WHERE sender_id = ? OR receiver_id = ?")) {
+                    stmt.setInt(1, selectedUser.getUserID());
+                    stmt.setInt(2, selectedUser.getUserID());
+                    stmt.executeUpdate();
                 }
 
-                // Remove user
+                // --- Delete from Doctor_Requests ---
+                try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM Doctor_Requests WHERE user_id = ?")) {
+                    stmt.setInt(1, selectedUser.getUserID());
+                    stmt.executeUpdate();
+                }
+
+                // --- Delete from doctor_patient_assignments (as doctor or patient) ---
+                try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM doctor_patient_assignments WHERE doctor_id = ? OR patient_id = ?")) {
+                    stmt.setInt(1, selectedUser.getUserID());
+                    stmt.setInt(2, selectedUser.getUserID());
+                    stmt.executeUpdate();
+                }
+
+                // --- Delete from feedback_by_patient (as doctor or patient) ---
+                try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM feedback_by_patient WHERE doctor_id = ? OR patient_id = ?")) {
+                    stmt.setInt(1, selectedUser.getUserID());
+                    stmt.setInt(2, selectedUser.getUserID());
+                    stmt.executeUpdate();
+                }
+
+                // --- Delete from appointments (as doctor or patient) ---
+                try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM appointments WHERE doctor_id = ? OR patient_id = ?")) {
+                    stmt.setInt(1, selectedUser.getUserID());
+                    stmt.setInt(2, selectedUser.getUserID());
+                    stmt.executeUpdate();
+                }
+
+                // --- Delete from patient_vitals (if patient) ---
+                if (selectedUser instanceof Patient) {
+                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                            "DELETE FROM patient_vitals WHERE user_id = ?")) {
+                        stmt.setInt(1, selectedUser.getUserID());
+                        stmt.executeUpdate();
+                    }
+                }
+
+                // --- Delete from Patients table (if patient) ---
+                if (selectedUser instanceof Patient) {
+                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                            "DELETE FROM Patients WHERE patient_id = ?")) {
+                        stmt.setInt(1, selectedUser.getUserID());
+                        stmt.executeUpdate();
+                    }
+                }
+
+                // --- Delete from Doctors table (if doctor) ---
+                if (selectedUser instanceof Doctor) {
+                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                            "DELETE FROM Doctors WHERE user_id = ?")) {
+                        stmt.setInt(1, selectedUser.getUserID());
+                        stmt.executeUpdate();
+                    }
+                }
+
+                // --- Finally, delete from Users table ---
                 try (java.sql.PreparedStatement stmt = conn.prepareStatement(
                         "DELETE FROM Users WHERE user_id = ?")) {
                     stmt.setInt(1, selectedUser.getUserID());
@@ -372,6 +425,7 @@ public class ManageUsersDashboardController {
         addressField.clear();
         specializationField.clear();
         experienceYearsSpinner.getValueFactory().setValue(0);
+        if (emergencyContactField != null) emergencyContactField.clear();
     }
 
     /**
@@ -413,6 +467,13 @@ public class ManageUsersDashboardController {
         if ("Doctor".equals(userTypeComboBox.getValue())) {
             if (specializationField.getText().trim().isEmpty()) {
                 errorMsg.append("Specialization is required for doctors.\n");
+            }
+        }
+
+        // Patient-specific validation
+        if ("Patient".equals(userTypeComboBox.getValue())) {
+            if (emergencyContactField == null || emergencyContactField.getText().trim().isEmpty()) {
+                errorMsg.append("Emergency contact is required for patients.\n");
             }
         }
 
@@ -479,3 +540,4 @@ public class ManageUsersDashboardController {
         }
     }
 }
+

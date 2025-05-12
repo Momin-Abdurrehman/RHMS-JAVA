@@ -280,9 +280,16 @@ public class AssignDoctorController {
             return;
         }
 
-        // Create the assignment through UserManager to ensure database is updated
-        boolean success = userManager.assignDoctorToPatient(selectedDoctor, selectedPatient);
-        
+        // Assign doctor to patient in the database and update in-memory assignments
+        boolean success = false;
+        try {
+            // Assign in DB (ensure UserManager uses DoctorPatientAssignmentHandler)
+            success = userManager.assignDoctorToPatient(selectedDoctor, selectedPatient);
+        } catch (Exception e) {
+            messageArea.setText("Database error during assignment: " + e.getMessage());
+            return;
+        }
+
         if (success) {
             // Refresh data
             refreshData();
@@ -306,12 +313,18 @@ public class AssignDoctorController {
             return;
         }
 
-        // Remove the assignment through UserManager to ensure database is updated
         Doctor doctor = selectedAssignment.getDoctor();
         Patient patient = selectedAssignment.getPatient();
-        
-        boolean success = userManager.removeDoctorFromPatient(doctor, patient);
-        
+
+        boolean success = false;
+        try {
+            // Remove assignment from DB (ensure UserManager uses DoctorPatientAssignmentHandler)
+            success = userManager.removeDoctorFromPatient(doctor, patient);
+        } catch (Exception e) {
+            messageArea.setText("Database error during removal: " + e.getMessage());
+            return;
+        }
+
         if (success) {
             // Refresh data
             refreshData();

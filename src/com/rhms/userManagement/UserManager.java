@@ -25,10 +25,9 @@ public class UserManager {
     private List<Doctor> doctors;
     private List<Patient> patients;
     private List<Administrator> administrators;
-    private UserDatabaseHandler dbHandler;
+    public UserDatabaseHandler dbHandler;
     private AppointmentDatabaseHandler appointmentDbHandler;
     private AuthenticationService authService;
-    private int nextUserId = 1000; // Starting ID for users
     private DoctorPatientAssignmentHandler assignmentHandler;
     /**
      * Initializes the user management system
@@ -130,25 +129,40 @@ public class UserManager {
     /**
      * Registers a new patient in the system
      */
-    public Patient registerPatient(String name, String email, String password, String phone, String address) {
+    public Patient registerPatient(String name, String email, String password, String phone, String address, String emergencyContact) {
         if (dbHandler.isEmailExists(email)) {
             System.err.println("Error: Email " + email + " already exists in the database.");
             return null;
         }
 
-        int userId = generateUserId();
-        String username = generateUsername(name, userId);
+        String username = generateUsername(name);
 
-        Patient patient = new Patient(name, email, password, phone, address, userId, username);
+        Patient patient = new Patient(name, email, password, phone, address, 0, username); // userId will be set after DB insert
+        patient.setEmergencyContact(emergencyContact);
 
-        if (!dbHandler.addUser(patient)) {
-            System.err.println("Error: Failed to add patient to the database.");
+        boolean dbSuccess = false;
+        try {
+            dbSuccess = dbHandler.addUser(patient);
+            if (!dbSuccess) {
+                System.err.println("Error: Failed to add patient to the database.");
+                return null;
+            }
+            // Fetch the user with the generated ID from the database
+            Patient dbPatient = dbHandler.getPatientByEmail(email);
+            if (dbPatient != null) {
+                patient.setUserID(dbPatient.getUserID());
+            }
+            patients.add(patient);
+            users.put(patient.getUserID(), patient);
+            return patient;
+        } catch (Exception e) {
+            System.err.println("Error: Exception during patient registration: " + e.getMessage());
+            // Rollback: remove user from DB if added
+            if (dbSuccess) {
+                dbHandler.deleteUserByEmail(email);
+            }
             return null;
         }
-
-        patients.add(patient);
-        users.put(userId, patient);
-        return patient;
     }
 
     /**
@@ -161,19 +175,32 @@ public class UserManager {
             return null;
         }
 
-        int userId = generateUserId();
-        String username = generateUsername(name, userId);
+        String username = generateUsername(name);
 
-        Doctor doctor = new Doctor(name, email, password, phone, address, userId, username, specialization, experienceYears);
+        Doctor doctor = new Doctor(name, email, password, phone, address, 0, username, specialization, experienceYears); // userId will be set after DB insert
 
-        if (!dbHandler.addUser(doctor)) {
-            System.err.println("Error: Failed to add doctor to the database.");
+        boolean dbSuccess = false;
+        try {
+            dbSuccess = dbHandler.addUser(doctor);
+            if (!dbSuccess) {
+                System.err.println("Error: Failed to add doctor to the database.");
+                return null;
+            }
+            // Fetch the user with the generated ID from the database
+            Doctor dbDoctor = dbHandler.getDoctorByEmail(email);
+            if (dbDoctor != null) {
+                doctor.setUserID(dbDoctor.getUserID());
+            }
+            doctors.add(doctor);
+            users.put(doctor.getUserID(), doctor);
+            return doctor;
+        } catch (Exception e) {
+            System.err.println("Error: Exception during doctor registration: " + e.getMessage());
+            if (dbSuccess) {
+                dbHandler.deleteUserByEmail(email);
+            }
             return null;
         }
-
-        doctors.add(doctor);
-        users.put(userId, doctor);
-        return doctor;
     }
 
     /**
@@ -185,19 +212,32 @@ public class UserManager {
             return null;
         }
 
-        int userId = generateUserId();
-        String username = generateUsername(name, userId);
+        String username = generateUsername(name);
 
-        Administrator admin = new Administrator(name, email, password, phone, address, userId, username);
+        Administrator admin = new Administrator(name, email, password, phone, address, 0, username); // userId will be set after DB insert
 
-        if (!dbHandler.addUser(admin)) {
-            System.err.println("Error: Failed to add administrator to the database.");
+        boolean dbSuccess = false;
+        try {
+            dbSuccess = dbHandler.addUser(admin);
+            if (!dbSuccess) {
+                System.err.println("Error: Failed to add administrator to the database.");
+                return null;
+            }
+            // Fetch the user with the generated ID from the database
+            Administrator dbAdmin = dbHandler.getAdminByEmail(email);
+            if (dbAdmin != null) {
+                admin.setUserID(dbAdmin.getUserID());
+            }
+            administrators.add(admin);
+            users.put(admin.getUserID(), admin);
+            return admin;
+        } catch (Exception e) {
+            System.err.println("Error: Exception during admin registration: " + e.getMessage());
+            if (dbSuccess) {
+                dbHandler.deleteUserByEmail(email);
+            }
             return null;
         }
-
-        administrators.add(admin);
-        users.put(userId, admin);
-        return admin;
     }
 
     /**
@@ -295,18 +335,11 @@ public class UserManager {
     }
 
     /**
-     * Generates a unique user ID.
+     * Generates a unique username based on the user's name.
      */
-    private int generateUserId() {
-        return nextUserId++;
-    }
-
-    /**
-     * Generates a unique username based on the user's name and ID.
-     */
-    private String generateUsername(String name, int userId) {
+    private String generateUsername(String name) {
         String[] nameParts = name.split("\\s+");
-        String baseUsername = nameParts[0].toLowerCase() + userId;
+        String baseUsername = nameParts[0].toLowerCase();
         String username = baseUsername;
 
         int counter = 1;

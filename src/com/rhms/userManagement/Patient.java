@@ -20,6 +20,7 @@ public class Patient extends User {
     private MedicalHistory medicalHistory;
     private VitalsDatabase vitalsDatabase;
     private ArrayList<Doctor> assignedDoctors; // Track assigned doctors
+    private String emergencyContact;
 
     public Patient(String name, String email, String password, String phone, String address, int userID) {
         super(name, email, password, phone, address, userID);
@@ -30,6 +31,7 @@ public class Patient extends User {
         this.medicalHistory = new MedicalHistory();
         this.vitalsDatabase = new VitalsDatabase(this);
         this.assignedDoctors = new ArrayList<>();
+        this.emergencyContact = "";
     }
     
     // Enhanced constructor with authentication fields
@@ -43,6 +45,7 @@ public class Patient extends User {
         this.medicalHistory = new MedicalHistory();
         this.vitalsDatabase = new VitalsDatabase(this);
         this.assignedDoctors = new ArrayList<>();
+        this.emergencyContact = "";
     }
 
     /**
@@ -321,4 +324,14 @@ public class Patient extends User {
         }
         return prescriptions;
     }
+
+    // Emergency contact getter and setter
+    public String getEmergencyContact() {
+        return emergencyContact;
+    }
+
+    public void setEmergencyContact(String emergencyContact) {
+        this.emergencyContact = emergencyContact;
+    }
 }
+

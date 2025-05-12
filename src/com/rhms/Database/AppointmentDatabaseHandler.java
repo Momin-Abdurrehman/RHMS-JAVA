@@ -4,6 +4,7 @@ import com.rhms.appointmentScheduling.Appointment;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.UserManager;
+import com.rhms.notifications.EmailNotification;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -120,6 +121,34 @@ public class AppointmentDatabaseHandler {
             }
             
             System.out.println("Appointment saved successfully with ID: " + appointment.getAppointmentId());
+
+            // --- Send email notifications to patient and doctor ---
+            EmailNotification emailNotification = new EmailNotification();
+            // Notify patient
+            if (appointment.getPatient() != null && appointment.getPatient().getEmail() != null) {
+                String subject = "Appointment Scheduled";
+                String message = "Dear " + appointment.getPatient().getName() + ",\n\n"
+                        + "Your appointment has been scheduled"
+                        + (appointment.getDoctor() != null ? " with Dr. " + appointment.getDoctor().getName() : "")
+                        + " on " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(appointment.getAppointmentDate())
+                        + ".\nStatus: " + appointment.getStatus()
+                        + "\nPurpose: " + (appointment.getPurpose() != null ? appointment.getPurpose() : "")
+                        + "\n\nThank you,\nRHMS Team";
+                emailNotification.sendNotification(appointment.getPatient().getEmail(), subject, message);
+            }
+            // Notify doctor
+            if (appointment.getDoctor() != null && appointment.getDoctor().getEmail() != null) {
+                String subject = "New Appointment Assigned";
+                String message = "Dear Dr. " + appointment.getDoctor().getName() + ",\n\n"
+                        + "You have a new appointment with patient " + appointment.getPatient().getName()
+                        + " on " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(appointment.getAppointmentDate())
+                        + ".\nStatus: " + appointment.getStatus()
+                        + "\nPurpose: " + (appointment.getPurpose() != null ? appointment.getPurpose() : "")
+                        + "\n\nThank you,\nRHMS Team";
+                emailNotification.sendNotification(appointment.getDoctor().getEmail(), subject, message);
+            }
+            // --- end email notifications ---
+
             return appointment;
         }
     }
@@ -141,6 +170,7 @@ public class AppointmentDatabaseHandler {
         String sql = "UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP, " +
                      "notification_sent = false WHERE appointment_id = ?";
                      
+        boolean result = false;
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, status);
             stmt.setInt(2, appointmentId);
@@ -150,12 +180,69 @@ public class AppointmentDatabaseHandler {
             if (affectedRows > 0) {
                 LOGGER.log(Level.INFO, "Appointment ID {0} status updated to: {1}", 
                           new Object[]{appointmentId, status});
-                return true;
+                result = true;
             } else {
                 LOGGER.log(Level.WARNING, "No appointment found with ID: {0}", appointmentId);
-                return false;
+                result = false;
             }
         }
+        // --- Send email notifications to patient and doctor about status update ---
+        if (result && userManager != null) {
+            Appointment updatedAppointment = null;
+            // Try to fetch updated appointment details
+            for (Doctor doctor : userManager.getAllDoctors()) {
+                List<Appointment> doctorAppointments = doctor.getAppointments();
+                if (doctorAppointments != null) {
+                    for (Appointment appt : doctorAppointments) {
+                        if (appt.getAppointmentId() == appointmentId) {
+                            updatedAppointment = appt;
+                            break;
+                        }
+                    }
+                }
+                if (updatedAppointment != null) break;
+            }
+            if (updatedAppointment == null) {
+                for (Patient patient : userManager.getAllPatients()) {
+                    List<Appointment> patientAppointments = patient.getAppointments();
+                    if (patientAppointments != null) {
+                        for (Appointment appt : patientAppointments) {
+                            if (appt.getAppointmentId() == appointmentId) {
+                                updatedAppointment = appt;
+                                break;
+                            }
+                        }
+                    }
+                    if (updatedAppointment != null) break;
+                }
+            }
+            if (updatedAppointment != null) {
+                EmailNotification emailNotification = new EmailNotification();
+                // Notify patient
+                if (updatedAppointment.getPatient() != null && updatedAppointment.getPatient().getEmail() != null) {
+                    String subject = "Appointment Status Updated";
+                    String message = "Dear " + updatedAppointment.getPatient().getName() + ",\n\n"
+                            + "Your appointment"
+                            + (updatedAppointment.getDoctor() != null ? " with Dr. " + updatedAppointment.getDoctor().getName() : "")
+                            + " on " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(updatedAppointment.getAppointmentDate())
+                            + " has been updated to status: " + status
+                            + ".\n\nThank you,\nRHMS Team";
+                    emailNotification.sendNotification(updatedAppointment.getPatient().getEmail(), subject, message);
+                }
+                // Notify doctor
+                if (updatedAppointment.getDoctor() != null && updatedAppointment.getDoctor().getEmail() != null) {
+                    String subject = "Appointment Status Updated";
+                    String message = "Dear Dr. " + updatedAppointment.getDoctor().getName() + ",\n\n"
+                            + "The appointment with patient " + updatedAppointment.getPatient().getName()
+                            + " on " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(updatedAppointment.getAppointmentDate())
+                            + " has been updated to status: " + status
+                            + ".\n\nThank you,\nRHMS Team";
+                    emailNotification.sendNotification(updatedAppointment.getDoctor().getEmail(), subject, message);
+                }
+            }
+        }
+        // --- end email notifications ---
+        return result;
     }
     
     /**
@@ -574,3 +661,4 @@ public class AppointmentDatabaseHandler {
         }
     }
 }
+

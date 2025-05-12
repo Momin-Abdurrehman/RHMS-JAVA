@@ -46,9 +46,9 @@ public class DoctorPatientAssignmentHandler {
             
             String createTableSQL = 
                 "CREATE TABLE IF NOT EXISTS doctor_patient_assignments (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "doctor_id INTEGER NOT NULL," +
-                "patient_id INTEGER NOT NULL," +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "doctor_id INT NOT NULL," +
+                "patient_id INT NOT NULL," +
                 "assignment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
                 "UNIQUE(doctor_id, patient_id)" +
                 ")";
@@ -182,7 +182,7 @@ public class DoctorPatientAssignmentHandler {
                         Doctor doctor = userDbHandler.getDoctorById(doctorId);
                         if (doctor != null) {
                             doctors.add(doctor);
-                            LOGGER.log(Level.FINE, "Found doctor {0} assigned to patient {1}", 
+                            LOGGER.log(Level.FINE, "Found doctor {0} assigned to patient {1}",
                                      new Object[]{doctorId, patientId});
                         } else {
                             LOGGER.log(Level.WARNING, "Doctor with ID {0} not found in database but assigned to patient {1}",
@@ -190,16 +190,16 @@ public class DoctorPatientAssignmentHandler {
                         }
                     }
                 } catch (SQLException e) {
-                    LOGGER.log(Level.SEVERE, "Error processing result set for patient {0}: {1}", 
+                    LOGGER.log(Level.SEVERE, "Error processing result set for patient {0}: {1}",
                               new Object[]{patientId, e.getMessage()});
                     throw e;
                 }
-                
-                LOGGER.log(Level.INFO, "Found {0} assigned doctors for patient {1}", 
+
+                LOGGER.log(Level.INFO, "Found {0} assigned doctors for patient {1}",
                           new Object[]{doctors.size(), patientId});
                 return doctors;
             } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Error executing query for patient {0}: {1}", 
+                LOGGER.log(Level.SEVERE, "Error executing query for patient {0}: {1}",
                           new Object[]{patientId, e.getMessage()});
                 LOGGER.log(Level.SEVERE, "SQL State: {0}, Error Code: {1}",
                           new Object[]{e.getSQLState(), e.getErrorCode()});
@@ -219,7 +219,7 @@ public class DoctorPatientAssignmentHandler {
             LOGGER.log(Level.SEVERE, "Invalid doctor ID: {0}", doctorId);
             throw new IllegalArgumentException("Doctor ID must be positive");
         }
-        
+
         if (userDbHandler == null) {
             LOGGER.log(Level.SEVERE, "UserDatabaseHandler is null. Cannot load patients for doctor.");
             throw new IllegalArgumentException("UserDatabaseHandler must not be null");
@@ -228,7 +228,7 @@ public class DoctorPatientAssignmentHandler {
         List<Patient> patients = new ArrayList<>();
         try {
             refreshConnectionIfNeeded();
-            
+
             String sql = "SELECT patient_id FROM doctor_patient_assignments WHERE doctor_id = ?";
             try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.setInt(1, doctorId);
@@ -240,24 +240,24 @@ public class DoctorPatientAssignmentHandler {
                         Patient patient = userDbHandler.getPatientById(patientId);
                         if (patient != null) {
                             patients.add(patient);
-                            LOGGER.log(Level.FINE, "Found patient {0} assigned to doctor {1}", 
+                            LOGGER.log(Level.FINE, "Found patient {0} assigned to doctor {1}",
                                      new Object[]{patientId, doctorId});
                         } else {
                             LOGGER.log(Level.WARNING, "Patient with ID {0} not found in database but assigned to doctor {1}",
                                       new Object[]{patientId, doctorId});
                         }
                     }
-                    LOGGER.log(Level.INFO, "Found {0} rows and {1} valid patients for doctor {2}", 
+                    LOGGER.log(Level.INFO, "Found {0} rows and {1} valid patients for doctor {2}",
                               new Object[]{count, patients.size(), doctorId});
                 } catch (SQLException e) {
-                    LOGGER.log(Level.SEVERE, "Error processing result set for doctor {0}: {1}", 
+                    LOGGER.log(Level.SEVERE, "Error processing result set for doctor {0}: {1}",
                               new Object[]{doctorId, e.getMessage()});
                     throw e;
                 }
-                
+
                 return patients;
             } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Error executing query for doctor {0}: {1}", 
+                LOGGER.log(Level.SEVERE, "Error executing query for doctor {0}: {1}",
                           new Object[]{doctorId, e.getMessage()});
                 LOGGER.log(Level.SEVERE, "SQL State: {0}, Error Code: {1}",
                           new Object[]{e.getSQLState(), e.getErrorCode()});
@@ -271,7 +271,7 @@ public class DoctorPatientAssignmentHandler {
             throw new SQLException("Unexpected error occurred", e);
         }
     }
-    
+
     /**
      * Gets all doctor-patient assignments from the database
      */
@@ -284,36 +284,36 @@ public class DoctorPatientAssignmentHandler {
         List<DoctorPatientAssignment> assignments = new ArrayList<>();
         try {
             refreshConnectionIfNeeded();
-            
+
             String sql = "SELECT doctor_id, patient_id FROM doctor_patient_assignments";
             try (Statement stmt = connection.createStatement();
                  ResultSet rs = stmt.executeQuery(sql)) {
-                
+
                 int count = 0;
                 while (rs.next()) {
                     count++;
                     int doctorId = rs.getInt("doctor_id");
                     int patientId = rs.getInt("patient_id");
-                    
+
                     try {
                         Doctor doctor = userDbHandler.getDoctorById(doctorId);
                         Patient patient = userDbHandler.getPatientById(patientId);
-                        
+
                         if (doctor != null && patient != null) {
                             assignments.add(new DoctorPatientAssignment(doctor, patient));
-                            LOGGER.log(Level.FINE, "Found assignment: Doctor {0} to Patient {1}", 
+                            LOGGER.log(Level.FINE, "Found assignment: Doctor {0} to Patient {1}",
                                      new Object[]{doctorId, patientId});
                         } else {
-                            LOGGER.log(Level.WARNING, "Invalid assignment in database: Doctor {0} to Patient {1} - One or both not found", 
+                            LOGGER.log(Level.WARNING, "Invalid assignment in database: Doctor {0} to Patient {1} - One or both not found",
                                       new Object[]{doctorId, patientId});
                         }
                     } catch (Exception e) {
-                        LOGGER.log(Level.WARNING, "Error processing assignment for Doctor {0}, Patient {1}: {2}", 
+                        LOGGER.log(Level.WARNING, "Error processing assignment for Doctor {0}, Patient {1}: {2}",
                                   new Object[]{doctorId, patientId, e.getMessage()});
                     }
                 }
-                
-                LOGGER.log(Level.INFO, "Loaded {0} total assignments ({1} valid) from database", 
+
+                LOGGER.log(Level.INFO, "Loaded {0} total assignments ({1} valid) from database",
                           new Object[]{count, assignments.size()});
                 return assignments;
             } catch (SQLException e) {
@@ -330,14 +330,14 @@ public class DoctorPatientAssignmentHandler {
             throw new SQLException("Unexpected error occurred", e);
         }
     }
-    
+
     /**
      * Simple class to hold doctor-patient assignment data
      */
     public static class DoctorPatientAssignment {
         private Doctor doctor;
         private Patient patient;
-        
+
         public DoctorPatientAssignment(Doctor doctor, Patient patient) {
             if (doctor == null || patient == null) {
                 throw new IllegalArgumentException("Doctor and patient cannot be null");
@@ -345,7 +345,7 @@ public class DoctorPatientAssignmentHandler {
             this.doctor = doctor;
             this.patient = patient;
         }
-        
+
         public Doctor getDoctor() { return doctor; }
         public Patient getPatient() { return patient; }
     }

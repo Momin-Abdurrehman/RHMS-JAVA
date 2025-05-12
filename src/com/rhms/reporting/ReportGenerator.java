@@ -301,29 +301,37 @@ public class ReportGenerator {
         writer.write("=================================================\n");
         writer.write("                 VITALS HISTORY                  \n");
         writer.write("=================================================\n\n");
-        
+
         // Get vitals directly from database instead of patient.getVitalsHistory()
-        List<VitalSign> vitals = patient.getVitalsDatabase().getAllVitals();
-        
+        List<VitalSign> vitals = null;
+        try {
+            // Use the static handler to fetch from DB to avoid stale/in-memory data
+            com.rhms.Database.VitalSignDatabaseHandler dbHandler = new com.rhms.Database.VitalSignDatabaseHandler();
+            vitals = dbHandler.getVitalSignsForPatient(patient.getUserID());
+        } catch (Exception e) {
+            writer.write("Error retrieving vitals from database: " + e.getMessage() + "\n\n");
+            return;
+        }
+
         if (vitals == null || vitals.isEmpty()) {
             writer.write("No vitals data found in database for this patient.\n\n");
             return;
         }
-        
+
         for (VitalSign vital : vitals) {
             writer.write("Date: " + dateFormat.format(vital.getTimestamp()) + "\n");
             writer.write("Heart Rate: " + decimalFormat.format(vital.getHeartRate()) + " bpm");
             writer.write(vital.isHeartRateNormal() ? "\n" : " (ABNORMAL)\n");
-            
+
             writer.write("Oxygen Level: " + decimalFormat.format(vital.getOxygenLevel()) + "%");
             writer.write(vital.isOxygenLevelNormal() ? "\n" : " (ABNORMAL)\n");
-            
+
             writer.write("Blood Pressure: " + decimalFormat.format(vital.getBloodPressure()) + " mmHg");
             writer.write(vital.isBloodPressureNormal() ? "\n" : " (ABNORMAL)\n");
-            
+
             writer.write("Temperature: " + decimalFormat.format(vital.getTemperature()) + "°C");
             writer.write(vital.isTemperatureNormal() ? "\n" : " (ABNORMAL)\n");
-            
+
             writer.write("Status: " + (vital.isAbnormal() ? "Abnormal" : "Normal") + "\n");
             writer.write("-------------------------------------------\n\n");
         }
@@ -405,3 +413,4 @@ public class ReportGenerator {
         writer.write("=================================================\n");
     }
 }
+

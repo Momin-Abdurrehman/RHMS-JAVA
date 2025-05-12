@@ -296,6 +296,9 @@ public class DoctorDashboardController implements DashboardController {
             stage.setScene(new Scene(feedbackFormView));
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL); // Make it modal
 
+            // Pass UserManager to feedback window for DB access
+            stage.setUserData(userManager);
+
             // Add CSS styles if available
             URL cssUrl = getClass().getResource("/com/rhms/ui/resources/styles.css");
             if (cssUrl != null) {

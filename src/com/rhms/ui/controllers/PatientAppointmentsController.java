@@ -3,8 +3,7 @@ package com.rhms.ui.controllers;
 import com.rhms.Database.AppointmentDatabaseHandler;
 import com.rhms.appointmentScheduling.Appointment;
 import com.rhms.appointmentScheduling.AppointmentManager;
-import com.rhms.notifications.Notification;
-import com.rhms.notifications.NotificationService;
+import com.rhms.emergencyAlert.NotificationService;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.UserManager;
@@ -20,7 +19,6 @@ import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -69,7 +67,6 @@ public class PatientAppointmentsController implements Initializable {
     private Patient currentPatient;
     private UserManager userManager;
     private AppointmentManager appointmentManager;
-    private NotificationService notificationService;
     private ObservableList<Appointment> appointmentList;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -89,7 +86,6 @@ public class PatientAppointmentsController implements Initializable {
         // Initialize services
         AppointmentDatabaseHandler dbHandler = new AppointmentDatabaseHandler(userManager);
         this.appointmentManager = new AppointmentManager(dbHandler);
-        this.notificationService = new NotificationService();
 
         setupTableColumns();
         setupEventHandlers();

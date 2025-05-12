@@ -95,6 +95,7 @@
             <children>
                 <HBox spacing="10.0" alignment="CENTER">
                     <children>
+                        <Button fx:id="acceptRequestButton" onAction="#handleAcceptRequest" text="Accept Request" />
                         <Button fx:id="markCompletedButton" onAction="#handleMarkCompleted" text="Mark as Completed" />
                         <Button fx:id="cancelAppointmentButton" onAction="#handleCancelAppointment" text="Cancel Appointment" />
                         <Button fx:id="provideFeedbackButton" onAction="#handleProvideFeedback" text="Provide Feedback" />
@@ -103,7 +104,7 @@
                         <Button fx:id="closeButton" onAction="#handleClose" text="Close" />
                     </children>
                 </HBox>
-                <Label styleClass="help-text" text="Select an appointment and choose an action. Only pending appointments can be marked as completed or cancelled." 
+                <Label styleClass="help-text" text="Select an appointment and choose an action. Pending appointment requests can be accepted. Only pending appointments can be marked as completed or cancelled." 
                        wrapText="true" />
             </children>
         </VBox>

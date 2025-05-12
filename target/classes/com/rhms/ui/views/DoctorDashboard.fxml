@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="700.0" prefWidth="1000.0" styleClass="dashboard-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.DoctorDashboardController">
+<BorderPane prefHeight="900.0" prefWidth="1400.0" styleClass="dashboard-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.DoctorDashboardController">
     <left>
         <VBox prefHeight="200.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" BorderPane.alignment="CENTER">
             <children>
@@ -19,6 +19,7 @@
                 <Button mnemonicParsing="false" onAction="#handleAppointments" styleClass="sidebar-button" text="Appointments" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleProvideFeedback" styleClass="sidebar-button" text="Provide Feedback" maxWidth="Infinity" />
                 <Button mnemonicParsing="false" onAction="#handleVideoCall" styleClass="sidebar-button" text="Start Video Call" maxWidth="Infinity" />
+                <Button mnemonicParsing="false" onAction="#handleChatWithPatient" styleClass="sidebar-button" text="Chat with Patient" maxWidth="Infinity" />
                 <Region VBox.vgrow="ALWAYS" />
                 <Button mnemonicParsing="false" onAction="#handleLogout" styleClass="logout-button" text="Logout" maxWidth="Infinity" />
             </children>

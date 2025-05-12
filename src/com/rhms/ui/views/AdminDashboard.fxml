@@ -30,11 +30,14 @@
                         styleClass="sidebar-button"
                         maxWidth="Infinity"
                         onAction="#handleManageUsers"/>
-
                 <Button text="Doctor Patient Assignments"
                         styleClass="sidebar-button"
                         maxWidth="Infinity"
                         onAction="#handleAssignDoctor"/>
+                <Button text="Download Patient Report"
+                        styleClass="sidebar-button"
+                        maxWidth="Infinity"
+                        onAction="#handleDownloadReport"/>
                 <Button text="View System Logs"
                         styleClass="sidebar-button"
                         maxWidth="Infinity"

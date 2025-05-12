@@ -166,9 +166,80 @@ public class LoginViewController {
             e.printStackTrace();
         }
     }
+
     @FXML
     private void handleRegister(ActionEvent event) {
-        // Registration handling code here
+        try {
+            LOGGER.info("Handling register button click");
+            
+            // Try multiple approaches to find the registration view
+            URL regUrl = null;
+            
+            // Approach 1: Direct class resource
+            regUrl = getClass().getResource("/com/rhms/ui/views/RegistrationDashboard.fxml");
+            LOGGER.info("Approach 1 result: " + (regUrl != null ? "found" : "not found"));
+            
+            // Approach 2: Using findResource helper
+            if (regUrl == null) {
+                regUrl = findResource("com/rhms/ui/views/RegistrationDashboard.fxml");
+                LOGGER.info("Approach 2 result: " + (regUrl != null ? "found" : "not found"));
+            }
+            
+            // Approach 3: Try direct file access
+            if (regUrl == null) {
+                File file = new File("src/com/rhms/ui/views/RegistrationDashboard.fxml");
+                if (file.exists()) {
+                    regUrl = file.toURI().toURL();
+                    LOGGER.info("Approach 3 result: found at " + file.getAbsolutePath());
+                } else {
+                    LOGGER.warning("File does not exist at: " + file.getAbsolutePath());
+                }
+            }
+            
+            // Check one more location
+            if (regUrl == null) {
+                File file = new File("/Users/apple/Desktop/RHMS-JAVA/src/com/rhms/ui/views/RegistrationDashboard.fxml");
+                if (file.exists()) {
+                    regUrl = file.toURI().toURL();
+                    LOGGER.info("Approach 4 result: found at " + file.getAbsolutePath());
+                } else {
+                    LOGGER.warning("File does not exist at: " + file.getAbsolutePath());
+                }
+            }
+            
+            if (regUrl == null) {
+                showErrorMessage("Could not find registration view resource. Please make sure the file exists.");
+                LOGGER.severe("Registration view resource not found after multiple attempts");
+                return;
+            }
+            
+            LOGGER.info("Loading registration view from: " + regUrl);
+            FXMLLoader loader = new FXMLLoader(regUrl);
+            Parent regView = loader.load();
+            
+            // Pass UserManager to registration controller
+            RegistrationController regController = loader.getController();
+            regController.setUserManager(userManager);
+            
+            // Setup new scene
+            Scene scene = new Scene(regView);
+            
+            URL cssUrl = findResource("com/rhms/ui/resources/styles.css");
+            if (cssUrl != null) {
+                scene.getStylesheets().add(cssUrl.toExternalForm());
+            }
+            
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(scene);
+            stage.setTitle("RHMS - Registration");
+            stage.show();
+            
+            LOGGER.info("Navigation to registration screen successful");
+        } catch (IOException e) {
+            showErrorMessage("Error opening registration form: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error navigating to registration screen", e);
+            e.printStackTrace();
+        }
     }
 
     private void loadDashboardForUser(User user) {
@@ -303,3 +374,4 @@ public class LoginViewController {
         alert.showAndWait();
     }
 }
+

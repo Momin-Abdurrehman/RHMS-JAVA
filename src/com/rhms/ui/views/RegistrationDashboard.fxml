@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="600.0" prefWidth="800.0" styleClass="main-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.RegistrationController">
+<BorderPane prefHeight="800.0" prefWidth="1400.0" styleClass="main-container" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rhms.ui.controllers.RegistrationController">
    <top>
       <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="header-label" text="Remote Healthcare Monitoring System" BorderPane.alignment="CENTER">
          <font>
@@ -90,6 +90,22 @@
                   <TextField fx:id="addressField" prefHeight="30.0" prefWidth="300.0" promptText="Enter your address" />
                </children>
             </HBox>
+            
+            <!-- Patient-specific fields, initially hidden -->
+            <VBox fx:id="patientFieldsContainer" alignment="CENTER" managed="false" visible="false" spacing="15.0">
+               <children>
+                  <HBox alignment="CENTER" prefHeight="40.0" prefWidth="200.0">
+                     <children>
+                        <Label prefWidth="150.0" text="Emergency Contact:">
+                           <HBox.margin>
+                              <Insets right="10.0" />
+                           </HBox.margin>
+                        </Label>
+                        <TextField fx:id="emergencyContactField" prefHeight="30.0" prefWidth="300.0" promptText="Enter emergency contact" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
             
             <!-- Doctor-specific fields, initially hidden -->
             <VBox fx:id="doctorFieldsContainer" alignment="CENTER" managed="false" visible="false">

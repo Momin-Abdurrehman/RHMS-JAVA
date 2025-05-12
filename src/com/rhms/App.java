@@ -11,7 +11,7 @@ public class App {
         System.out.println("Starting RHMS Application...");
         
         initializeSystem();
-        createDemoUsersIfNeeded();
+
         
         // Pass the userManager to the GUI app
         RhmsGuiApp.setUserManager(userManager);
@@ -45,48 +45,7 @@ public class App {
         }
     }
     
-    private static void createDemoUsersIfNeeded() {
-        // Create a demo doctor if none exists
-        if (userManager.getAllDoctors().isEmpty()) {
-            User existingDoctor = userManager.findUserByEmail("doctor@rhms.com");
-            if (existingDoctor == null) {
-                System.out.println("Creating demo doctor account...");
-                Doctor doctor = userManager.registerDoctor(
-                    "M", "doctor@rhms.com", "doctor123",
-                    "555-123-4567", "123 Medical Center Dr",
-                    "Cardiology", 10
-                );
-                if (doctor != null) {
-                    System.out.println("Demo doctor account created. Username: " + doctor.getUsername());
-                }
-            }
-        }
-        
-        // Create a demo patient if none exists
-        if (userManager.getAllPatients().isEmpty()) {
-            User existingPatient = userManager.findUserByEmail("patient@rhms.com");
-            if (existingPatient == null) {
-                System.out.println("Creating demo patient account...");
-                Patient patient = userManager.registerPatient(
-                    "Mary Johnson", "patient@rhms.com", "patient123", 
-                    "555-987-6543", "456 Health St"
-                );
-                if (patient != null) {
-                    System.out.println("Demo patient account created. Username: " + patient.getUsername());
-                    
-                    // Assign the demo doctor to this patient if possible
-                    Doctor demoDoctor = findDoctorByEmail("doctor@rhms.com");
-                    if (demoDoctor != null) {
-                        patient.addAssignedDoctor(demoDoctor);
-                        System.out.println("Demo doctor assigned to demo patient");
-                    }
-                }
-            }
-        }
-        
-        // Make sure changes are saved
-        userManager.syncUsersFromDatabase();
-    }
+
     
     private static Doctor findDoctorByEmail(String email) {
         User user = userManager.findUserByEmail(email);

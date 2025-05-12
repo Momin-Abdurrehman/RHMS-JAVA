@@ -32,6 +32,10 @@ public class RegistrationController {
     @FXML private TextField specializationField;
     @FXML private TextField experienceYearsField;
     @FXML private VBox doctorFieldsContainer;
+
+    // Patient-specific fields
+    @FXML private TextField emergencyContactField;
+    @FXML private VBox patientFieldsContainer;
     
     private UserManager userManager;
     private AdminDashboardController adminController;
@@ -40,12 +44,26 @@ public class RegistrationController {
         // Initialize user type dropdown
         userTypeComboBox.getItems().addAll("Patient", "Doctor", "Administrator");
         userTypeComboBox.getSelectionModel().selectFirst();
-        
-        // Show/hide doctor fields based on selection
+
+        // Ensure correct visibility on initial load
+        if (doctorFieldsContainer != null) {
+            doctorFieldsContainer.setVisible("Doctor".equals(userTypeComboBox.getValue()));
+            doctorFieldsContainer.setManaged("Doctor".equals(userTypeComboBox.getValue()));
+        }
+        if (patientFieldsContainer != null) {
+            patientFieldsContainer.setVisible("Patient".equals(userTypeComboBox.getValue()));
+            patientFieldsContainer.setManaged("Patient".equals(userTypeComboBox.getValue()));
+        }
+
+        // Show/hide doctor/patient fields based on selection
         userTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (doctorFieldsContainer != null) {
                 doctorFieldsContainer.setVisible("Doctor".equals(newVal));
                 doctorFieldsContainer.setManaged("Doctor".equals(newVal));
+            }
+            if (patientFieldsContainer != null) {
+                patientFieldsContainer.setVisible("Patient".equals(newVal));
+                patientFieldsContainer.setManaged("Patient".equals(newVal));
             }
         });
     }
@@ -92,7 +110,8 @@ public class RegistrationController {
             }
             
             if ("Patient".equals(userType)) {
-                newUser = userManager.registerPatient(name, email, password, phone, address);
+                String emergencyContact = emergencyContactField != null ? emergencyContactField.getText().trim() : "";
+                newUser = userManager.registerPatient(name, email, password, phone, address, emergencyContact);
             } else if ("Doctor".equals(userType)) {
                 String specialization = specializationField.getText().trim();
                 
@@ -187,6 +206,15 @@ public class RegistrationController {
                 return false;
             }
         }
+
+        // Validate patient-specific fields
+        if ("Patient".equals(userType)) {
+            String emergencyContact = emergencyContactField != null ? emergencyContactField.getText().trim() : "";
+            if (emergencyContact.isEmpty()) {
+                showMessage("Please fill in all patient-specific fields", true);
+                return false;
+            }
+        }
         
         return true;
     }
@@ -238,6 +266,7 @@ public class RegistrationController {
             stage.setTitle("RHMS - Login");
             stage.show();
             
+            LOGGER.info("Navigation back to login screen successful");
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error navigating to login screen", e);
             showMessage("Error returning to login screen: " + e.getMessage(), true);
@@ -294,8 +323,10 @@ public class RegistrationController {
             addressField.clear();
             if (specializationField != null) specializationField.clear();
             if (experienceYearsField != null) experienceYearsField.clear();
+            if (emergencyContactField != null) emergencyContactField.clear();
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Error clearing form fields", e);
         }
     }
 }
+

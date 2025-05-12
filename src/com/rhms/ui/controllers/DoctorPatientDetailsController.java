@@ -46,7 +46,7 @@ public class DoctorPatientDetailsController {
     @FXML private TableColumn<VitalSign, String> bpColumn;
     @FXML private TableColumn<VitalSign, String> heartRateColumn;
     @FXML private TableColumn<VitalSign, String> tempColumn;
- 
+
 
     // Medical history tab
     @FXML private ListView<String> medicalHistoryList;
@@ -151,34 +151,34 @@ public class DoctorPatientDetailsController {
     private void loadMedicalHistory() {
         List<MedicalRecord> records = currentPatient.getMedicalRecords();
         List<String> formattedRecords = new ArrayList<>();
-        
+
         if (records != null && !records.isEmpty()) {
             // Sort by date (most recent first)
             records.sort(Comparator.comparing(MedicalRecord::getDate).reversed());
-            
+
             for (MedicalRecord record : records) {
                 String doctorName = record.getRecordedBy() != null ? record.getRecordedBy().getName() : "Unknown Doctor";
-                
+
                 StringBuilder recordText = new StringBuilder();
                 recordText.append(dateTimeFormat.format(record.getDate()))
-                         .append(" - ").append(record.getCondition())
-                         .append("\nRecorded by: Dr. ").append(doctorName)
-                         .append("\n").append(record.getDescription());
-                         
+                        .append(" - ").append(record.getCondition())
+                        .append("\nRecorded by: Dr. ").append(doctorName)
+                        .append("\n").append(record.getDescription());
+
                 formattedRecords.add(recordText.toString());
             }
         } else {
             formattedRecords.add("No medical history available");
         }
-        
+
         medicalHistoryList.setItems(FXCollections.observableArrayList(formattedRecords));
-        
+
         // Set up custom cell factory for better display
         medicalHistoryList.setCellFactory(listView -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                
+
                 if (empty || item == null) {
                     setText(null);
                     setStyle("-fx-background-color: transparent;");
@@ -186,7 +186,7 @@ public class DoctorPatientDetailsController {
                     setText(item);
                     setWrapText(true);
                     setPrefWidth(0); // Enable text wrapping
-                    
+
                     // Add some styling to make records easier to read
                     if (!item.equals("No medical history available")) {
                         setStyle("-fx-background-color: #f8f9fa; -fx-padding: 5;");
@@ -203,13 +203,13 @@ public class DoctorPatientDetailsController {
         try {
             // Retrieve all feedback for this patient
             List<Feedback> feedbackHistory = new ArrayList<>();
-            
+
             // Get feedback provided by the current doctor
             List<Feedback> doctorFeedback = currentDoctor.getFeedbackForPatient(currentPatient);
             if (doctorFeedback != null) {
                 feedbackHistory.addAll(doctorFeedback);
             }
-            
+
             // Get feedback provided by all doctors to this patient
             List<Feedback> allFeedback = currentPatient.getAllFeedback();
             if (allFeedback != null) {
@@ -220,44 +220,44 @@ public class DoctorPatientDetailsController {
                     }
                 }
             }
-            
+
             // Sort feedback by timestamp (most recent first)
             feedbackHistory.sort(Comparator.comparing(Feedback::getTimestamp).reversed());
-            
+
             if (feedbackHistory.isEmpty()) {
                 feedbackList.setItems(FXCollections.observableArrayList("No previous feedback available"));
                 return;
             }
-            
+
             // Convert feedback objects to formatted strings for display
             List<String> displayItems = new ArrayList<>();
             for (Feedback feedback : feedbackHistory) {
                 StringBuilder feedbackText = new StringBuilder();
                 String doctorName = feedback.getDoctor() != null ? feedback.getDoctor().getName() : "Unknown Doctor";
-                
+
                 feedbackText.append(dateTimeFormat.format(feedback.getTimestamp()))
-                          .append(" - Dr. ").append(doctorName).append("\n")
-                          .append(feedback.getMessage());
-                
+                        .append(" - Dr. ").append(doctorName).append("\n")
+                        .append(feedback.getMessage());
+
                 // Add prescription info if available
                 if (feedback.hasPrescription()) {
                     feedbackText.append("\n\nPrescription: ")
-                              .append(feedback.getPrescription().getMedicationName())
-                              .append(" - ").append(feedback.getPrescription().getDosage())
-                              .append(" - ").append(feedback.getPrescription().getSchedule());
+                            .append(feedback.getPrescription().getMedicationName())
+                            .append(" - ").append(feedback.getPrescription().getDosage())
+                            .append(" - ").append(feedback.getPrescription().getSchedule());
                 }
-                
+
                 displayItems.add(feedbackText.toString());
             }
-            
+
             feedbackList.setItems(FXCollections.observableArrayList(displayItems));
-            
+
             // Set up custom cell factory for better display
             feedbackList.setCellFactory(listView -> new ListCell<String>() {
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
-                    
+
                     if (empty || item == null) {
                         setText(null);
                         setStyle("-fx-background-color: transparent;");
@@ -265,7 +265,7 @@ public class DoctorPatientDetailsController {
                         setText(item);
                         setWrapText(true);
                         setPrefWidth(0); // Enable text wrapping
-                        
+
                         // Add some styling to make feedback easier to read
                         if (!item.equals("No previous feedback available")) {
                             setStyle("-fx-background-color: #f8f9fa; -fx-padding: 5;");
@@ -273,10 +273,10 @@ public class DoctorPatientDetailsController {
                     }
                 }
             });
-            
-            LOGGER.log(Level.INFO, "Loaded {0} feedback items for patient {1}", 
-                     new Object[]{feedbackHistory.size(), currentPatient.getName()});
-            
+
+            LOGGER.log(Level.INFO, "Loaded {0} feedback items for patient {1}",
+                    new Object[]{feedbackHistory.size(), currentPatient.getName()});
+
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error loading feedback for patient " + currentPatient.getName(), e);
             feedbackList.setItems(FXCollections.observableArrayList(
@@ -290,27 +290,31 @@ public class DoctorPatientDetailsController {
     @FXML
     private void handleProvideFeedback() {
         try {
-            // Load the feedback view
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/rhms/ui/views/DoctorFeedbackView.fxml"));
             javafx.scene.Parent feedbackView = loader.load();
 
-            // Get the controller and initialize it with the current doctor and patient
             DoctorFeedbackController controller = loader.getController();
             controller.initializeData(currentDoctor, currentPatient);
 
-            // Create and show the feedback dialog
+            // Pass UserManager to feedback window for DB access
             Stage stage = new Stage();
             stage.setTitle("Provide Feedback - " + currentPatient.getName());
             stage.setScene(new Scene(feedbackView));
             stage.initModality(Modality.APPLICATION_MODAL);
+            stage.getScene().getWindow().setUserData(userManager); // Pass UserManager
 
             // Apply CSS if available
             Scene scene = stage.getScene();
             scene.getStylesheets().add(getClass().getResource("/com/rhms/ui/resources/styles.css").toExternalForm());
 
+            // Show dialog and wait for feedback submission
             stage.showAndWait();
 
-            // After dialog closes, refresh the feedback list in case new feedback was added
+            // After dialog closes, retrieve feedback and prescription from controller
+            com.rhms.doctorPatientInteraction.Feedback feedback = controller.getSubmittedFeedback();
+            // No need to save to DB here, it's handled in DoctorFeedbackController
+
+            // Refresh feedback list
             loadPreviousFeedback();
 
         } catch (IOException e) {

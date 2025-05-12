@@ -1,8 +1,6 @@
 package com.rhms.appointmentScheduling;
 
 import com.rhms.Database.AppointmentDatabaseHandler;
-import com.rhms.notifications.AppointmentNotificationService;
-import com.rhms.notifications.NotificationService;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 
@@ -20,7 +18,7 @@ import java.util.logging.Logger;
 public class AppointmentManager {
     private static final Logger LOGGER = Logger.getLogger(AppointmentManager.class.getName());
     private AppointmentDatabaseHandler dbHandler;
-    private AppointmentNotificationService notificationService;
+
 
     public AppointmentManager(AppointmentDatabaseHandler dbHandler) {
         if (dbHandler == null) {
@@ -29,10 +27,7 @@ public class AppointmentManager {
         }
         this.dbHandler = dbHandler;
         
-        // Initialize notification services
-        NotificationService coreNotificationService = new NotificationService();
-        this.notificationService = new AppointmentNotificationService(coreNotificationService);
-        
+
         LOGGER.log(Level.INFO, "AppointmentManager initialized successfully with notification support");
     }
 
@@ -216,16 +211,6 @@ public class AppointmentManager {
                     LOGGER.log(Level.INFO, "Successfully updated appointment {0} status to {1}", 
                               new Object[]{appointmentId, newStatus});
                     
-                    // Send notification if status changed
-                    if (!oldStatus.equals(newStatus) && notificationService != null) {
-                        boolean notified = notificationService.notifyStatusChange(appointment, oldStatus, newStatus);
-                        if (notified) {
-                            appointment.markNotificationSent();
-                            LOGGER.log(Level.INFO, "Notification sent for appointment {0} status change: {1} -> {2}", 
-                                      new Object[]{appointmentId, oldStatus, newStatus});
-                        }
-                    }
-                    
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, "Failed to update in-memory appointment status: {0}", e.getMessage());
                     // The database was updated successfully, so we still return true
@@ -302,17 +287,7 @@ public class AppointmentManager {
                 String oldStatus = appointment.getStatus();
                 appointment.setStatus("Confirmed");
                 
-                // Send notification to patient
-                if (notificationService != null) {
-                    boolean notified = notificationService.notifyAppointmentAccepted(appointment);
-                    if (notified) {
-                        appointment.markNotificationSent();
-                        LOGGER.log(Level.INFO, "Acceptance notification sent for appointment {0}", appointmentId);
-                    } else {
-                        LOGGER.log(Level.WARNING, "Failed to send acceptance notification for appointment {0}", 
-                                 appointmentId);
-                    }
-                }
+
                 
                 LOGGER.log(Level.INFO, "Successfully accepted appointment {0}", appointmentId);
                 return true;

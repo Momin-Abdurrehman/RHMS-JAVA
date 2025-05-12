@@ -83,7 +83,10 @@ public class MenuController {
 
         switch (choice) {
             case 1:
-                registerPatient(name, email, password, phone, address);
+                // Ask for emergency contact for patient registration
+                System.out.print("Enter emergency contact: ");
+                String emergencyContact = scanner.nextLine();
+                registerPatient(name, email, password, phone, address, emergencyContact);
                 break;
             case 2:
                 registerDoctor(name, email, password, phone, address);
@@ -302,8 +305,8 @@ public class MenuController {
         // Implementation for managing appointments
     }
 
-    private void registerPatient(String name, String email, String password, String phone, String address) {
-        Patient patient = userManager.registerPatient(name, email, password, phone, address);
+    private void registerPatient(String name, String email, String password, String phone, String address, String emergencyContact) {
+        Patient patient = userManager.registerPatient(name, email, password, phone, address, emergencyContact);
         if (patient != null) {
             System.out.println("Patient registered successfully! Username: " + patient.getUsername());
         }
@@ -393,3 +396,4 @@ public class MenuController {
                          " to patient " + selectedPatient.getName());
     }
 }
+

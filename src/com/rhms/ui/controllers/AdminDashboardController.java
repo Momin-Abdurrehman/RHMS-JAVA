@@ -5,19 +5,29 @@ import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.User;
 import com.rhms.userManagement.UserManager;
+import com.rhms.reporting.ReportFormat;
+import com.rhms.reporting.ReportGenerator;
+import com.rhms.reporting.DownloadHandler;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.ButtonType;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.scene.control.ButtonBar;
 
 import java.io.IOException;
 import java.io.File;
@@ -52,8 +62,9 @@ public class AdminDashboardController implements DashboardController {
         nameLabel.setText(currentAdmin.getName());
         outputArea.setText("Welcome, " + currentAdmin.getName() + "!\n\n" +
                 "Select an option from the sidebar to begin managing the system.");
-    }
 
+
+    }
 
     @FXML
     public void handleAssignDoctor(ActionEvent event) {
@@ -210,6 +221,89 @@ public class AdminDashboardController implements DashboardController {
         outputArea.setText(logContent.toString());
     }
 
+    @FXML
+    public void handleDownloadReport(ActionEvent event) {
+        // Show a dialog to select a patient
+        List<Patient> patients = userManager.getAllPatients();
+        if (patients.isEmpty()) {
+            showError("No patients available for report generation.");
+            return;
+        }
+
+        // Create a dialog to select patient and report format
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Download Patient Report");
+
+        ComboBox<Patient> patientComboBox = new ComboBox<>();
+        patientComboBox.getItems().addAll(patients);
+        patientComboBox.setPromptText("Select Patient");
+        patientComboBox.setCellFactory(cb -> new ListCell<Patient>() {
+            @Override
+            protected void updateItem(Patient item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "" : item.getName() + " (ID: " + item.getUserID() + ")");
+            }
+        });
+        patientComboBox.setButtonCell(new ListCell<Patient>() {
+            @Override
+            protected void updateItem(Patient item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "" : item.getName() + " (ID: " + item.getUserID() + ")");
+            }
+        });
+
+        ComboBox<ReportFormat> formatComboBox = new ComboBox<>();
+        formatComboBox.getItems().addAll(ReportFormat.values());
+        formatComboBox.setValue(ReportFormat.PDF);
+
+        VBox vbox = new VBox(10, new Label("Patient:"), patientComboBox, new Label("Report Format:"), formatComboBox);
+        dialog.getDialogPane().setContent(vbox);
+
+        // Add explicit Download and Cancel buttons
+        ButtonType downloadButtonType = new ButtonType("Download", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(downloadButtonType, ButtonType.CANCEL);
+
+        // Enable/disable Download button based on selection
+        Button downloadButton = (Button) dialog.getDialogPane().lookupButton(downloadButtonType);
+        downloadButton.setDisable(true);
+
+        patientComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            downloadButton.setDisable(newVal == null || formatComboBox.getValue() == null);
+        });
+        formatComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            downloadButton.setDisable(patientComboBox.getValue() == null || newVal == null);
+        });
+
+        dialog.setResultConverter(button -> {
+            if (button == downloadButtonType) {
+                Patient selectedPatient = patientComboBox.getValue();
+                ReportFormat format = formatComboBox.getValue();
+                if (selectedPatient == null || format == null) {
+                    showError("Please select a patient and report format.");
+                    return null;
+                }
+
+                DirectoryChooser directoryChooser = new DirectoryChooser();
+                directoryChooser.setTitle("Select Save Location");
+                File directory = directoryChooser.showDialog(nameLabel.getScene().getWindow());
+
+                if (directory != null) {
+                    try {
+                        ReportGenerator reportGenerator = new ReportGenerator(selectedPatient);
+                        File reportFile = reportGenerator.generateCompleteReport(directory.getAbsolutePath(), format);
+                        showInfo("Report generated successfully!\nFile: " + reportFile.getAbsolutePath());
+                        DownloadHandler.openFile(reportFile);
+                    } catch (Exception e) {
+                        showError("Error generating report: " + e.getMessage());
+                    }
+                }
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
     @Override
     public void handleLogout() {
         try {
@@ -299,4 +393,13 @@ public class AdminDashboardController implements DashboardController {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    private void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 }
+
