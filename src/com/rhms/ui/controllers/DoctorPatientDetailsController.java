@@ -252,7 +252,7 @@ public class DoctorPatientDetailsController {
 
             feedbackList.setItems(FXCollections.observableArrayList(displayItems));
 
-            // Set up custom cell factory for better display
+            // Setup custom cell factory for better display
             feedbackList.setCellFactory(listView -> new ListCell<String>() {
                 @Override
                 protected void updateItem(String item, boolean empty) {
