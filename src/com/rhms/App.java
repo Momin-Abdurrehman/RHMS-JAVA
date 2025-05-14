@@ -47,8 +47,5 @@ public class App {
     
 
     
-    private static Doctor findDoctorByEmail(String email) {
-        User user = userManager.findUserByEmail(email);
-        return (user instanceof Doctor) ? (Doctor)user : null;
-    }
+
 }

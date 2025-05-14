@@ -209,6 +209,17 @@ public class ManageUsersDashboardController {
                     stmt.setInt(2, selectedUser.getUserID());
                     stmt.executeUpdate();
                 }
+                // --- Delete prescriptions first (that reference feedback by doctor) ---
+                if (selectedUser instanceof Doctor || selectedUser instanceof Patient) {
+                    try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                            "DELETE p FROM prescription p " +
+                                    "JOIN feedback_by_doctor f ON p.feedback_id = f.feedback_id " +
+                                    "WHERE f.doctor_id = ? OR f.patient_id = ?")) {
+                        stmt.setInt(1, selectedUser.getUserID());
+                        stmt.setInt(2, selectedUser.getUserID());
+                        stmt.executeUpdate();
+                    }
+                }
 
                 // --- Delete from feedback_by_patient (as doctor or patient) ---
                 try (java.sql.PreparedStatement stmt = conn.prepareStatement(
@@ -217,6 +228,15 @@ public class ManageUsersDashboardController {
                     stmt.setInt(2, selectedUser.getUserID());
                     stmt.executeUpdate();
                 }
+                // --- Delete from feedback_by_doctor (as doctor or patient) ---
+                try (java.sql.PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM feedback_by_doctor WHERE doctor_id = ? OR patient_id = ?")) {
+                    stmt.setInt(1, selectedUser.getUserID());
+                    stmt.setInt(2, selectedUser.getUserID());
+                    stmt.executeUpdate();
+                }
+
+
 
                 // --- Delete from appointments (as doctor or patient) ---
                 try (java.sql.PreparedStatement stmt = conn.prepareStatement(

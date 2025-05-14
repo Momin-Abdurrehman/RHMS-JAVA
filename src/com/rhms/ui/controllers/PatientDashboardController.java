@@ -3,9 +3,6 @@ package com.rhms.ui.controllers;
 import com.rhms.Database.AppointmentDatabaseHandler;
 import com.rhms.Database.VitalSignDatabaseHandler;
 import com.rhms.appointmentScheduling.AppointmentManager;
-import com.rhms.reporting.DownloadHandler;
-import com.rhms.reporting.ReportFormat;
-import com.rhms.reporting.ReportGenerator;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.User;
@@ -28,7 +25,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -1009,151 +1005,6 @@ public class PatientDashboardController implements DashboardController {
         // Use the current patient field that was already set during initialization
         // instead of trying to get it from userManager
         return this.currentPatient;
-    }
-
-    @FXML
-    public void handleGenerateReport(ActionEvent event) {
-        try {
-            // Create dialog for report options
-            Dialog<ReportOptions> dialog = new Dialog<>();
-            dialog.setTitle("Generate Health Report");
-            dialog.setHeaderText("Create a downloadable report with your health data");
-
-            // Set the button types
-            ButtonType generateButtonType = new ButtonType("Generate", ButtonBar.ButtonData.OK_DONE);
-            dialog.getDialogPane().getButtonTypes().addAll(generateButtonType, ButtonType.CANCEL);
-
-            // Create the report options form
-            GridPane grid = new GridPane();
-            grid.setHgap(10);
-            grid.setVgap(10);
-            grid.setPadding(new Insets(20, 150, 10, 10));
-
-            // Report sections checkboxes
-            CheckBox vitalsCheckbox = new CheckBox("Vitals History");
-            vitalsCheckbox.setSelected(true);
-            CheckBox feedbackCheckbox = new CheckBox("Doctor's Feedback");
-            feedbackCheckbox.setSelected(true);
-            CheckBox trendsCheckbox = new CheckBox("Health Trends & Graphs");
-            trendsCheckbox.setSelected(true);
-
-            // Report format selection
-            ComboBox<ReportFormat> formatCombo = new ComboBox<>();
-            formatCombo.getItems().addAll(ReportFormat.values());
-            formatCombo.setValue(ReportFormat.PDF);
-
-            // Date range selection
-            DatePicker startDatePicker = new DatePicker(java.time.LocalDate.now().minusMonths(1));
-            DatePicker endDatePicker = new DatePicker(java.time.LocalDate.now());
-
-            // Add elements to grid
-            grid.add(new Label("Include in Report:"), 0, 0);
-            grid.add(vitalsCheckbox, 0, 1);
-            grid.add(feedbackCheckbox, 0, 2);
-            grid.add(trendsCheckbox, 0, 3);
-
-            grid.add(new Label("Report Format:"), 0, 4);
-            grid.add(formatCombo, 1, 4);
-
-            grid.add(new Label("Date Range:"), 0, 5);
-            grid.add(new Label("From:"), 0, 6);
-            grid.add(startDatePicker, 1, 6);
-            grid.add(new Label("To:"), 0, 7);
-            grid.add(endDatePicker, 1, 7);
-
-            dialog.getDialogPane().setContent(grid);
-
-            // Enable/Disable generate button based on form validation
-            javafx.scene.Node generateButton = dialog.getDialogPane().lookupButton(generateButtonType);
-            generateButton.setDisable(false);
-
-            // Validate at least one section is selected
-            Runnable validateForm = () -> {
-                boolean valid = vitalsCheckbox.isSelected() ||
-                        feedbackCheckbox.isSelected() ||
-                        trendsCheckbox.isSelected();
-                generateButton.setDisable(!valid);
-            };
-
-            vitalsCheckbox.setOnAction(e -> validateForm.run());
-            feedbackCheckbox.setOnAction(e -> validateForm.run());
-            trendsCheckbox.setOnAction(e -> validateForm.run());
-
-            // Convert dialog result
-            dialog.setResultConverter(dialogButton -> {
-                if (dialogButton == generateButtonType) {
-                    return new ReportOptions(
-                            vitalsCheckbox.isSelected(),
-                            feedbackCheckbox.isSelected(),
-                            trendsCheckbox.isSelected(),
-                            formatCombo.getValue(),
-                            startDatePicker.getValue(),
-                            endDatePicker.getValue()
-                    );
-                }
-                return null;
-            });
-
-            // Show dialog and handle result
-            Optional<ReportOptions> result = dialog.showAndWait();
-            result.ifPresent(options -> {
-                try {
-                    // Show directory chooser for save location
-                    DirectoryChooser directoryChooser = new DirectoryChooser();
-                    directoryChooser.setTitle("Select Save Location");
-                    File directory = directoryChooser.showDialog(((javafx.scene.Node)event.getSource()).getScene().getWindow());
-
-                    if (directory != null) {
-                        // Create the report generator
-                        ReportGenerator generator = new ReportGenerator(currentPatient);
-
-                        // Generate the report based on selected options
-                        File reportFile = generator.generateReport(
-                                directory.getAbsolutePath(),
-                                options.includeVitals,
-                                options.includeFeedback,
-                                options.includeTrends,
-                                options.format
-                        );
-
-                        // Show success message with file path
-                        showMessage("Report generated successfully!\nSaved to: " + reportFile.getAbsolutePath());
-
-                        // Try to open the file
-                        DownloadHandler.openFile(reportFile);
-                    }
-                } catch (IOException e) {
-                    showMessage("Error generating report: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            });
-
-        } catch (Exception e) {
-            showMessage("Error creating report options dialog: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Helper class to store report generation options
-     */
-    private static class ReportOptions {
-        final boolean includeVitals;
-        final boolean includeFeedback;
-        final boolean includeTrends;
-        final ReportFormat format;
-        final java.time.LocalDate startDate;
-        final java.time.LocalDate endDate;
-
-        public ReportOptions(boolean includeVitals, boolean includeFeedback, boolean includeTrends,
-                             ReportFormat format, java.time.LocalDate startDate, java.time.LocalDate endDate) {
-            this.includeVitals = includeVitals;
-            this.includeFeedback = includeFeedback;
-            this.includeTrends = includeTrends;
-            this.format = format;
-            this.startDate = startDate;
-            this.endDate = endDate;
-        }
     }
 
     @FXML

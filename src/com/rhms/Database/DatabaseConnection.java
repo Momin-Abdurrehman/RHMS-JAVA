@@ -7,8 +7,8 @@ import java.sql.SQLException;
 public class DatabaseConnection {
     // Database connection parameters
     private static final String JDBC_URL = "jdbc:mysql://localhost:3306/hospital_db?useSSL=false&serverTimezone=UTC";
-    private static final String USERNAME = "root"; // Replace with your MySQL username
-    private static final String PASSWORD = "Diamond4056!"; // Replace with your MySQL password
+    private static final String USERNAME = "root"; //HERE U WILL REPLACE WITH YOU OWN USERNAME n PASSWORD
+    private static final String PASSWORD = "Diamond4056!";
 
     // Connection instance
     private static Connection connection = null;
