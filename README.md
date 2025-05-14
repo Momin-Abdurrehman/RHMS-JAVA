@@ -86,6 +86,28 @@ com.rhms
 * Git
 
 ### Installation
+Database Setup (MySQL + JDBC)
+
+**Create the database:**
+
+CREATE DATABASE rhms_db;
+
+Create the required tables by running the provided SQL script (if available), or manually create tables like patients, doctors, appointments, etc.
+
+Set up the DB credentials.
+
+**Javax Mail Setup**
+(For Email Notifications)
+
+    Add the Javax Mail dependency in pom.xml:
+
+<dependency>
+    <groupId>com.sun.mail</groupId>
+    <artifactId>javax.mail</artifactId>
+    <version>1.6.2</version>
+</dependency>
+
+Configure mail settings
 
 1. Clone the repository:
 
