@@ -4,8 +4,6 @@ import com.rhms.Database.AppointmentDatabaseHandler;
 import com.rhms.Database.DoctorPatientAssignmentHandler;
 import com.rhms.Database.UserDatabaseHandler;
 import com.rhms.appointmentScheduling.Appointment;
-import com.rhms.healthDataHandling.VitalSign;
-import com.rhms.loginSystem.AuthenticationService;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -27,7 +25,6 @@ public class UserManager {
     private List<Administrator> administrators;
     public UserDatabaseHandler dbHandler;
     private AppointmentDatabaseHandler appointmentDbHandler;
-    private AuthenticationService authService;
     private DoctorPatientAssignmentHandler assignmentHandler;
     /**
      * Initializes the user management system
@@ -37,7 +34,6 @@ public class UserManager {
         this.doctors = new ArrayList<>();
         this.patients = new ArrayList<>();
         this.administrators = new ArrayList<>();
-        this.authService = new AuthenticationService();
         this.dbHandler = new UserDatabaseHandler();
         this.appointmentDbHandler = new AppointmentDatabaseHandler(this);
         assignmentHandler = new DoctorPatientAssignmentHandler();
@@ -372,26 +368,6 @@ public class UserManager {
     }
 
     /**
-     * Load appointments for a specific doctor from the database
-     * @param doctor The doctor for whom to load appointments
-     */
-    public void loadAppointmentsForDoctor(Doctor doctor) {
-        if (doctor == null) {
-            LOGGER.log(Level.WARNING, "Cannot load appointments for null doctor");
-            return;
-        }
-
-        try {
-            List<Appointment> appointments = appointmentDbHandler.loadAppointmentsForDoctor(doctor.getUserID());
-            doctor.setAppointments(appointments);
-            LOGGER.log(Level.INFO, "Loaded {0} appointments for doctor {1}",
-                    new Object[]{appointments.size(), doctor.getName()});
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error loading appointments for doctor " + doctor.getUserID(), e);
-        }
-    }
-
-    /**
      * Get the appointment database handler
      * @return The appointment database handler
      */
@@ -492,22 +468,6 @@ public class UserManager {
 
         // Load assignments after users are loaded
         loadDoctorPatientAssignments();
-    }
-
-    public List<VitalSign> getSortedVitals(boolean b) {
-        List<VitalSign> sortedVitals = new ArrayList<>();
-        for (User user : users.values()) {
-            if (user instanceof Patient) {
-                Patient patient = (Patient) user;
-                List<VitalSign> vitals = patient.getVitalSigns();
-                if (b) {
-                    sortedVitals.addAll(vitals);
-                } else {
-                    sortedVitals.addAll(vitals);
-                }
-            }
-        }
-        return sortedVitals;
     }
 
     /**

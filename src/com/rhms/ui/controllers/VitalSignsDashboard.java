@@ -325,6 +325,5 @@ public class VitalSignsDashboard {
         alert.showAndWait();
     }
 
-    // ... existing code ...
 }
 

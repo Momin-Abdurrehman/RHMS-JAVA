@@ -57,10 +57,6 @@ public class Prescription {
         System.out.println("Schedule: " + schedule);
     }
 
-    public void addInstructions(String instructions) {
-        System.out.println("Instructions: " + instructions);
-    }
-
     public String getMedicationInfo() {
         return "Medication: " + medicationName + "\nDosage: " + dosage + "\nSchedule: " + schedule;
     }

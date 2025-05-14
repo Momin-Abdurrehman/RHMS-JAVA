@@ -5,7 +5,6 @@ import com.rhms.userManagement.User;
 import com.rhms.userManagement.Doctor;
 import com.rhms.userManagement.Patient;
 import com.rhms.userManagement.Administrator;
-import com.rhms.loginSystem.Session;
 import com.rhms.doctorPatientInteraction.Feedback;
 import com.rhms.doctorPatientInteraction.Prescription;
 import java.sql.*;
@@ -176,84 +175,6 @@ public class UserDatabaseHandler {
         return null;
     }
 
-    // Save a session to the database
-    public boolean saveSession(Session session) {
-        String sql = "INSERT INTO Sessions (session_token, user_id, creation_time, last_activity_time) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, session.getSessionToken());
-            stmt.setInt(2, session.getUser().getUserID());
-            stmt.setTimestamp(3, Timestamp.valueOf(session.getCreationTime()));
-            stmt.setTimestamp(4, Timestamp.valueOf(session.getLastActivityTime()));
-            stmt.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            System.err.println("Error saving session: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // Fetch a session by its token
-    public Session getSessionByToken(String sessionToken) {
-        String sql = "SELECT * FROM Sessions WHERE session_token = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, sessionToken);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                User user = getUserById(rs.getInt("user_id"));
-                if (user != null) {
-                    return new Session(
-                            sessionToken,
-                            user,
-                            rs.getTimestamp("creation_time").toLocalDateTime(),
-                            rs.getTimestamp("last_activity_time").toLocalDateTime()
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error fetching session by token: " + e.getMessage());
-        }
-        return null;
-    }
-
-    // Update session activity in the database
-    public boolean updateSessionActivity(Session session) {
-        String sql = "UPDATE Sessions SET last_activity_time = ? WHERE session_token = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setTimestamp(1, Timestamp.valueOf(session.getLastActivityTime()));
-            stmt.setString(2, session.getSessionToken());
-            stmt.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            System.err.println("Error updating session activity: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // Delete a session by its token
-    public boolean deleteSession(String sessionToken) {
-        String sql = "DELETE FROM Sessions WHERE session_token = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, sessionToken);
-            stmt.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            System.err.println("Error deleting session: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // Delete a user by user_id (for rollback)
-    public boolean deleteUserById(int userId) {
-        String sql = "DELETE FROM Users WHERE user_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setInt(1, userId);
-            int rows = stmt.executeUpdate();
-            return rows > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting user by ID: " + e.getMessage());
-            return false;
-        }
-    }
 
     // Fetch a user by their ID
     public User getUserById(int userId) {

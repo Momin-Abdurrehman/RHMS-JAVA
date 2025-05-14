@@ -102,7 +102,7 @@ public class DoctorPatientAssignmentHandler {
         try {
             refreshConnectionIfNeeded();
             
-            // Changed from INSERT OR IGNORE INTO (SQLite syntax) to INSERT IGNORE INTO (MySQL syntax)
+
             String sql = "INSERT IGNORE INTO doctor_patient_assignments (doctor_id, patient_id) VALUES (?, ?)";
             try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.setInt(1, doctor.getUserID());

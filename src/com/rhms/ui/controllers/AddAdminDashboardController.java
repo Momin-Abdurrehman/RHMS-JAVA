@@ -149,7 +149,7 @@ public class AddAdminDashboardController {
         addressField.clear();
     }
     
-    // Method to set the UserManager (for dependency injection)
+    // Method to set the UserManager
     public void setUserManager(UserManager userManager) {
         this.userManager = userManager;
     }

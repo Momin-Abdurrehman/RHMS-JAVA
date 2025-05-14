@@ -9,36 +9,25 @@ import com.rhms.userManagement.User;
 import com.rhms.userManagement.UserManager;
 
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Callback;
 
-import java.io.File;
-import java.net.URL;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import java.io.IOException;
-
 import javafx.stage.Stage;
-import javafx.scene.control.Alert;
 
 public class ChatWithPatientDashboard {
 
@@ -359,45 +348,4 @@ public class ChatWithPatientDashboard {
         stage.close();
     }
 
-    /**
-     * Helper method to find a resource file
-     */
-    private URL findResource(String path) {
-        URL url = getClass().getClassLoader().getResource(path);
-
-        if (url == null) {
-            url = getClass().getResource("/" + path);
-        }
-
-        if (url == null) {
-            try {
-                File file = new File("src/" + path);
-                if (file.exists()) {
-                    url = file.toURI().toURL();
-                }
-
-                if (url == null) {
-                    file = new File("target/classes/" + path);
-                    if (file.exists()) {
-                        url = file.toURI().toURL();
-                    }
-                }
-            } catch (Exception e) {
-                // Silently handle exception
-            }
-        }
-
-        return url;
-    }
-
-    /**
-     * Show an error message
-     */
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
 }
