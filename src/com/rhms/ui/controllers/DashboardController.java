@@ -27,7 +27,7 @@ public interface DashboardController {
     void initializeDashboard();
     
     /**
-     * Handles logout action
+     * Handles logout actions
      */
     void handleLogout();
 }
