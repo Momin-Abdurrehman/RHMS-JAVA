@@ -89,7 +89,7 @@ com.rhms
 Database Setup (MySQL + JDBC)
 
 **Create the database using this script:**
-
+```
 CREATE DATABASE IF NOT EXISTS `hospital_db`;
 USE `hospital_db`;
 
@@ -250,7 +250,7 @@ CREATE TABLE `prescription` (
   KEY `fk_prescription_feedback` (`feedback_id`),
   CONSTRAINT `fk_prescription_feedback` FOREIGN KEY (`feedback_id`) REFERENCES `feedback_by_doctor` (`feedback_id`)
 );
-
+```
 Create the required tables by running the provided SQL script (if available), or manually create tables like patients, doctors, appointments, etc.
 
 Set up the DB credentials.
