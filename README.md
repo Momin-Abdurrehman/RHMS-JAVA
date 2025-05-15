@@ -88,9 +88,168 @@ com.rhms
 ### Installation
 Database Setup (MySQL + JDBC)
 
-**Create the database:**
+**Create the database using this script:**
 
-CREATE DATABASE rhms_db;
+CREATE DATABASE IF NOT EXISTS `hospital_db`;
+USE `hospital_db`;
+
+CREATE TABLE `Users` (
+  `user_id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `address` text,
+  `user_type` enum('Patient','Doctor','Administrator') NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `specialization` varchar(100) DEFAULT 'General',
+  `experience_years` int DEFAULT '0',
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_users_username` (`username`),
+  KEY `idx_users_email` (`email`)
+);
+
+CREATE TABLE `Administrators` (
+  `admin_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  PRIMARY KEY (`admin_id`),
+  UNIQUE KEY `user_id` (`user_id`),
+  CONSTRAINT `administrators_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`user_id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `appointments` (
+  `appointment_id` int NOT NULL AUTO_INCREMENT,
+  `appointment_date` datetime NOT NULL,
+  `doctor_id` int DEFAULT NULL,
+  `patient_id` int NOT NULL,
+  `purpose` varchar(255) DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'Pending',
+  `notes` varchar(500) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `notification_sent` tinyint(1) DEFAULT '0',
+  `accepted_by` int DEFAULT NULL,
+  PRIMARY KEY (`appointment_id`),
+  KEY `fk_appointments_doctor` (`doctor_id`),
+  KEY `fk_appointments_patient` (`patient_id`),
+  CONSTRAINT `fk_appointments_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_appointments_patient` FOREIGN KEY (`patient_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `Chat_Messages` (
+  `message_id` int NOT NULL AUTO_INCREMENT,
+  `sender_id` int NOT NULL,
+  `receiver_id` int NOT NULL,
+  `message_text` text NOT NULL,
+  `sent_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_read` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`message_id`),
+  KEY `idx_chat_messages_sender` (`sender_id`),
+  KEY `idx_chat_messages_receiver` (`receiver_id`),
+  CONSTRAINT `chat_messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `Users` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `chat_messages_ibfk_2` FOREIGN KEY (`receiver_id`) REFERENCES `Users` (`user_id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `doctor_patient_assignments` (
+  `assignment_id` int NOT NULL AUTO_INCREMENT,
+  `doctor_id` int NOT NULL,
+  `patient_id` int NOT NULL,
+  `assigned_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`assignment_id`),
+  UNIQUE KEY `unique_assignment` (`doctor_id`,`patient_id`),
+  KEY `fk_assignment_patient` (`patient_id`),
+  CONSTRAINT `fk_assignment_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_assignment_patient` FOREIGN KEY (`patient_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `Doctor_Requests` (
+  `request_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `request_type` varchar(50) NOT NULL,
+  `doctor_specialization` varchar(100) DEFAULT NULL,
+  `additional_details` text,
+  `request_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` varchar(20) DEFAULT 'Pending',
+  PRIMARY KEY (`request_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `doctor_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`user_id`)
+);
+
+CREATE TABLE `Doctors` (
+  `doctor_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `specialization` varchar(100) NOT NULL,
+  `experience_years` int NOT NULL,
+  PRIMARY KEY (`doctor_id`),
+  UNIQUE KEY `user_id` (`user_id`),
+  CONSTRAINT `doctors_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`user_id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `patients` (
+  `patient_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `emergency_contact` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`patient_id`),
+  UNIQUE KEY `user_id` (`user_id`),
+  CONSTRAINT `patients_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `Users` (`user_id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `feedback_by_doctor` (
+  `feedback_id` int NOT NULL AUTO_INCREMENT,
+  `doctor_id` int NOT NULL,
+  `patient_id` int NOT NULL,
+  `comments` text,
+  `timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`feedback_id`),
+  KEY `doctor_id` (`doctor_id`),
+  KEY `patient_id` (`patient_id`),
+  CONSTRAINT `feedback_by_doctor_ibfk_1` FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`doctor_id`),
+  CONSTRAINT `feedback_by_doctor_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`patient_id`)
+);
+
+CREATE TABLE `feedback_by_patient` (
+  `feedback_id` int NOT NULL AUTO_INCREMENT,
+  `patient_id` int NOT NULL,
+  `doctor_id` int NOT NULL,
+  `feedback_text` text NOT NULL,
+  `rating` int NOT NULL,
+  `submitted_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`feedback_id`),
+  KEY `patient_id` (`patient_id`),
+  KEY `doctor_id` (`doctor_id`),
+  CONSTRAINT `feedback_by_patient_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `Patients` (`patient_id`) ON DELETE CASCADE,
+  CONSTRAINT `feedback_by_patient_ibfk_2` FOREIGN KEY (`doctor_id`) REFERENCES `Doctors` (`doctor_id`) ON DELETE CASCADE,
+  CONSTRAINT `feedback_by_patient_chk_1` CHECK ((`rating` between 1 and 5))
+);
+
+CREATE TABLE `Patient_Vitals` (
+  `vital_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `heart_rate` double DEFAULT NULL,
+  `oxygen_level` double DEFAULT NULL,
+  `blood_pressure` double DEFAULT NULL,
+  `temperature` double DEFAULT NULL,
+  `timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`vital_id`),
+  KEY `fk_user_id_idx` (`user_id`),
+  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+);
+
+CREATE TABLE `prescription` (
+  `prescription_id` int NOT NULL AUTO_INCREMENT,
+  `feedback_id` int NOT NULL,
+  `medication_name` varchar(255) NOT NULL,
+  `dosage` varchar(100) DEFAULT NULL,
+  `schedule` varchar(100) DEFAULT NULL,
+  `duration` varchar(100) DEFAULT NULL,
+  `instructions` text,
+  PRIMARY KEY (`prescription_id`),
+  KEY `fk_prescription_feedback` (`feedback_id`),
+  CONSTRAINT `fk_prescription_feedback` FOREIGN KEY (`feedback_id`) REFERENCES `feedback_by_doctor` (`feedback_id`)
+);
 
 Create the required tables by running the provided SQL script (if available), or manually create tables like patients, doctors, appointments, etc.
 
