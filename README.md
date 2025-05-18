@@ -142,13 +142,41 @@ com.rhms
 3. **MySQL Server**
 4. **Git**
 
-### 1. Clone the Repository
+### 1a. Clone the Repository
 
 ```bash
 git clone https://github.com/Momin-Abdurrehman/Remote-Hospital-Mangement-System.git
 cd Remote-Hospital-Mangement-System
 ```
 
+### 1b. Adding Dependencies to Pom.xml:
+To enable email notifications and database connectivity, add the following to your pom.xml inside the <dependencies> section:
+```
+<dependencies>
+  <!-- Javax Mail (for EmailNotification) -->
+  <dependency>
+    <groupId>com.sun.mail</groupId>
+    <artifactId>javax.mail</artifactId>
+    <version>1.6.2</version>
+  </dependency>
+
+  <!-- Javax WebSocket (if you use video/chat over WebSocket) -->
+  <dependency>
+    <groupId>javax.websocket</groupId>
+    <artifactId>javax.websocket-api</artifactId>
+    <version>1.1</version>
+  </dependency>
+
+  <!-- MySQL Connector/J (for JDBC) -->
+  <dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.33</version>
+  </dependency>
+
+  <!-- (Other existing dependencies…) -->
+</dependencies>
+```
 ### 2. Database Setup
 
 1. **Start MySQL** (default port 3306) or note your custom host/port.
