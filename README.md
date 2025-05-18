@@ -130,8 +130,15 @@ com.rhms
 │   └ UserManager.java
 └── App.java
 ```
+
+### DEMO VIDEO:
+```
+https://drive.google.com/file/d/1EGaJAOSugzxAt_U2s3aqVi_aTnek2AhX/view?usp=sharing
+```
+
 ### GUI Screenshot:
-![Uploading image.png…]()
+<img width="1401" alt="image" src="https://github.com/user-attachments/assets/40fe5d47-9333-4e40-afc7-48ecd058d863" />
+
 
 
 ---
